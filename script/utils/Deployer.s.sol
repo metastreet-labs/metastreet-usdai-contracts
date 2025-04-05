@@ -26,7 +26,8 @@ contract Deployer is BaseScript {
     struct Deployment {
         address USDai;
         address stakedUSDai;
-        address wrappedMSwapAdapter;
+        address swapAdapter;
+        address priceOracle;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -102,7 +103,8 @@ contract Deployer is BaseScript {
 
         json = stdJson.serialize("", "USDai", _deployment.USDai);
         json = stdJson.serialize("", "StakedUSDai", _deployment.stakedUSDai);
-        json = stdJson.serialize("", "WrappedMSwapAdapter", _deployment.wrappedMSwapAdapter);
+        json = stdJson.serialize("", "SwapAdapter", _deployment.swapAdapter);
+        json = stdJson.serialize("", "PriceOracle", _deployment.priceOracle);
 
         console.log("Writing json to file: %s\n", json);
         vm.writeJson(json, _getJsonFilePath());
@@ -130,11 +132,18 @@ contract Deployer is BaseScript {
             console.log("Could not parse StakedUSDai");
         }
 
-        /* Deserialize WrappedMSwapAdapter */
-        try vm.parseJsonAddress(json, ".WrappedMSwapAdapter") returns (address instance) {
-            _deployment.wrappedMSwapAdapter = instance;
+        /* Deserialize SwapAdapter */
+        try vm.parseJsonAddress(json, ".SwapAdapter") returns (address instance) {
+            _deployment.swapAdapter = instance;
         } catch {
-            console.log("Could not parse WrappedMSwapAdapter");
+            console.log("Could not parse SwapAdapter");
+        }
+
+        /* Deserialize PriceOracle */
+        try vm.parseJsonAddress(json, ".PriceOracle") returns (address instance) {
+            _deployment.priceOracle = instance;
+        } catch {
+            console.log("Could not parse PriceOracle");
         }
     }
 }

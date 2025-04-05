@@ -40,9 +40,17 @@ usage() {
     echo ""
     echo "Commands:"
     echo "  deploy <wrapped M token> <swap router> <staked timelock>"
-    echo "  upgrade-usdai <swap adapter>"
+    echo "  deploy-swap-adapter <wrapped M token> <swap router> <tokens>"
+    echo "  deploy-price-oracle <M NAV price feed> <tokens> <price feeds>"
+    echo ""
+    echo "  upgrade-usdai"
     echo "  upgrade-staked-usdai"
-    echo "  test"
+    echo ""
+    echo "  swap-adapter-set-token-whitelist <tokens>"
+    echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
+    echo "  grant-role <target> <role> <account>"
+    echo ""
+    echo "  deploy-test-mnav-price-feed"
     echo ""
     echo "  show"
     echo ""
@@ -67,25 +75,69 @@ case $1 in
         ;;
 
    "deploy")
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Deploy.s.sol:Deploy" --sig "run(address,address,uint64,address)" $2 $3 $4 $5
+        ;;
+
+   "deploy-swap-adapter")
         if [ "$#" -ne 4 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Deploy.s.sol:Deploy" --sig "run(address,address,uint64)" $2 $3 $4
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeploySwapAdapter.s.sol:DeploySwapAdapter" --sig "run(address,address,address[])" $2 $3 "$4"
+        ;;
+
+   "deploy-price-oracle")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployPriceOracle.s.sol:DeployPriceOracle" --sig "run(address,address[],address[])" $2 "$3" "$4"
         ;;
 
    "upgrade-usdai")
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run()"
+        ;;
+
+   "upgrade-staked-usdai")
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai" --sig "run()"
+        ;;
+
+   "swap-adapter-set-token-whitelist")
         if [ "$#" -ne 2 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run(address)" $2
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/SwapAdapterSetTokenWhitelist.s.sol:SwapAdapterSetTokenWhitelist" --sig "run(address[])" "$2"
         ;;
 
-   "upgrade-staked-usdai")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai" --sig "run()"
+   "price-oracle-set-price-feeds")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/PriceOracleSetPriceFeeds.s.sol:PriceOracleSetPriceFeeds" --sig "run(address[],address[])" "$2" "$3"
+        ;;
+
+   "grant-role")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
+        ;;
+
+   "deploy-test-mnav-price-feed")
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestMNAVPriceFeed.s.sol:DeployTestMNAVPriceFeed" --sig "run()"
         ;;
 
     "show")

@@ -7,7 +7,8 @@ import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.so
 
 import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol";
 
-import {WrappedMSwapAdapter} from "src/swapAdapters/WrappedMSwapAdapter.sol";
+import {UniswapV3SwapAdapter} from "src/swapAdapters/UniswapV3SwapAdapter.sol";
+import {ChainlinkPriceOracle} from "src/oracles/ChainlinkPriceOracle.sol";
 import {USDai} from "src/USDai.sol";
 import {StakedUSDai} from "src/StakedUSDai.sol";
 import {Deployer} from "./utils/Deployer.s.sol";
@@ -16,11 +17,18 @@ contract Deploy is Deployer {
     function run(
         address wrappedMToken,
         address swapRouter,
-        uint64 timelock
-    ) public returns (address, address, address) {
-        // Deploy WrappedMSwapAdapter
-        WrappedMSwapAdapter swapAdapter = new WrappedMSwapAdapter(wrappedMToken, swapRouter);
-        console.log("WrappedMSwapAdapter", address(swapAdapter));
+        uint64 timelock,
+        address mNavPriceFeed
+    ) public broadcast useDeployment returns (address, address, address, address) {
+        // Deploy UniswapV3SwapAdapter
+        UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter);
+        console.log("UniswapV3SwapAdapter", address(swapAdapter));
+
+        // Deploy ChainlinkPriceOracle
+        address[] memory tokens = new address[](0);
+        address[] memory priceFeeds = new address[](0);
+        ChainlinkPriceOracle priceOracle = new ChainlinkPriceOracle(mNavPriceFeed, tokens, priceFeeds);
+        console.log("ChainlinkPriceOracle", address(priceOracle));
 
         // Deploy USDai implemetation
         USDai USDaiImpl = new USDai(address(swapAdapter));
@@ -32,7 +40,7 @@ contract Deploy is Deployer {
         console.log("USDai proxy", address(USDai_));
 
         // Deploy StakedUSDai
-        StakedUSDai stakedUSDaiImpl = new StakedUSDai(address(USDai_));
+        StakedUSDai stakedUSDaiImpl = new StakedUSDai(address(USDai_), address(priceOracle));
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Deploy StakedUSDai proxy
@@ -45,10 +53,11 @@ contract Deploy is Deployer {
         IAccessControl(address(swapAdapter)).grantRole(keccak256("USDAI_ROLE"), address(USDai_));
 
         // Log deployment
-        _deployment.wrappedMSwapAdapter = address(swapAdapter);
+        _deployment.swapAdapter = address(swapAdapter);
+        _deployment.priceOracle = address(priceOracle);
         _deployment.USDai = address(USDai_);
         _deployment.stakedUSDai = address(stakedUSDai);
 
-        return (address(swapAdapter), address(USDai_), address(stakedUSDai));
+        return (address(swapAdapter), address(priceOracle), address(USDai_), address(stakedUSDai));
     }
 }

@@ -15,7 +15,8 @@ contract Show is Deployer {
 
         console.log("USDai:               %s", _deployment.USDai);
         console.log("StakedUSDai:         %s", _deployment.stakedUSDai);
-        console.log("WrappedMSwapAdapter: %s", _deployment.wrappedMSwapAdapter);
+        console.log("SwapAdapter:         %s", _deployment.swapAdapter);
+        console.log("PriceOracle:         %s", _deployment.priceOracle);
 
         console.log("Printing deployments completed");
     }
