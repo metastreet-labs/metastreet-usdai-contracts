@@ -290,6 +290,9 @@ contract StakedUSDai is
         /* If shares is 0 or less than min shares, revert */
         if (shares == 0 || shares < minShares) revert InvalidAmount();
 
+        /* If initial deposit, mint locked shares */
+        _mintLockedShares();
+
         /* Mint shares */
         _mint(receiver, shares);
 
@@ -322,6 +325,9 @@ contract StakedUSDai is
         /* If amount is 0 or more than max amount, revert */
         if (amount == 0 || amount > maxAmount) revert InvalidAmount();
 
+        /* If initial deposit, mint locked shares */
+        _mintLockedShares();
+
         /* Mint shares */
         _mint(receiver, shares);
 
@@ -332,6 +338,13 @@ contract StakedUSDai is
         emit Deposit(msg.sender, receiver, amount, shares);
 
         return amount;
+    }
+
+    /**
+     * @notice Mint locked shares
+     */
+    function _mintLockedShares() internal {
+        if (totalSupply() < LOCKED_SHARES) _mint(address(0xdead), LOCKED_SHARES);
     }
 
     /*------------------------------------------------------------------------*/

@@ -55,7 +55,7 @@ contract StakedUSDaiDepositSharePriceTest is BaseTest {
         // Assert deposit share price increased
         assertEq(
             stakedUsdai.depositSharePrice(),
-            (2_000_000 ether * FIXED_POINT_SCALE) / shares,
+            (2_000_000 ether * FIXED_POINT_SCALE) / (shares + LOCKED_SHARES),
             "Deposit share price mismatch"
         );
 
@@ -68,7 +68,11 @@ contract StakedUSDaiDepositSharePriceTest is BaseTest {
 
         // Assert deposit share price unchanged
         uint256 depositSharePrice = stakedUsdai.depositSharePrice();
-        assertEq(depositSharePrice, (2_000_000 ether * FIXED_POINT_SCALE) / shares, "Deposit share price mismatch");
+        assertEq(
+            depositSharePrice,
+            (2_000_000 ether * FIXED_POINT_SCALE) / (shares + LOCKED_SHARES),
+            "Deposit share price mismatch"
+        );
 
         // Service redemption
         uint256 amountProcessed = serviceRedemptionAndWarp(shares / 2, false);
