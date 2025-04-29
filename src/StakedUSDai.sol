@@ -278,7 +278,6 @@ contract StakedUSDai is
         internal
         whenNotPaused
         notBlacklisted(msg.sender)
-        notBlacklisted(receiver)
         nonReentrant
         nonZeroUint(amount)
         nonZeroAddress(receiver)
@@ -313,7 +312,6 @@ contract StakedUSDai is
         internal
         whenNotPaused
         notBlacklisted(msg.sender)
-        notBlacklisted(receiver)
         nonReentrant
         nonZeroUint(shares)
         nonZeroAddress(receiver)
@@ -345,6 +343,25 @@ contract StakedUSDai is
      */
     function _mintLockedShares() internal {
         if (totalSupply() < LOCKED_SHARES) _mint(address(0xdead), LOCKED_SHARES);
+    }
+
+    /*------------------------------------------------------------------------*/
+    /* ERC20Upgradeable overrides */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @inheritdoc ERC20Upgradeable
+     */
+    function _update(address from, address to, uint256 value) internal override {
+        /* If from or to is blacklisted, revert */
+        if (
+            _getBlacklistStorage().blacklist[msg.sender] || _getBlacklistStorage().blacklist[from]
+                || _getBlacklistStorage().blacklist[to]
+        ) {
+            revert BlacklistedAddress(from);
+        }
+
+        super._update(from, to, value);
     }
 
     /*------------------------------------------------------------------------*/
@@ -653,7 +670,6 @@ contract StakedUSDai is
         whenNotPaused
         notBlacklisted(msg.sender)
         notBlacklisted(controller)
-        notBlacklisted(owner)
         nonReentrant
         nonZeroUint(shares)
         nonZeroAddress(controller)
