@@ -121,7 +121,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
     function testFuzz__StakedUSDaiRequestRedeem(
         uint256 shares
     ) public {
-        vm.assume(shares > 0);
+        vm.assume(shares > 1e18);
         vm.assume(shares <= sharesBalance);
 
         // Request redeem

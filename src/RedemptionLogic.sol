@@ -34,6 +34,11 @@ library RedemptionLogic {
      */
     uint256 internal constant MAX_ACTIVE_REDEMPTIONS_COUNT = 50;
 
+    /**
+     * @notice Minimum redemption shares
+     */
+    uint256 internal constant MIN_REDEMPTION_SHARES = 1e18;
+
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
@@ -263,6 +268,9 @@ library RedemptionLogic {
         if (redemptionState_.redemptionIds[controller].length() == MAX_ACTIVE_REDEMPTIONS_COUNT) {
             revert IStakedUSDai.InvalidRedemptionState();
         }
+
+        /* Validate shares are greater than minimum redemption shares */
+        if (shares < MIN_REDEMPTION_SHARES) revert IStakedUSDai.InvalidAmount();
 
         /* Assign redemption ID */
         uint256 redemptionId = ++redemptionState_.index;
