@@ -78,15 +78,13 @@ contract OAdapterSendTest is TestHelperOz5 {
         // Deploy two instances of OAdapter for testing, associating them with respective endpoints
         aOAdapter = OAdapter(
             _deployOApp(
-                type(OAdapter).creationCode,
-                abi.encode(address(aToken), address(endpoints[aEid]), rateLimitConfigsA, address(this))
+                type(OAdapter).creationCode, abi.encode(address(aToken), address(endpoints[aEid]), address(this))
             )
         );
 
         bOAdapter = OAdapter(
             _deployOApp(
-                type(OAdapter).creationCode,
-                abi.encode(address(bToken), address(endpoints[bEid]), rateLimitConfigsB, address(this))
+                type(OAdapter).creationCode, abi.encode(address(bToken), address(endpoints[bEid]), address(this))
             )
         );
 
@@ -95,6 +93,10 @@ contract OAdapterSendTest is TestHelperOz5 {
         ofts[0] = address(aOAdapter);
         ofts[1] = address(bOAdapter);
         this.wireOApps(ofts);
+
+        // Set rate limit configs
+        aOAdapter.setRateLimits(rateLimitConfigsA);
+        bOAdapter.setRateLimits(rateLimitConfigsB);
 
         // Grant minter roles
         AccessControl(address(aToken)).grantRole(aToken.BRIDGE_ADMIN_ROLE(), address(aOAdapter));

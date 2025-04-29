@@ -32,19 +32,14 @@ contract OAdapter is OFTCore, RateLimiter {
      * @param token_ The address of the wrapped token
      * @param lzEndpoint_ The LayerZero endpoint address
      * @param delegate_ The delegate address
-     * @param rateLimitConfigs_ The rate limit configs
      */
     constructor(
         address token_,
         address lzEndpoint_,
-        RateLimitConfig[] memory rateLimitConfigs_,
         address delegate_
     ) OFTCore(IERC20Metadata(token_).decimals(), lzEndpoint_, delegate_) Ownable(delegate_) {
         /* Set token */
         _token = IMintable(token_);
-
-        /* Set rate limits */
-        _setRateLimits(rateLimitConfigs_);
     }
 
     /*------------------------------------------------------------------------*/
