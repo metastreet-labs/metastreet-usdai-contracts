@@ -101,19 +101,27 @@ abstract contract BasePositionManager is
     }
 
     /*------------------------------------------------------------------------*/
+    /* API */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @inheritdoc IBasePositionManager
+     */
+    function claimBaseYield() external {
+        _wrappedMToken.claimFor(address(_usdai));
+        _wrappedMToken.claimFor(address(this));
+    }
+
+    /*------------------------------------------------------------------------*/
     /* Permissioned API */
     /*------------------------------------------------------------------------*/
 
     /**
      * @inheritdoc IBasePositionManager
      */
-    function harvestBaseYield(
+    function depositBaseYield(
         uint256 usdaiAmount
-    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant {
-        /* Claim yield */
-        _wrappedMToken.claimFor(address(_usdai));
-        _wrappedMToken.claimFor(address(this));
-
+    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant returns (uint256) {
         /* Scale down the USDai amount */
         uint256 wrappedMAmount = _unscale(usdaiAmount);
 
@@ -125,10 +133,12 @@ abstract contract BasePositionManager is
         /* Approve wrapped M token to spend USDai */
         _wrappedMToken.approve(address(_usdai), wrappedMAmount);
 
-        /* Swap wrapped M token to USDai */
-        _usdai.deposit(address(_wrappedMToken), wrappedMAmount, 0, address(this));
+        /* Deposit wrapped M token for USDai */
+        uint256 usdaiAmount_ = _usdai.deposit(address(_wrappedMToken), wrappedMAmount, 0, address(this));
 
-        /* Emit BaseYieldHarvested */
-        emit BaseYieldHarvested(usdaiAmount);
+        /* Emit BaseYieldDeposited */
+        emit BaseYieldDeposited(usdaiAmount_);
+
+        return usdaiAmount_;
     }
 }

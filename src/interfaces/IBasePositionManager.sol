@@ -11,10 +11,10 @@ interface IBasePositionManager {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Base yield harvested
+     * @notice Base yield deposited
      * @param usdaiAmount USDai amount
      */
-    event BaseYieldHarvested(uint256 usdaiAmount);
+    event BaseYieldDeposited(uint256 usdaiAmount);
 
     /*------------------------------------------------------------------------*/
     /* Getter */
@@ -31,10 +31,16 @@ interface IBasePositionManager {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Harvest yield from base token
-     * @param usdaiAmount USDai amount
+     * @notice Claim base yield
      */
-    function harvestBaseYield(
+    function claimBaseYield() external;
+
+    /**
+     * @notice Deposit base yield
+     * @param usdaiAmount USDai amount
+     * @return USDai amount deposited
+     */
+    function depositBaseYield(
         uint256 usdaiAmount
-    ) external;
+    ) external returns (uint256);
 }

@@ -34,7 +34,8 @@ contract StakedUSDaiHarvestBaseYieldTest is BaseTest {
 
         assertGt(claimableBaseYield, 0, "Claimable base yield should be greater than 0");
 
-        stakedUsdai.harvestBaseYield(claimableBaseYield);
+        stakedUsdai.claimBaseYield();
+        stakedUsdai.depositBaseYield(claimableBaseYield);
 
         assertEq(stakedUsdai.claimableBaseYield(), 0, "Claimable base yield should be 0");
 
