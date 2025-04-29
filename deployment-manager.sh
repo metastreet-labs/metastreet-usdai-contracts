@@ -42,6 +42,7 @@ usage() {
     echo "  deploy <wrapped M token> <swap router> <staked timelock>"
     echo "  deploy-swap-adapter <wrapped M token> <swap router> <tokens>"
     echo "  deploy-price-oracle <M NAV price feed> <tokens> <price feeds>"
+    echo "  deploy-oadapter <token> <lz endpoint>"
     echo ""
     echo "  upgrade-usdai"
     echo "  upgrade-staked-usdai"
@@ -99,6 +100,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployPriceOracle.s.sol:DeployPriceOracle" --sig "run(address,address[],address[])" $2 "$3" "$4"
+        ;;
+
+   "deploy-oadapter")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOAdapter.s.sol:DeployOAdapter" --sig "run(address,address)" $2 $3
         ;;
 
    "upgrade-usdai")
