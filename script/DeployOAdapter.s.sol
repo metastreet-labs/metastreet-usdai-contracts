@@ -15,9 +15,9 @@ contract DeployOAdapter is Deployer {
         OAdapter adapter = new OAdapter(token, lzEndpoint, msg.sender);
         console.log("OAdapter", address(adapter));
 
-        if (token == _deployment.USDai) {
+        if (token == _deployment.USDai || token == _deployment.oTokenUSDai) {
             _deployment.oAdapterUSDai = address(adapter);
-        } else if (token == _deployment.stakedUSDai) {
+        } else if (token == _deployment.stakedUSDai || token == _deployment.oTokenStakedUSDai) {
             _deployment.oAdapterStakedUSDai = address(adapter);
         }
 

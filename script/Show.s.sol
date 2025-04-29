@@ -20,6 +20,9 @@ contract Show is Deployer {
         console.log("");
         console.log("OAdapterUSDai:       %s", _deployment.oAdapterUSDai);
         console.log("OAdapterStakedUSDai: %s", _deployment.oAdapterStakedUSDai);
+        console.log("");
+        console.log("OTokenUSDai:         %s", _deployment.oTokenUSDai);
+        console.log("OTokenStakedUSDai:   %s", _deployment.oTokenStakedUSDai);
 
         console.log("Printing deployments completed");
     }

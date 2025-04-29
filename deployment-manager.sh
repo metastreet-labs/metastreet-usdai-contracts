@@ -43,9 +43,11 @@ usage() {
     echo "  deploy-swap-adapter <wrapped M token> <swap router> <tokens>"
     echo "  deploy-price-oracle <M NAV price feed> <tokens> <price feeds>"
     echo "  deploy-oadapter <token> <lz endpoint>"
+    echo "  deploy-otoken <name> <symbol>"
     echo ""
     echo "  upgrade-usdai"
     echo "  upgrade-staked-usdai"
+    echo "  upgrade-otoken <token>"
     echo ""
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
@@ -111,12 +113,30 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOAdapter.s.sol:DeployOAdapter" --sig "run(address,address)" $2 $3
         ;;
 
+   "deploy-otoken")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOToken.s.sol:DeployOToken" --sig "run(string,string)" "$2" "$3"
+        ;;
+
    "upgrade-usdai")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run()"
         ;;
 
    "upgrade-staked-usdai")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai" --sig "run()"
+        ;;
+
+   "upgrade-otoken")
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeOToken.s.sol:UpgradeOToken" --sig "run(address)" $2
         ;;
 
    "swap-adapter-set-token-whitelist")

@@ -30,6 +30,8 @@ contract Deployer is BaseScript {
         address priceOracle;
         address oAdapterUSDai;
         address oAdapterStakedUSDai;
+        address oTokenUSDai;
+        address oTokenStakedUSDai;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -109,6 +111,8 @@ contract Deployer is BaseScript {
         json = stdJson.serialize("", "PriceOracle", _deployment.priceOracle);
         json = stdJson.serialize("", "OAdapterUSDai", _deployment.oAdapterUSDai);
         json = stdJson.serialize("", "OAdapterStakedUSDai", _deployment.oAdapterStakedUSDai);
+        json = stdJson.serialize("", "OTokenUSDai", _deployment.oTokenUSDai);
+        json = stdJson.serialize("", "OTokenStakedUSDai", _deployment.oTokenStakedUSDai);
 
         console.log("Writing json to file: %s\n", json);
         vm.writeJson(json, _getJsonFilePath());
@@ -162,6 +166,20 @@ contract Deployer is BaseScript {
             _deployment.oAdapterStakedUSDai = instance;
         } catch {
             console.log("Could not parse OAdapterStakedUSDai");
+        }
+
+        /* Deserialize OTokenUSDai */
+        try vm.parseJsonAddress(json, ".OTokenUSDai") returns (address instance) {
+            _deployment.oTokenUSDai = instance;
+        } catch {
+            console.log("Could not parse OTokenUSDai");
+        }
+
+        /* Deserialize OTokenStakedUSDai */
+        try vm.parseJsonAddress(json, ".OTokenStakedUSDai") returns (address instance) {
+            _deployment.oTokenStakedUSDai = instance;
+        } catch {
+            console.log("Could not parse OTokenStakedUSDai");
         }
     }
 }
