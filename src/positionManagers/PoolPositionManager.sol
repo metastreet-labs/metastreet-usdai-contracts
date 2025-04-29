@@ -301,9 +301,6 @@ abstract contract PoolPositionManager is
         /* Validate USDai balance */
         if (usdaiAmount > usdaiBalance) revert InsufficientBalance();
 
-        /* Approve USDai */
-        _usdai.approve(address(_usdai), usdaiAmount);
-
         /* Swap USDai to pool currency token */
         uint256 poolCurrencyAmount =
             _usdai.withdraw(poolCurrency, usdaiAmount, poolCurrencyAmountMinimum, address(this), data);
