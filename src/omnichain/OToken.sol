@@ -7,14 +7,14 @@ import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 
-import "../interfaces/IMintable.sol";
+import "../interfaces/IMintableBurnable.sol";
 
 /**
  * @title Omnichain Token
  * @author MetaStreet Foundation
  */
 contract OToken is
-    IMintable,
+    IMintableBurnable,
     ERC20Upgradeable,
     ERC20PermitUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -64,14 +64,14 @@ contract OToken is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc IMintable
+     * @inheritdoc IMintableBurnable
      */
     function mint(address to, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) nonReentrant {
         _mint(to, amount);
     }
 
     /**
-     * @inheritdoc IMintable
+     * @inheritdoc IMintableBurnable
      */
     function burn(address from, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) nonReentrant {
         _burn(from, amount);

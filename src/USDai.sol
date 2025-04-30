@@ -13,7 +13,7 @@ import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 
 import "./interfaces/IUSDai.sol";
 import "./interfaces/ISwapAdapter.sol";
-import "./interfaces/IMintable.sol";
+import "./interfaces/IMintableBurnable.sol";
 
 /**
  * @title USDai ERC20
@@ -21,7 +21,7 @@ import "./interfaces/IMintable.sol";
  */
 contract USDai is
     IUSDai,
-    IMintable,
+    IMintableBurnable,
     ERC165Upgradeable,
     ERC20Upgradeable,
     ERC20PermitUpgradeable,
@@ -322,14 +322,14 @@ contract USDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc IMintable
+     * @inheritdoc IMintableBurnable
      */
     function mint(address to, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
         _mint(to, amount);
     }
 
     /**
-     * @inheritdoc IMintable
+     * @inheritdoc IMintableBurnable
      */
     function burn(address from, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
         _burn(from, amount);
@@ -346,6 +346,6 @@ contract USDai is
         bytes4 interfaceId
     ) public view virtual override(AccessControlUpgradeable, ERC165Upgradeable) returns (bool) {
         return interfaceId == type(IERC20).interfaceId || interfaceId == type(IUSDai).interfaceId
-            || interfaceId == type(IMintable).interfaceId || super.supportsInterface(interfaceId);
+            || interfaceId == type(IMintableBurnable).interfaceId || super.supportsInterface(interfaceId);
     }
 }

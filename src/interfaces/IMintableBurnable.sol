@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Mintable Interface
+ * @title Mintable Burnable Interface
  * @author MetaStreet Foundation
  */
-interface IMintable {
+interface IMintableBurnable {
     /*------------------------------------------------------------------------*/
     /* Minter API */
     /*------------------------------------------------------------------------*/

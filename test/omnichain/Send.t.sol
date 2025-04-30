@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import "../Base.t.sol";
 
 // Test imports
-import {IMintable} from "src/interfaces/IMintable.sol";
+import {IMintableBurnable} from "src/interfaces/IMintableBurnable.sol";
 
 // Implementation imports
 import {OAdapter} from "src/omnichain/OAdapter.sol";

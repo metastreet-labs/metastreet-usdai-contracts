@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/utils/RateLimiter.sol";
 
-import "../interfaces/IMintable.sol";
+import "../interfaces/IMintableBurnable.sol";
 
 /**
  * @title Omnichain Adapter
@@ -21,7 +21,7 @@ contract OAdapter is OFTCore, RateLimiter {
     /**
      * @notice Token
      */
-    IMintable internal immutable _token;
+    IMintableBurnable internal immutable _token;
 
     /*------------------------------------------------------------------------*/
     /* Constructor */
@@ -39,7 +39,7 @@ contract OAdapter is OFTCore, RateLimiter {
         address delegate_
     ) OFTCore(IERC20Metadata(token_).decimals(), lzEndpoint_, delegate_) Ownable(delegate_) {
         /* Set token */
-        _token = IMintable(token_);
+        _token = IMintableBurnable(token_);
     }
 
     /*------------------------------------------------------------------------*/

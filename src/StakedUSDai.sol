@@ -25,7 +25,7 @@ import "./interfaces/IStakedUSDai.sol";
 import "./interfaces/IERC7540.sol";
 import "./interfaces/IPoolPositionManager.sol";
 import "./interfaces/IBasePositionManager.sol";
-import "./interfaces/IMintable.sol";
+import "./interfaces/IMintableBurnable.sol";
 
 /**
  * @title Staked USDai ERC20
@@ -41,7 +41,7 @@ contract StakedUSDai is
     BasePositionManager,
     PoolPositionManager,
     IStakedUSDai,
-    IMintable,
+    IMintableBurnable,
     IERC4626,
     IERC7540Redeem,
     IERC7540Operator
@@ -752,7 +752,7 @@ contract StakedUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc IMintable
+     * @inheritdoc IMintableBurnable
      */
     function mint(address to, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
         /* Mint supply */
@@ -763,7 +763,7 @@ contract StakedUSDai is
     }
 
     /**
-     * @inheritdoc IMintable
+     * @inheritdoc IMintableBurnable
      */
     function burn(address from, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
         /* Burn supply */
@@ -785,7 +785,7 @@ contract StakedUSDai is
     ) public view virtual override(AccessControlUpgradeable, ERC165Upgradeable) returns (bool) {
         return interfaceId == type(IERC20).interfaceId || interfaceId == type(IERC4626).interfaceId
             || interfaceId == type(IERC7540Redeem).interfaceId || interfaceId == type(IERC7540Operator).interfaceId
-            || interfaceId == type(IStakedUSDai).interfaceId || interfaceId == type(IMintable).interfaceId
+            || interfaceId == type(IStakedUSDai).interfaceId || interfaceId == type(IMintableBurnable).interfaceId
             || super.supportsInterface(interfaceId);
     }
 }
