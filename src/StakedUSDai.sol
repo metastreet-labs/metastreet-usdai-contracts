@@ -430,18 +430,12 @@ contract StakedUSDai is
      */
     function convertToShares(
         uint256 assets
-    ) public view nonZeroUint(assets) returns (uint256) {
+    ) public view returns (uint256) {
         /* Check if initial deposit */
-        bool initialDeposit = totalShares() < LOCKED_SHARES;
+        bool initialDeposit = totalSupply() < LOCKED_SHARES;
 
-        /* Compute shares */
-        uint256 shares = ((assets * FIXED_POINT_SCALE) / depositSharePrice());
-
-        /* Check if initial deposit and shares is less than locked shares */
-        if (initialDeposit && shares <= LOCKED_SHARES) revert InvalidAmount();
-
-        /* Compute shares. If initial deposit, lock subset of shares */
-        return shares - (initialDeposit ? LOCKED_SHARES : 0);
+        /* Compute shares. If initial deposit, remove locked shares */
+        return ((assets * FIXED_POINT_SCALE) / depositSharePrice()) - (initialDeposit ? LOCKED_SHARES : 0);
     }
 
     /**
@@ -449,12 +443,12 @@ contract StakedUSDai is
      */
     function convertToAssets(
         uint256 shares
-    ) public view nonZeroUint(shares) returns (uint256) {
+    ) public view returns (uint256) {
         /* Check if initial deposit */
-        bool initialDeposit = totalShares() < LOCKED_SHARES;
+        bool initialDeposit = totalSupply() < LOCKED_SHARES;
 
-        /* Compute assets. If initial deposit, add locked shares to shares */
-        return ((initialDeposit ? shares + LOCKED_SHARES : shares) * depositSharePrice()) / FIXED_POINT_SCALE;
+        /* Compute assets. If initial deposit, price locked shares */
+        return (((initialDeposit ? LOCKED_SHARES : 0) + shares) * depositSharePrice()) / FIXED_POINT_SCALE;
     }
 
     /**
