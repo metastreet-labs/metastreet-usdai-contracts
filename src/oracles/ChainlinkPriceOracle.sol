@@ -48,11 +48,17 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Token price feed set
+     * @notice Token price feed added
      * @param token Token
      * @param priceFeed Price feed
      */
-    event TokenPriceFeedSet(address indexed token, address indexed priceFeed);
+    event TokenPriceFeedAdded(address indexed token, address indexed priceFeed);
+
+    /**
+     * @notice Token price feed removed
+     * @param token Token
+     */
+    event TokenPriceFeedRemoved(address indexed token);
 
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -123,8 +129,8 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
         /* Set M NAV price feed decimals */
         _mNavDecimals = _mNavPriceFeed.decimals();
 
-        /* Set token price feeds */
-        _setTokenPriceFeed(tokens_, priceFeeds_);
+        /* Add token price feeds */
+        _addTokenPriceFeeds(tokens_, priceFeeds_);
 
         /* Grant roles */
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -189,11 +195,11 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Set token price feed
+     * @notice Add token price feeds
      * @param tokens_ Tokens
      * @param priceFeeds_ Price feeds
      */
-    function _setTokenPriceFeed(address[] memory tokens_, address[] memory priceFeeds_) internal {
+    function _addTokenPriceFeeds(address[] memory tokens_, address[] memory priceFeeds_) internal {
         /* Validate tokens and price feeds */
         if (tokens_.length != priceFeeds_.length) {
             revert InvalidLength();
@@ -202,21 +208,45 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
         /* Set token price feeds */
         for (uint256 i = 0; i < tokens_.length; i++) {
             /* Validate token */
-            if (tokens_[i] == address(0)) revert InvalidAddress();
+            if (tokens_[i] == address(0) || priceFeeds_[i] == address(0)) revert InvalidAddress();
 
-            if (priceFeeds_[i] != address(0)) {
-                /* Add token */
-                _tokens.add(tokens_[i]);
-            } else {
-                /* Remove token */
-                _tokens.remove(tokens_[i]);
-            }
+            /* Validate token price feed is not already set */
+            if (address(_priceFeeds[tokens_[i]]) != address(0)) revert InvalidAddress();
 
-            /* Set token price feed which can be zero address if it is for unsetting */
+            /* Add token */
+            _tokens.add(tokens_[i]);
+
+            /* Set token price feed */
             _priceFeeds[tokens_[i]] = AggregatorV3Interface(priceFeeds_[i]);
 
             /* Emit event */
-            emit TokenPriceFeedSet(tokens_[i], priceFeeds_[i]);
+            emit TokenPriceFeedAdded(tokens_[i], priceFeeds_[i]);
+        }
+    }
+
+    /**
+     * @notice Remove token price feeds
+     * @param tokens_ Tokens
+     */
+    function _removeTokenPriceFeed(
+        address[] memory tokens_
+    ) internal {
+        /* Set token price feeds */
+        for (uint256 i = 0; i < tokens_.length; i++) {
+            /* Validate token */
+            if (tokens_[i] == address(0)) revert InvalidAddress();
+
+            /* Validate token is currently supported */
+            if (!_tokens.contains(tokens_[i])) revert InvalidAddress();
+
+            /* Remove token */
+            _tokens.remove(tokens_[i]);
+
+            /* Set token price feed */
+            delete _priceFeeds[tokens_[i]];
+
+            /* Emit event */
+            emit TokenPriceFeedRemoved(tokens_[i]);
         }
     }
 
@@ -281,14 +311,24 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Set token price feed
+     * @notice Add token price feed
      * @param tokens_ Tokens
      * @param priceFeeds_ Price feeds
      */
-    function setTokenPriceFeeds(
+    function addTokenPriceFeeds(
         address[] memory tokens_,
         address[] memory priceFeeds_
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setTokenPriceFeed(tokens_, priceFeeds_);
+        _addTokenPriceFeeds(tokens_, priceFeeds_);
+    }
+
+    /**
+     * @notice Remove token price feeds
+     * @param tokens_ Tokens
+     */
+    function removeTokenPriceFeeds(
+        address[] memory tokens_
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _removeTokenPriceFeed(tokens_);
     }
 }

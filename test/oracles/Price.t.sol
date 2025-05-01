@@ -69,4 +69,16 @@ contract ChainlinkPriceOracleTest is BaseTest {
         vm.expectRevert(abi.encodeWithSelector(IPriceOracle.UnsupportedToken.selector, randomToken));
         oracle.price(randomToken);
     }
+
+    function test__RemoveTokenPriceFeeds() public {
+        address[] memory tokens = new address[](1);
+        tokens[0] = USDC_ETHEREUM;
+
+        // Remove USDC_ETHEREUM price feed
+        oracle.removeTokenPriceFeeds(tokens);
+
+        // Should revert when trying to get price for unsupported token
+        vm.expectRevert(abi.encodeWithSelector(IPriceOracle.UnsupportedToken.selector, USDC_ETHEREUM));
+        oracle.price(USDC_ETHEREUM);
+    }
 }

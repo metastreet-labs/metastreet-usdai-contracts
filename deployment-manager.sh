@@ -118,13 +118,13 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/SwapAdapterSetTokenWhitelist.s.sol:SwapAdapterSetTokenWhitelist" --sig "run(address[])" "$2"
         ;;
 
-   "price-oracle-set-price-feeds")
+   "price-oracle-add-price-feeds")
         if [ "$#" -ne 3 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/PriceOracleSetPriceFeeds.s.sol:PriceOracleSetPriceFeeds" --sig "run(address[],address[])" "$2" "$3"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/PriceOracleAddPriceFeeds.s.sol:PriceOracleAddPriceFeeds" --sig "run(address[],address[])" "$2" "$3"
         ;;
 
    "grant-role")
