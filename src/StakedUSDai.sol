@@ -57,7 +57,7 @@ contract StakedUSDai is
     /**
      * @notice Fixed point scale
      */
-    uint256 internal constant FIXED_POINT_SCALE = 1e18;
+    uint256 private constant FIXED_POINT_SCALE = 1e18;
 
     /**
      * @notice Amount of shares to lock for initial deposit
