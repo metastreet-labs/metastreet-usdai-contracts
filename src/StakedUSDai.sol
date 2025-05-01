@@ -147,14 +147,6 @@ contract StakedUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get implementation name
-     * @return The implementation name
-     */
-    function IMPLEMENTATION_NAME() external pure returns (string memory) {
-        return "Staked USDai";
-    }
-
-    /**
      * @notice Get implementation version
      * @return The implementation version
      */
