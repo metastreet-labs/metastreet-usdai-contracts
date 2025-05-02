@@ -185,6 +185,17 @@ contract USDai is
     }
 
     /**
+     * @notice Helper function to scale down a value, rounding up
+     * @param value Value
+     * @return Unscaled value rounded up
+     */
+    function _unscaleUp(
+        uint256 value
+    ) public view returns (uint256) {
+        return (value + _scaleFactor() - 1) / _scaleFactor();
+    }
+
+    /**
      * @notice Deposit
      * @param depositToken Deposit token
      * @param depositAmount Deposit amount
@@ -210,7 +221,7 @@ contract USDai is
             IERC20(depositToken).forceApprove(address(_swapAdapter), depositAmount);
 
             /* Swap in deposit token for base token */
-            usdaiAmount = _scale(_swapAdapter.swapIn(depositToken, depositAmount, _unscale(usdaiAmountMinimum), data));
+            usdaiAmount = _scale(_swapAdapter.swapIn(depositToken, depositAmount, _unscaleUp(usdaiAmountMinimum), data));
         } else {
             usdaiAmount = _scale(depositAmount);
         }
