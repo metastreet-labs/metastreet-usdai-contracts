@@ -239,7 +239,7 @@ contract USDai is
      * @notice Withdraw
      * @param withdrawToken Withdraw token
      * @param usdaiAmount USD.ai amount
-     * @param withdrawAmountMinimum Minimum withdraw amount
+     * @param withdrawAmountMinimum Minimum withdraw amount (only checked for non-base token withdrawals)
      * @param recipient Recipient address
      * @param data Data
      * @return Withdraw amount
