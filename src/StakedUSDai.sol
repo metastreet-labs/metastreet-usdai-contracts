@@ -23,6 +23,7 @@ import "./positionManagers/PoolPositionManager.sol";
 import "./interfaces/IUSDai.sol";
 import "./interfaces/IStakedUSDai.sol";
 import "./interfaces/IERC7540.sol";
+import "./interfaces/IERC7575.sol";
 import "./interfaces/IPoolPositionManager.sol";
 import "./interfaces/IBasePositionManager.sol";
 import "./interfaces/IMintableBurnable.sol";
@@ -531,7 +532,7 @@ contract StakedUSDai is
         IERC20(asset()).safeTransfer(receiver, amount);
 
         /* Emit Withdraw */
-        emit Withdraw(msg.sender, controller, receiver, amount, shares);
+        emit Withdraw(msg.sender, receiver, controller, amount, shares);
 
         return shares;
     }
@@ -567,7 +568,7 @@ contract StakedUSDai is
         if (amount > 0) IERC20(asset()).safeTransfer(receiver, amount);
 
         /* Emit Withdraw */
-        emit Withdraw(msg.sender, controller, receiver, amount, shares);
+        emit Withdraw(msg.sender, receiver, controller, amount, shares);
 
         return amount;
     }
@@ -697,6 +698,18 @@ contract StakedUSDai is
     }
 
     /*------------------------------------------------------------------------*/
+    /* ERC7575 */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Get share address
+     * @return Share address
+     */
+    function share() external view returns (address) {
+        return address(this);
+    }
+
+    /*------------------------------------------------------------------------*/
     /* Default admin API */
     /*------------------------------------------------------------------------*/
 
@@ -806,6 +819,6 @@ contract StakedUSDai is
         return interfaceId == type(IERC20).interfaceId || interfaceId == type(IERC4626).interfaceId
             || interfaceId == type(IERC7540Redeem).interfaceId || interfaceId == type(IERC7540Operator).interfaceId
             || interfaceId == type(IStakedUSDai).interfaceId || interfaceId == type(IMintableBurnable).interfaceId
-            || super.supportsInterface(interfaceId);
+            || interfaceId == type(IERC7575).interfaceId || super.supportsInterface(interfaceId);
     }
 }
