@@ -32,6 +32,7 @@ contract Deployer is BaseScript {
         address oAdapterStakedUSDai;
         address oTokenUSDai;
         address oTokenStakedUSDai;
+        address oUSDaiUtility;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -113,6 +114,7 @@ contract Deployer is BaseScript {
         json = stdJson.serialize("", "OAdapterStakedUSDai", _deployment.oAdapterStakedUSDai);
         json = stdJson.serialize("", "OTokenUSDai", _deployment.oTokenUSDai);
         json = stdJson.serialize("", "OTokenStakedUSDai", _deployment.oTokenStakedUSDai);
+        json = stdJson.serialize("", "OUSDaiUtility", _deployment.oUSDaiUtility);
 
         console.log("Writing json to file: %s\n", json);
         vm.writeJson(json, _getJsonFilePath());
@@ -180,6 +182,13 @@ contract Deployer is BaseScript {
             _deployment.oTokenStakedUSDai = instance;
         } catch {
             console.log("Could not parse OTokenStakedUSDai");
+        }
+
+        /* Deserialize OUSDaiUtility */
+        try vm.parseJsonAddress(json, ".OUSDaiUtility") returns (address instance) {
+            _deployment.oUSDaiUtility = instance;
+        } catch {
+            console.log("Could not parse OUSDaiUtiltiy");
         }
     }
 }

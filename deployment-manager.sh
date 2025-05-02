@@ -44,10 +44,12 @@ usage() {
     echo "  deploy-price-oracle <M NAV price feed> <tokens> <price feeds>"
     echo "  deploy-oadapter <token> <lz endpoint>"
     echo "  deploy-otoken <name> <symbol>"
+    echo "  deploy-ousdai-utility <o adapter> <lz endpoint>"
     echo ""
     echo "  upgrade-usdai"
     echo "  upgrade-staked-usdai"
     echo "  upgrade-otoken <token>"
+    echo "  upgrade-ousdai-utility <lz endpoint>"
     echo ""
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
@@ -124,6 +126,15 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOToken.s.sol:DeployOToken" --sig "run(string,string)" "$2" "$3"
         ;;
 
+   "deploy-ousdai-utility")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOUSDaiUtility.s.sol:DeployOUSDaiUtility" --sig "run(address,address)" $2 $3
+        ;;
+
    "upgrade-usdai")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run()"
         ;;
@@ -139,6 +150,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeOToken.s.sol:UpgradeOToken" --sig "run(address)" $2
+        ;;
+
+   "upgrade-ousdai-utility")
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeOUSDaiUtility.s.sol:UpgradeOUSDaiUtility" --sig "run(address)" $2
         ;;
 
    "swap-adapter-set-token-whitelist")
