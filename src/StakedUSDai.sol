@@ -466,7 +466,8 @@ contract StakedUSDai is
         bool initialDeposit = totalSupply() < LOCKED_SHARES;
 
         /* Compute assets. If initial deposit, price locked shares */
-        return (((initialDeposit ? LOCKED_SHARES : 0) + shares) * depositSharePrice()) / FIXED_POINT_SCALE;
+        return ((((initialDeposit ? LOCKED_SHARES : 0) + shares) * depositSharePrice()) + FIXED_POINT_SCALE - 1)
+            / FIXED_POINT_SCALE;
     }
 
     /**
