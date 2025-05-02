@@ -55,6 +55,11 @@ contract USDai is
      */
     IERC20 internal immutable _baseToken;
 
+    /**
+     * @notice Scale factor
+     */
+    uint256 internal immutable _scaleFactor;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -70,6 +75,7 @@ contract USDai is
 
         _swapAdapter = ISwapAdapter(swapAdapter_);
         _baseToken = IERC20(_swapAdapter.baseToken());
+        _scaleFactor = 10 ** (18 - IERC20Metadata(_swapAdapter.baseToken()).decimals());
     }
 
     /*------------------------------------------------------------------------*/
@@ -155,14 +161,6 @@ contract USDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Scale factor
-     * @return Scale factor
-     */
-    function _scaleFactor() internal view returns (uint256) {
-        return 10 ** (18 - IERC20Metadata(address(_baseToken)).decimals());
-    }
-
-    /**
      * @notice Helper function to scale up a value
      * @param value Value
      * @return Scaled value
@@ -170,7 +168,7 @@ contract USDai is
     function _scale(
         uint256 value
     ) public view returns (uint256) {
-        return value * _scaleFactor();
+        return value * _scaleFactor;
     }
 
     /**
@@ -181,7 +179,7 @@ contract USDai is
     function _unscale(
         uint256 value
     ) public view returns (uint256) {
-        return value / _scaleFactor();
+        return value / _scaleFactor;
     }
 
     /**
@@ -192,7 +190,7 @@ contract USDai is
     function _unscaleUp(
         uint256 value
     ) public view returns (uint256) {
-        return (value + _scaleFactor() - 1) / _scaleFactor();
+        return (value + _scaleFactor - 1) / _scaleFactor;
     }
 
     /**
