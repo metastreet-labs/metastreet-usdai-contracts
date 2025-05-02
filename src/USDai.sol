@@ -3,6 +3,7 @@ pragma solidity 0.8.29;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
@@ -29,6 +30,8 @@ contract USDai is
     ReentrancyGuardUpgradeable,
     AccessControlUpgradeable
 {
+    using SafeERC20 for IERC20;
+
     /*------------------------------------------------------------------------*/
     /* Constant */
     /*------------------------------------------------------------------------*/
@@ -204,7 +207,7 @@ contract USDai is
         uint256 usdaiAmount;
         if (depositToken != address(_baseToken)) {
             /* Approve the adapter to spend the token in */
-            IERC20(depositToken).approve(address(_swapAdapter), depositAmount);
+            IERC20(depositToken).forceApprove(address(_swapAdapter), depositAmount);
 
             /* Swap in deposit token for base token */
             usdaiAmount = _scale(_swapAdapter.swapIn(depositToken, depositAmount, _unscale(usdaiAmountMinimum), data));
