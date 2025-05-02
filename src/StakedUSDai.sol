@@ -787,7 +787,7 @@ contract StakedUSDai is
     /**
      * @inheritdoc IMintableBurnable
      */
-    function mint(address to, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
+    function mint(address to, uint256 amount) external whenNotPaused onlyRole(BRIDGE_ADMIN_ROLE) {
         /* Mint supply */
         _mint(to, amount);
 
@@ -798,7 +798,7 @@ contract StakedUSDai is
     /**
      * @inheritdoc IMintableBurnable
      */
-    function burn(address from, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
+    function burn(address from, uint256 amount) external whenNotPaused onlyRole(BRIDGE_ADMIN_ROLE) {
         /* Burn supply */
         _burn(from, amount);
 
