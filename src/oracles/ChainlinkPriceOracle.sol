@@ -129,6 +129,9 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
         /* Set M NAV price feed decimals */
         _mNavDecimals = _mNavPriceFeed.decimals();
 
+        /* Validate M NAV price feed decimals */
+        if (_mNavDecimals != 8) revert InvalidDecimals();
+
         /* Add token price feeds */
         _addTokenPriceFeeds(tokens_, priceFeeds_);
 
@@ -209,6 +212,9 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
         for (uint256 i = 0; i < tokens_.length; i++) {
             /* Validate token */
             if (tokens_[i] == address(0) || priceFeeds_[i] == address(0)) revert InvalidAddress();
+
+            /* Validate price feed decimals */
+            if (AggregatorV3Interface(priceFeeds_[i]).decimals() > 18) revert InvalidDecimals();
 
             /* Validate token price feed is not already set */
             if (address(_priceFeeds[tokens_[i]]) != address(0)) revert InvalidAddress();
