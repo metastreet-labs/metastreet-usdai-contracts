@@ -338,23 +338,23 @@ library RedemptionLogic {
             IStakedUSDai.Redemption storage redemption_ = redemptionState_.redemptions[head];
 
             /* Compute shares to fulfill */
-            uint256 fullfilledShares = Math.min(redemption_.pendingShares, remainingShares);
+            uint256 fulfilledShares = Math.min(redemption_.pendingShares, remainingShares);
 
             /* Compute amount to fulfill */
-            uint256 fullfilledAmount = Math.mulDiv(fullfilledShares, redemptionSharePrice_, FIXED_POINT_SCALE);
+            uint256 fulfilledAmount = Math.mulDiv(fulfilledShares, redemptionSharePrice_, FIXED_POINT_SCALE);
 
             /* Update redemption pending, redeemable shares, and withdrawable amount */
-            redemption_.pendingShares -= fullfilledShares;
-            redemption_.redeemableShares += fullfilledShares;
-            redemption_.withdrawableAmount += fullfilledAmount;
+            redemption_.pendingShares -= fulfilledShares;
+            redemption_.redeemableShares += fulfilledShares;
+            redemption_.withdrawableAmount += fulfilledAmount;
 
             /* Update remaining shares and amount processed */
-            remainingShares -= fullfilledShares;
-            amountProcessed += fullfilledAmount;
+            remainingShares -= fulfilledShares;
+            amountProcessed += fulfilledAmount;
 
             /* Emit RedemptionProcessed */
             emit IStakedUSDai.RedemptionProcessed(
-                head, redemption_.controller, fullfilledShares, fullfilledAmount, redemption_.pendingShares
+                head, redemption_.controller, fulfilledShares, fulfilledAmount, redemption_.pendingShares
             );
 
             /* If redemption is completely fulfilled, update head */
