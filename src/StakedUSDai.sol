@@ -190,10 +190,10 @@ contract StakedUSDai is
     /**
      * @inheritdoc IStakedUSDai
      */
-    function redemptions(
+    function redemptionIds(
         address controller
-    ) external view nonZeroAddress(controller) returns (Redemption[] memory) {
-        return RedemptionLogic._redemptions(_getRedemptionStateStorage(), controller);
+    ) external view nonZeroAddress(controller) returns (uint256[] memory) {
+        return _getRedemptionStateStorage().redemptionIds[controller].values();
     }
 
     /**

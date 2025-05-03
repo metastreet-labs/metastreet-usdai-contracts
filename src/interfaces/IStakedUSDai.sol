@@ -134,7 +134,7 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
 
     /**
      * @notice Get redemption
-     * @param redemptionId The redemption ID
+     * @param redemptionId Redemption ID
      * @return Redemption and shares ahead
      */
     function redemption(
@@ -142,13 +142,13 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     ) external view returns (Redemption memory, uint256);
 
     /**
-     * @notice Get redemptions
+     * @notice Get redemption IDs
      * @param controller Controller
-     * @return Redemptions
+     * @return Redemption IDs
      */
-    function redemptions(
+    function redemptionIds(
         address controller
-    ) external view returns (Redemption[] memory);
+    ) external view returns (uint256[] memory);
 
     /**
      * @notice Get net asset value

@@ -239,11 +239,12 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         vm.stopPrank();
 
         // Get controller redemptions IDs
-        IStakedUSDai.Redemption[] memory redemptions = stakedUsdai.redemptions(address(users.normalUser1));
+        uint256[] memory redemptionIds = stakedUsdai.redemptionIds(address(users.normalUser1));
         uint256 totalPendingShares;
-        for (uint256 i; i < redemptions.length; i++) {
-            totalPendingShares += redemptions[i].pendingShares;
-            assertEq(redemptions[i].redeemableShares, 0, "Should have 0 redeemable shares");
+        for (uint256 i; i < redemptionIds.length; i++) {
+            (IStakedUSDai.Redemption memory redemption,) = stakedUsdai.redemption(redemptionIds[i]);
+            totalPendingShares += redemption.pendingShares;
+            assertEq(redemption.redeemableShares, 0, "Should have 0 redeemable shares");
         }
         assertEq(totalPendingShares, 450_000 ether, "Should have remaining pending amount");
     }

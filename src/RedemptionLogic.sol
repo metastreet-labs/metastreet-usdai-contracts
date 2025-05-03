@@ -81,26 +81,6 @@ library RedemptionLogic {
     }
 
     /**
-     * @notice Get redemptions
-     * @param redemptionState_ Redemption state
-     * @param controller Controller address
-     * @return Redemptions
-     */
-    function _redemptions(
-        StakedUSDaiStorage.RedemptionState storage redemptionState_,
-        address controller
-    ) external view returns (IStakedUSDai.Redemption[] memory) {
-        uint256[] memory redemptionIds = redemptionState_.redemptionIds[controller].values();
-
-        IStakedUSDai.Redemption[] memory redemptions_ = new IStakedUSDai.Redemption[](redemptionIds.length);
-        for (uint256 i; i < redemptionIds.length; i++) {
-            redemptions_[i] = redemptionState_.redemptions[redemptionIds[i]];
-        }
-
-        return redemptions_;
-    }
-
-    /**
      * @notice Get available redemption amount and shares
      * @param redemptionState_ Redemption state
      * @param controller Controller address
