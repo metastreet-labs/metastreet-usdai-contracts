@@ -81,20 +81,10 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
         // USDai amount should be greater than 0
         assertGt(usdaiAmount, 0);
 
-        // Get pool positions
-        IPoolPositionManager.TickPosition[] memory positions1 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.OPTIMISTIC
-        );
-
-        (uint128 pending,,) = IPool(metastreetPool1).redemptions(address(stakedUsdai), TICK, redemptionId);
-
-        // Validate pool positions
-        assertEq(positions1.length, 1);
-        assertEq(positions1[0].tick, TICK);
-        assertEq(positions1[0].shares, 0);
-        assertEq(positions1[0].pendingShares, pending);
-        assertEq(positions1[0].value, (metastreetPool1.depositSharePrice(TICK) * pending) / 1e18);
-        assertEq(positions1[0].redemptionIds.length, 1);
+        // Validate pool ticks
+        uint256[] memory ticks = IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1));
+        assertEq(ticks.length, 1);
+        assertEq(ticks[0], TICK);
 
         vm.stopPrank();
 
@@ -106,13 +96,8 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
         // Withdraw
         IPoolPositionManager(stakedUsdai).poolWithdraw(address(metastreetPool1), TICK, redemptionId, 0, path);
 
-        // Get pool positions
-        IPoolPositionManager.TickPosition[] memory positions2 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.OPTIMISTIC
-        );
-
         // Validate pool positions
-        assertEq(positions2.length, 0);
+        assertEq(IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1)).length, 0);
         assertEq(IPoolPositionManager(stakedUsdai).pools().length, 0);
 
         vm.stopPrank();

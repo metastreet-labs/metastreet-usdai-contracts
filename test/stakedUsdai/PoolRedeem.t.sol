@@ -58,19 +58,10 @@ contract StakedUSDaiPoolRedeemTest is BaseTest {
         // There should still be one pool
         assertEq(IPoolPositionManager(stakedUsdai).pools().length, 1);
 
-        // Get pool positions
-        IPoolPositionManager.TickPosition[] memory positions1 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.OPTIMISTIC
-        );
-
-        // Validate pool positions
-        (uint256 shares,) = metastreetPool1.deposits(address(stakedUsdai), TICK);
-        assertEq(positions1.length, 1);
-        assertEq(positions1[0].tick, TICK);
-        assertEq(positions1[0].shares, shares);
-        assertEq(positions1[0].pendingShares, 20 ether);
-        assertEq(positions1[0].value, (metastreetPool1.depositSharePrice(TICK) * (shares + 20 ether)) / 1e18);
-        assertEq(positions1[0].redemptionIds.length, 1);
+        // Validate pool ticks
+        uint256[] memory ticks = IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1));
+        assertEq(ticks.length, 1);
+        assertEq(ticks[0], TICK);
 
         // Advance time to loan maturity
         vm.warp(block.timestamp + 30 days);
@@ -83,18 +74,8 @@ contract StakedUSDaiPoolRedeemTest is BaseTest {
         vm.startPrank(users.manager);
 
         // Redeem
+        (uint256 shares,) = metastreetPool1.deposits(address(stakedUsdai), TICK);
         IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), TICK, shares);
-
-        IPoolPositionManager.TickPosition[] memory positions2 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.OPTIMISTIC
-        );
-
-        assertEq(positions2.length, 1);
-        assertEq(positions2[0].tick, TICK);
-        assertEq(positions2[0].shares, 0);
-        assertEq(positions2[0].pendingShares, shares + 20 ether);
-        assertEq(positions2[0].value, (metastreetPool1.depositSharePrice(TICK) * (shares + 20 ether)) / 1e18);
-        assertEq(positions2[0].redemptionIds.length, 2);
 
         vm.stopPrank();
 

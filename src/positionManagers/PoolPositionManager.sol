@@ -104,23 +104,10 @@ abstract contract PoolPositionManager is
     /**
      * @inheritdoc IPoolPositionManager
      */
-    function poolPosition(address pool, ValuationType valuationType) external view returns (TickPosition[] memory) {
-        /* Get pool position */
-        PoolPosition storage position = _getPoolsStorage().position[address(pool)];
-
-        /* Get ticks */
-        uint256[] memory ticks_ = position.ticks.values();
-
-        /* Initialize ticks */
-        TickPosition[] memory ticks = new TickPosition[](ticks_.length);
-
-        /* Add ticks */
-        for (uint256 i; i < ticks_.length; i++) {
-            /* Add to ticks */
-            ticks[i] = _getTickPosition(position, IPool(pool), uint128(ticks_[i]), valuationType);
-        }
-
-        return ticks;
+    function poolTicks(
+        address pool
+    ) external view returns (uint256[] memory) {
+        return _getPoolsStorage().position[pool].ticks.values();
     }
 
     /**

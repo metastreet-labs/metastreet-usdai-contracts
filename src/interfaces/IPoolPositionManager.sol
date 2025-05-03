@@ -89,15 +89,13 @@ interface IPoolPositionManager {
     function pools() external view returns (address[] memory);
 
     /**
-     * @notice Get pool position
+     * @notice Get pool ticks
      * @param pool Pool
-     * @param valuationType Valuation type
-     * @return Pool position
+     * @return Ticks
      */
-    function poolPosition(
-        address pool,
-        PositionManager.ValuationType valuationType
-    ) external view returns (TickPosition[] memory);
+    function poolTicks(
+        address pool
+    ) external view returns (uint256[] memory);
 
     /**
      * @notice Get price oracle

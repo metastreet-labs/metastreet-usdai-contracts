@@ -56,24 +56,10 @@ contract StakedUSDaiPoolDepositTest is BaseTest {
         // There should be one pool
         assertEq(IPoolPositionManager(stakedUsdai).pools().length, 1);
 
-        // Get pool positions
-        IPoolPositionManager.TickPosition[] memory positions1 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.OPTIMISTIC
-        );
-
-        // Validate pool positions
-        (uint256 shares,) = metastreetPool1.deposits(address(stakedUsdai), TICK);
-        assertEq(positions1.length, 1);
-        assertEq(positions1[0].tick, TICK);
-        assertEq(positions1[0].shares, shares);
-        assertEq(positions1[0].pendingShares, 0);
-        assertEq(positions1[0].value, (metastreetPool1.depositSharePrice(TICK) * shares) / 1e18);
-        assertEq(positions1[0].redemptionIds.length, 0);
-
-        IPoolPositionManager.TickPosition[] memory positions2 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.CONSERVATIVE
-        );
-        assertEq(positions2[0].value, (metastreetPool1.redemptionSharePrice(TICK) * shares) / 1e18);
+        // Validate pool ticks
+        uint256[] memory ticks = IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1));
+        assertEq(ticks.length, 1);
+        assertEq(ticks[0], TICK);
 
         // Advance time to loan maturity
         vm.warp(block.timestamp + 30 days);
@@ -86,17 +72,6 @@ contract StakedUSDaiPoolDepositTest is BaseTest {
 
         // Total assets should be greater than before repayment
         assertGt(totalAssetsAfterRepayment, totalAssetsAfterPoolDeposit);
-
-        IPoolPositionManager.TickPosition[] memory positions3 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.OPTIMISTIC
-        );
-
-        IPoolPositionManager.TickPosition[] memory positions4 = IPoolPositionManager(stakedUsdai).poolPosition(
-            address(metastreetPool1), PositionManager.ValuationType.CONSERVATIVE
-        );
-
-        // Validate optimistic and conservative valuations are the same
-        assertEq(positions3[0].value, positions4[0].value);
 
         vm.stopPrank();
     }
