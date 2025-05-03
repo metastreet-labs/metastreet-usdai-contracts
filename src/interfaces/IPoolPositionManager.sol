@@ -19,26 +19,6 @@ interface IPoolPositionManager {
     error UnsupportedCurrency(address currency);
 
     /*------------------------------------------------------------------------*/
-    /* Structures */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Tick position
-     * @param tick Tick
-     * @param shares Shares
-     * @param pendingShares Pending shares
-     * @param value Estimated value in pool currency
-     * @param redemptionIds Redemption IDs
-     */
-    struct TickPosition {
-        uint128 tick;
-        uint128 shares;
-        uint128 pendingShares;
-        uint256 value;
-        uint256[] redemptionIds;
-    }
-
-    /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
 

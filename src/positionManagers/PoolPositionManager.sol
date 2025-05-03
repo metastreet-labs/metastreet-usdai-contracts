@@ -138,73 +138,51 @@ abstract contract PoolPositionManager is
     function _assets(
         ValuationType valuationType
     ) internal view virtual override returns (uint256) {
-        /* Get all pools */
-        address[] memory pools_ = _getPoolsStorage().pools.values();
-
         /* Compute NAV */
         uint256 nav_;
-        for (uint256 i; i < pools_.length; i++) {
-            /* Get pool */
-            IPool pool = IPool(pools_[i]);
+        for (uint256 i; i < _getPoolsStorage().pools.length(); i++) {
+            IPool pool = IPool(_getPoolsStorage().pools.at(i));
 
-            /* Get all ticks */
-            PoolPosition storage position = _getPoolsStorage().position[address(pool)];
-            uint256[] memory ticks = position.ticks.values();
-
-            /* Compute value for each tick in terms of pool currency */
-            uint256 value;
-            for (uint256 j; j < ticks.length; j++) {
-                /* Compute value of shares */
-                value += _getTickPosition(position, IPool(pool), uint128(ticks[j]), valuationType).value;
-            }
-
-            /* Get value in USDai and add to NAV */
-            nav_ += _value(pool.currencyToken(), value);
+            /* Get pool value in terms of USDai and add to NAV */
+            nav_ += _value(pool.currencyToken(), _getPoolPosition(pool, valuationType));
         }
 
-        /* Return NAV */
         return nav_;
     }
 
     /**
-     * @notice Get tick position
-     * @param position Pool position
+     * @notice Get pool position
      * @param pool Pool
-     * @param tick Tick
      * @param valuationType Valuation type
-     * @return Tick position
+     * @return Valuation
      */
-    function _getTickPosition(
-        PoolPosition storage position,
-        IPool pool,
-        uint128 tick,
-        ValuationType valuationType
-    ) private view returns (TickPosition memory) {
-        /* Get shares */
-        (uint128 shares,) = pool.deposits(address(this), tick);
+    function _getPoolPosition(IPool pool, ValuationType valuationType) internal view returns (uint256) {
+        /* Get pool position */
+        PoolPosition storage position = _getPoolsStorage().position[address(pool)];
 
-        /* Get redemption IDs */
-        uint256[] memory redemptionIds = position.redemptionIds[tick].values();
+        /* Compute value across all ticks */
+        uint256 value;
+        for (uint256 i; i < position.ticks.length(); i++) {
+            uint128 tick = uint128(position.ticks.at(i));
 
-        /* Get pending shares */
-        uint128 pendingShares;
-        for (uint256 j; j < redemptionIds.length; j++) {
-            (uint128 pending,,) = pool.redemptions(address(this), tick, uint128(redemptionIds[j]));
-            pendingShares += pending;
+            /* Get shares */
+            (uint256 shares,) = pool.deposits(address(this), tick);
+
+            /* Get pending shares */
+            uint256 pendingShares;
+            for (uint256 j; j < position.redemptionIds[tick].length(); j++) {
+                (uint128 pending,,) = pool.redemptions(address(this), tick, uint128(position.redemptionIds[tick].at(j)));
+                pendingShares += pending;
+            }
+
+            value += (
+                valuationType == ValuationType.OPTIMISTIC
+                    ? pool.depositSharePrice(tick) * (shares + pendingShares)
+                    : pool.redemptionSharePrice(tick) * (shares + pendingShares)
+            ) / FIXED_POINT_SCALE;
         }
 
-        /* Return tick */
-        return TickPosition({
-            tick: tick,
-            shares: shares,
-            pendingShares: pendingShares,
-            value: (
-                valuationType == ValuationType.OPTIMISTIC
-                    ? pool.depositSharePrice(tick) * uint256(shares + pendingShares)
-                    : pool.redemptionSharePrice(tick) * uint256(shares + pendingShares)
-            ) / FIXED_POINT_SCALE,
-            redemptionIds: redemptionIds
-        });
+        return value;
     }
 
     /**
