@@ -323,6 +323,9 @@ abstract contract PoolPositionManager is
         /* Garbage collect tick info and pool */
         _garbageCollect(pool, tick, redemptionId);
 
+        /* Check if withdraw produced currency */
+        if (poolCurrencyAmount == 0) return 0;
+
         /* Get currency token */
         address poolCurrency = IPool(pool).currencyToken();
 
