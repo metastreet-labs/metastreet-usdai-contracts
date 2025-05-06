@@ -65,7 +65,7 @@ contract USDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice USD.ai Constructor
+     * @notice USDai Constructor
      * @param swapAdapter_ Swap Adapter
      */
     constructor(
@@ -86,8 +86,8 @@ contract USDai is
      * @notice Initialize the contract
      */
     function initialize() public initializer {
-        __ERC20_init("USD.ai", "USDai");
-        __ERC20Permit_init("USD.ai");
+        __ERC20_init("USDai", "USDai");
+        __ERC20Permit_init("USDai");
         __Multicall_init();
         __ReentrancyGuard_init();
         __AccessControl_init();

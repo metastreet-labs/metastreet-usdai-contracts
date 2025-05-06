@@ -11,7 +11,7 @@ contract USDaiMetadataTest is BaseTest {
         IERC20Metadata usdai_ = IERC20Metadata(address(usdai));
 
         // Test token name
-        assertEq(usdai_.name(), "USD.ai");
+        assertEq(usdai_.name(), "USDai");
 
         // Test token symbol
         assertEq(usdai_.symbol(), "USDai");
@@ -25,7 +25,7 @@ contract USDaiMetadataTest is BaseTest {
         bytes32 expectedDomainSeparator = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes("USD.ai")),
+                keccak256(bytes("USDai")),
                 keccak256(bytes("1")),
                 block.chainid,
                 address(usdai)
