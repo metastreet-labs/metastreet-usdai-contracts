@@ -264,10 +264,10 @@ contract UniswapV3SwapAdapter is ISwapAdapter, AccessControl {
         returns (uint256)
     {
         /* Transfer token input from sender to this contract */
-        IERC20(inputToken).transferFrom(msg.sender, address(this), inputAmount);
+        IERC20(inputToken).safeTransferFrom(msg.sender, address(this), inputAmount);
 
         /* Approve the router to spend token input */
-        IERC20(inputToken).approve(address(_swapRouter), inputAmount);
+        IERC20(inputToken).forceApprove(address(_swapRouter), inputAmount);
 
         /* Swap token input for base token */
         uint256 baseAmount;
@@ -321,10 +321,10 @@ contract UniswapV3SwapAdapter is ISwapAdapter, AccessControl {
         returns (uint256)
     {
         /* Transfer token input from sender to this contract */
-        _baseToken.transferFrom(msg.sender, address(this), baseAmount);
+        _baseToken.safeTransferFrom(msg.sender, address(this), baseAmount);
 
         /* Approve the router to spend base token */
-        _baseToken.approve(address(_swapRouter), baseAmount);
+        _baseToken.forceApprove(address(_swapRouter), baseAmount);
 
         /* Swap base token for token output */
         uint256 outputAmount;
