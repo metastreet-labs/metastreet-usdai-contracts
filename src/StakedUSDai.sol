@@ -69,7 +69,7 @@ contract StakedUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice sUSD.ai Constructor
+     * @notice sUSDai Constructor
      */
     constructor(
         address usdai_,
@@ -90,8 +90,8 @@ contract StakedUSDai is
         uint64 timelock_
     ) external initializer {
         __ERC165_init();
-        __ERC20_init("Staked USD.ai", "sUSDai");
-        __ERC20Permit_init("Staked USD.ai");
+        __ERC20_init("Staked USDai", "sUSDai");
+        __ERC20Permit_init("Staked USDai");
         __Multicall_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
