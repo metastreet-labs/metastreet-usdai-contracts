@@ -210,7 +210,7 @@ contract USDai is
         bytes calldata data
     ) internal nonZeroUint(depositAmount) nonZeroAddress(recipient) returns (uint256) {
         /* Transfer token in from sender to this contract */
-        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+        IERC20(depositToken).safeTransferFrom(msg.sender, address(this), depositAmount);
 
         /* If the deposit token isn't base token, swap in */
         uint256 usdaiAmount;
@@ -258,7 +258,7 @@ contract USDai is
             uint256 baseTokenAmount = _unscale(usdaiAmount);
 
             /* Approve the adapter to spend the token in */
-            _baseToken.approve(address(_swapAdapter), baseTokenAmount);
+            _baseToken.forceApprove(address(_swapAdapter), baseTokenAmount);
 
             /* Swap base token input for withdraw token */
             withdrawAmount = _swapAdapter.swapOut(withdrawToken, baseTokenAmount, withdrawAmountMinimum, data);
@@ -267,7 +267,7 @@ contract USDai is
         }
 
         /* Transfer token output from this contract to the recipient address */
-        IERC20(withdrawToken).transfer(recipient, withdrawAmount);
+        IERC20(withdrawToken).safeTransfer(recipient, withdrawAmount);
 
         /* Emit withdrawn event */
         emit Withdrawn(msg.sender, recipient, withdrawToken, usdaiAmount, withdrawAmount);
