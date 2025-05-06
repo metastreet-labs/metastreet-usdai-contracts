@@ -267,15 +267,7 @@ contract StakedUSDai is
         uint256 amount,
         address receiver,
         uint256 minShares
-    )
-        internal
-        whenNotPaused
-        notBlacklisted(msg.sender)
-        nonReentrant
-        nonZeroUint(amount)
-        nonZeroAddress(receiver)
-        returns (uint256)
-    {
+    ) internal whenNotPaused nonReentrant nonZeroUint(amount) nonZeroAddress(receiver) returns (uint256) {
         /* Compute shares */
         uint256 shares = convertToShares(amount);
 
@@ -301,15 +293,7 @@ contract StakedUSDai is
         uint256 shares,
         address receiver,
         uint256 maxAmount
-    )
-        internal
-        whenNotPaused
-        notBlacklisted(msg.sender)
-        nonReentrant
-        nonZeroUint(shares)
-        nonZeroAddress(receiver)
-        returns (uint256 assets)
-    {
+    ) internal whenNotPaused nonReentrant nonZeroUint(shares) nonZeroAddress(receiver) returns (uint256 assets) {
         /* Compute amount */
         uint256 amount = convertToAssets(shares);
 
@@ -345,15 +329,11 @@ contract StakedUSDai is
     /**
      * @inheritdoc ERC20Upgradeable
      */
-    function _update(address from, address to, uint256 value) internal override {
-        /* If from or to is blacklisted, revert */
-        if (
-            _getBlacklistStorage().blacklist[msg.sender] || _getBlacklistStorage().blacklist[from]
-                || _getBlacklistStorage().blacklist[to]
-        ) {
-            revert BlacklistedAddress(from);
-        }
-
+    function _update(
+        address from,
+        address to,
+        uint256 value
+    ) internal override notBlacklisted(msg.sender) notBlacklisted(from) notBlacklisted(to) {
         super._update(from, to, value);
     }
 
@@ -601,15 +581,7 @@ contract StakedUSDai is
     function setOperator(
         address operator,
         bool approved
-    )
-        external
-        whenNotPaused
-        notBlacklisted(msg.sender)
-        notBlacklisted(operator)
-        nonReentrant
-        nonZeroAddress(operator)
-        returns (bool)
-    {
+    ) external whenNotPaused notBlacklisted(msg.sender) nonReentrant nonZeroAddress(operator) returns (bool) {
         /* Validate caller */
         if (msg.sender == operator) revert InvalidAddress();
 
@@ -662,7 +634,6 @@ contract StakedUSDai is
     )
         external
         whenNotPaused
-        notBlacklisted(msg.sender)
         notBlacklisted(controller)
         nonReentrant
         nonZeroUint(shares)
