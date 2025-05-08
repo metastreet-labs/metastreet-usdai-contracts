@@ -139,24 +139,21 @@ abstract contract PoolPositionManager is
      */
     function _assets(
         ValuationType valuationType
-    ) internal view virtual override returns (uint256) {
+    ) internal view virtual override returns (uint256 nav_) {
         /* Compute NAV */
-        uint256 nav_;
         for (uint256 i; i < _getPoolsStorage().pools.length(); i++) {
             IPool pool = IPool(_getPoolsStorage().pools.at(i));
 
             /* Get pool value in terms of USDai and add to NAV */
             nav_ += _value(pool.currencyToken(), _getPoolPosition(pool, valuationType));
         }
-
-        return nav_;
     }
 
     /**
      * @notice Get pool position
      * @param pool Pool
      * @param valuationType Valuation type
-     * @return Valuation
+     * @return Pool position value
      */
     function _getPoolPosition(IPool pool, ValuationType valuationType) internal view returns (uint256) {
         /* Get pool position */
