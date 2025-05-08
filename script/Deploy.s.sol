@@ -46,7 +46,9 @@ contract Deploy is Deployer {
 
         // Deploy StakedUSDai proxy
         TransparentUpgradeableProxy stakedUSDai = new TransparentUpgradeableProxy(
-            address(stakedUSDaiImpl), msg.sender, abi.encodeWithSignature("initialize(uint64)", timelock)
+            address(stakedUSDaiImpl),
+            msg.sender,
+            abi.encodeWithSignature("initialize(address,uint64)", msg.sender, timelock)
         );
         console.log("StakedUSDai proxy", address(stakedUSDai));
 

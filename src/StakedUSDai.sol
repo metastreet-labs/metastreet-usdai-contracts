@@ -84,11 +84,10 @@ contract StakedUSDai is
 
     /**
      * @notice Initialize the contract
+     * @param admin Default admin address
      * @param timelock_ Timelock period for redemptions
      */
-    function initialize(
-        uint64 timelock_
-    ) external initializer {
+    function initialize(address admin, uint64 timelock_) external initializer {
         __ERC165_init();
         __ERC20_init("Staked USDai", "sUSDai");
         __ERC20Permit_init("Staked USDai");
@@ -96,11 +95,10 @@ contract StakedUSDai is
         __ReentrancyGuard_init();
         __AccessControl_init();
 
-        /* Initialize storage */
         _getTimelockStorage().timelock = timelock_;
 
         /* Grant roles */
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /*------------------------------------------------------------------------*/
