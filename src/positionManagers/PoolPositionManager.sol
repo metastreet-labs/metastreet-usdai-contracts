@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
@@ -27,6 +28,7 @@ abstract contract PoolPositionManager is
     StakedUSDaiStorage,
     IPoolPositionManager
 {
+    using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
 
@@ -276,7 +278,7 @@ abstract contract PoolPositionManager is
         position.position[pool].ticks.add(tick);
 
         /* Approve pool currency token */
-        IERC20(poolCurrency).approve(address(pool), poolCurrencyAmount);
+        IERC20(poolCurrency).forceApprove(address(pool), poolCurrencyAmount);
 
         /* Deposit */
         uint256 shares = IPool(pool).deposit(tick, poolCurrencyAmount, minShares);
@@ -330,7 +332,7 @@ abstract contract PoolPositionManager is
         address poolCurrency = IPool(pool).currencyToken();
 
         /* Approve currency token */
-        IERC20(poolCurrency).approve(address(_usdai), poolCurrencyAmount);
+        IERC20(poolCurrency).forceApprove(address(_usdai), poolCurrencyAmount);
 
         /* Swap currency token to USDai */
         uint256 usdaiAmount = _usdai.deposit(poolCurrency, poolCurrencyAmount, usdaiAmountMinimum, address(this), data);
