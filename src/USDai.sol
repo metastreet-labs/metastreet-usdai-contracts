@@ -84,8 +84,11 @@ contract USDai is
 
     /**
      * @notice Initialize the contract
+     * @param admin Default admin address
      */
-    function initialize() public initializer {
+    function initialize(
+        address admin
+    ) public initializer {
         __ERC20_init("USDai", "USDai");
         __ERC20Permit_init("USDai");
         __Multicall_init();
@@ -93,7 +96,7 @@ contract USDai is
         __AccessControl_init();
 
         /* Grant roles */
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /*------------------------------------------------------------------------*/

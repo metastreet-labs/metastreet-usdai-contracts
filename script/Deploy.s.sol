@@ -35,8 +35,9 @@ contract Deploy is Deployer {
         console.log("USDai implementation", address(USDaiImpl));
 
         // Deploy USDai proxy
-        TransparentUpgradeableProxy USDai_ =
-            new TransparentUpgradeableProxy(address(USDaiImpl), msg.sender, abi.encodeWithSignature("initialize()"));
+        TransparentUpgradeableProxy USDai_ = new TransparentUpgradeableProxy(
+            address(USDaiImpl), msg.sender, abi.encodeWithSignature("initialize(address)", msg.sender)
+        );
         console.log("USDai proxy", address(USDai_));
 
         // Deploy StakedUSDai

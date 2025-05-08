@@ -264,7 +264,7 @@ abstract contract BaseTest is Test {
 
         /* Deploy usdai proxy */
         TransparentUpgradeableProxy usdaiProxy = new TransparentUpgradeableProxy(
-            address(usdaiImpl), address(users.admin), abi.encodeWithSignature("initialize()")
+            address(usdaiImpl), address(users.admin), abi.encodeWithSignature("initialize(address)", users.deployer)
         );
 
         /* Deploy usdai */
