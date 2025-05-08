@@ -55,6 +55,8 @@ usage() {
     echo ""
     echo "  deploy-test-mnav-price-feed"
     echo ""
+    echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
+    echo ""
     echo "  show"
     echo ""
     echo "Options:"
@@ -168,6 +170,15 @@ case $1 in
 
    "deploy-test-mnav-price-feed")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestMNAVPriceFeed.s.sol:DeployTestMNAVPriceFeed" --sig "run()"
+        ;;
+
+   "create3-proxy-calldata")
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Create3ProxyCalldata.s.sol:Create3ProxyCalldata" --sig "run(address,bytes32,address,bytes)" $2 $3 $4 $5
         ;;
 
     "show")
