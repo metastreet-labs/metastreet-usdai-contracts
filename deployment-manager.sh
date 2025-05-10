@@ -57,6 +57,7 @@ usage() {
     echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
     echo "  grant-role <target> <role> <account>"
     echo ""
+    echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -190,6 +191,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
+        ;;
+
+   "deploy-production-environment")
+        if [ "$#" -ne 7 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployProductionEnvironment.s.sol:DeployProductionEnvironment" --sig "run(address,address,address,address[],address[],address)" $2 $3 $4 "$5" "$6" $7
         ;;
 
    "create3-proxy-calldata")
