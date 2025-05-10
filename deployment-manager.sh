@@ -39,7 +39,9 @@ usage() {
     echo "Usage: $0 <command> [options]"
     echo ""
     echo "Commands:"
-    echo "  deploy <wrapped M token> <swap router> <staked timelock>"
+    echo "  deploy-test-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <redemption timelock>"
+    echo ""
+    echo "  deploy-test-mnav-price-feed"
     echo "  deploy-swap-adapter <wrapped M token> <swap router> <tokens>"
     echo "  deploy-price-oracle <M NAV price feed> <tokens> <price feeds>"
     echo "  deploy-oadapter <token> <lz endpoint>"
@@ -54,8 +56,6 @@ usage() {
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
     echo "  grant-role <target> <role> <account>"
-    echo ""
-    echo "  deploy-test-mnav-price-feed"
     echo ""
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
@@ -81,13 +81,17 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Test.s.sol:Test" --sig "run()"
         ;;
 
-   "deploy")
-        if [ "$#" -ne 5 ]; then
+   "deploy-test-environment")
+        if [ "$#" -ne 7 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Deploy.s.sol:Deploy" --sig "run(address,address,uint64,address)" $2 $3 $4 $5
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestEnvironment.s.sol:DeployTestEnvironment" --sig "run(address,address,address,address[],address[],uint64)" $2 $3 $4 "$5" "$6" $7
+        ;;
+
+   "deploy-test-mnav-price-feed")
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestMNAVPriceFeed.s.sol:DeployTestMNAVPriceFeed" --sig "run()"
         ;;
 
    "deploy-swap-adapter")
@@ -186,10 +190,6 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
-        ;;
-
-   "deploy-test-mnav-price-feed")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestMNAVPriceFeed.s.sol:DeployTestMNAVPriceFeed" --sig "run()"
         ;;
 
    "create3-proxy-calldata")
