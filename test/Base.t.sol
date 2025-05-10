@@ -182,16 +182,15 @@ abstract contract BaseTest is Test {
     function deployUniswapV3SwapAdapter() internal {
         vm.startPrank(users.deployer);
 
-        /* Deploy Uniswap V3 swap adapter */
-        uniswapV3SwapAdapter =
-            new UniswapV3SwapAdapter(address(WRAPPED_M_TOKEN), address(UniswapPoolHelpers.UNISWAP_ROUTER));
-
         address[] memory whitelistedTokens = new address[](3);
         whitelistedTokens[0] = address(usd);
         whitelistedTokens[1] = address(WETH);
         whitelistedTokens[2] = address(USDT);
 
-        uniswapV3SwapAdapter.setWhitelistedTokens(whitelistedTokens);
+        /* Deploy Uniswap V3 swap adapter */
+        uniswapV3SwapAdapter = new UniswapV3SwapAdapter(
+            address(WRAPPED_M_TOKEN), address(UniswapPoolHelpers.UNISWAP_ROUTER), whitelistedTokens
+        );
 
         vm.stopPrank();
     }

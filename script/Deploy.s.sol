@@ -21,7 +21,7 @@ contract Deploy is Deployer {
         address mNavPriceFeed
     ) public broadcast useDeployment returns (address, address, address, address) {
         // Deploy UniswapV3SwapAdapter
-        UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter);
+        UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter, tokens);
         console.log("UniswapV3SwapAdapter", address(swapAdapter));
 
         // Deploy ChainlinkPriceOracle

@@ -112,10 +112,16 @@ contract UniswapV3SwapAdapter is ISwapAdapter, AccessControl {
      * @notice Uniswap V3 Swap Adapter Constructor
      * @param baseToken_ Base token
      * @param swapRouter_ Swap router
+     * @param tokens Whitelisted tokens
      */
-    constructor(address baseToken_, address swapRouter_) {
+    constructor(address baseToken_, address swapRouter_, address[] memory tokens) {
         _baseToken = IERC20(baseToken_);
         _swapRouter = ISwapRouter02(swapRouter_);
+
+        for (uint256 i; i < tokens.length; i++) {
+            if (tokens[i] == address(0)) revert InvalidToken();
+            _whitelistedTokens.add(tokens[i]);
+        }
 
         /* Grant roles */
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);

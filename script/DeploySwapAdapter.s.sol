@@ -16,11 +16,8 @@ contract DeploySwapAdapter is Deployer {
         address[] memory tokens
     ) public broadcast useDeployment returns (address) {
         // Deploy UniswapV3SwapAdapter
-        UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter);
+        UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter, tokens);
         console.log("UniswapV3SwapAdapter", address(swapAdapter));
-
-        // Set tokens whitelist
-        swapAdapter.setWhitelistedTokens(tokens);
 
         // Grant role to USDAI
         AccessControl(address(swapAdapter)).grantRole(keccak256("USDAI_ROLE"), address(_deployment.USDai));
