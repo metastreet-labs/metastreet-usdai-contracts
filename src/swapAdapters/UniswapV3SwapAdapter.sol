@@ -23,6 +23,16 @@ contract UniswapV3SwapAdapter is ISwapAdapter, AccessControl {
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /**
+     * @notice Implementation name
+     */
+    string public constant IMPLEMENTATION_NAME = "Uniswap V3 Swap Adapter";
+
+    /**
      * @notice USD.ai role for access control
      */
     bytes32 internal constant USDAI_ROLE = keccak256("USDAI_ROLE");
@@ -177,22 +187,6 @@ contract UniswapV3SwapAdapter is ISwapAdapter, AccessControl {
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Get implementation name
-     * @return Implementation name
-     */
-    function IMPLEMENTATION_NAME() external pure returns (string memory) {
-        return "Uniswap V3 Swap Adapter";
-    }
-
-    /**
-     * @notice Get implementation version
-     * @return Implementation version
-     */
-    function IMPLEMENTATION_VERSION() external pure returns (string memory) {
-        return "1.0";
-    }
 
     /**
      * @inheritdoc ISwapAdapter
