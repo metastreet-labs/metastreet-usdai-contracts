@@ -55,6 +55,11 @@ contract StakedUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /**
      * @notice Fixed point scale
      */
     uint256 private constant FIXED_POINT_SCALE = 1e18;
@@ -143,14 +148,6 @@ contract StakedUSDai is
     /*------------------------------------------------------------------------*/
     /* Getters  */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Get implementation version
-     * @return The implementation version
-     */
-    function IMPLEMENTATION_VERSION() external pure returns (string memory) {
-        return "1.0";
-    }
 
     /**
      * @inheritdoc IStakedUSDai
