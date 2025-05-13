@@ -20,6 +20,16 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /**
+     * @notice Implementation name
+     */
+    string public constant IMPLEMENTATION_NAME = "Chainlink Price Oracle";
+
+    /**
      * @notice USDai decimals
      */
     uint8 internal constant USDAI_DECIMALS = 18;
@@ -142,14 +152,6 @@ contract ChainlinkPriceOracle is IPriceOracle, AccessControl {
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Get price oracle implementation version
-     * @return Price oracle implementation version
-     */
-    function IMPLEMENTATION_VERSION() external pure returns (string memory) {
-        return "1.0";
-    }
 
     /**
      * @notice Get address of M NAV price feed
