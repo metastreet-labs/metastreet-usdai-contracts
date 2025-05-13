@@ -41,7 +41,7 @@ contract Deploy is Deployer {
         console.log("USDai proxy", address(USDai_));
 
         // Deploy StakedUSDai
-        StakedUSDai stakedUSDaiImpl = new StakedUSDai(address(USDai_), address(priceOracle));
+        StakedUSDai stakedUSDaiImpl = new StakedUSDai(address(USDai_), wrappedMToken, address(priceOracle));
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Deploy StakedUSDai proxy

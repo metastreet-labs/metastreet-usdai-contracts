@@ -297,7 +297,7 @@ abstract contract BaseTest is Test {
         vm.startPrank(users.deployer);
 
         /* Deploy staked usdai implementation */
-        StakedUSDai stakedUsdaiImpl = new StakedUSDai(address(usdai), address(priceOracle));
+        StakedUSDai stakedUsdaiImpl = new StakedUSDai(address(usdai), address(WRAPPED_M_TOKEN), address(priceOracle));
 
         /* Deploy staked usdai proxy */
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(

@@ -75,11 +75,15 @@ contract StakedUSDai is
 
     /**
      * @notice sUSDai Constructor
+     * @param usdai_ USDai token
+     * @param baseToken_ Base token
+     * @param priceOracle_ Price oracle
      */
     constructor(
         address usdai_,
+        address baseToken_,
         address priceOracle_
-    ) StakedUSDaiStorage(usdai_) BasePositionManager(IUSDai(usdai_).baseToken()) PoolPositionManager(priceOracle_) {
+    ) StakedUSDaiStorage(usdai_) BasePositionManager(baseToken_) PoolPositionManager(priceOracle_) {
         _disableInitializers();
     }
 
