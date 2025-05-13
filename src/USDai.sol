@@ -37,6 +37,11 @@ contract USDai is
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /**
      * @notice Minter role
      */
     bytes32 internal constant BRIDGE_ADMIN_ROLE = keccak256("BRIDGE_ADMIN_ROLE");
@@ -128,22 +133,6 @@ contract USDai is
     /*------------------------------------------------------------------------*/
     /* Getters  */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Get implementation name
-     * @return Implementation name
-     */
-    function IMPLEMENTATION_NAME() external pure returns (string memory) {
-        return "USDai";
-    }
-
-    /**
-     * @notice Get implementation version
-     * @return Implementation version
-     */
-    function IMPLEMENTATION_VERSION() external pure returns (string memory) {
-        return "1.0";
-    }
 
     /**
      * @inheritdoc IUSDai
