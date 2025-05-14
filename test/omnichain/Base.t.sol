@@ -123,22 +123,30 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         TransparentUpgradeableProxy usdtHomeTokenProxy = new TransparentUpgradeableProxy(
             address(usdtHomeTokenImpl),
             address(this),
-            abi.encodeWithSignature("initialize(string,string)", "usdtHomeToken", "usdtHomeToken")
+            abi.encodeWithSignature(
+                "initialize(string,string,address)", "usdtHomeToken", "usdtHomeToken", address(this)
+            )
         );
         TransparentUpgradeableProxy usdtAwayTokenProxy = new TransparentUpgradeableProxy(
             address(usdtAwayTokenImpl),
             address(this),
-            abi.encodeWithSignature("initialize(string,string)", "usdtAwayToken", "usdtAwayToken")
+            abi.encodeWithSignature(
+                "initialize(string,string,address)", "usdtAwayToken", "usdtAwayToken", address(this)
+            )
         );
         TransparentUpgradeableProxy usdaiAwayTokenProxy = new TransparentUpgradeableProxy(
             address(usdaiAwayTokenImpl),
             address(this),
-            abi.encodeWithSignature("initialize(string,string)", "usdaiAwayToken", "usdaiAwayToken")
+            abi.encodeWithSignature(
+                "initialize(string,string,address)", "usdaiAwayToken", "usdaiAwayToken", address(this)
+            )
         );
         TransparentUpgradeableProxy stakedUsdaiAwayTokenProxy = new TransparentUpgradeableProxy(
             address(stakedUsdaiAwayTokenImpl),
             address(this),
-            abi.encodeWithSignature("initialize(string,string)", "stakedUsdaiAwayToken", "stakedUsdaiAwayToken")
+            abi.encodeWithSignature(
+                "initialize(string,string,address)", "stakedUsdaiAwayToken", "stakedUsdaiAwayToken", address(this)
+            )
         );
         usdtHomeToken = OToken(address(usdtHomeTokenProxy));
         usdtAwayToken = OToken(address(usdtAwayTokenProxy));
