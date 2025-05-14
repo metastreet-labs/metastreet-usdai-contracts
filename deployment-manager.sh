@@ -58,6 +58,7 @@ usage() {
     echo "  grant-role <target> <role> <account>"
     echo ""
     echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
+    echo "  deploy-omnichain-environment <deployer> <lz endpoint> <multisig>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -200,6 +201,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployProductionEnvironment.s.sol:DeployProductionEnvironment" --sig "run(address,address,address,address[],address[],address)" $2 $3 $4 "$5" "$6" $7
+        ;;
+
+   "deploy-omnichain-environment")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOmnichainEnvironment.s.sol:DeployOmnichainEnvironment" --sig "run(address,address,address)" $2 $3 $4
         ;;
 
    "create3-proxy-calldata")
