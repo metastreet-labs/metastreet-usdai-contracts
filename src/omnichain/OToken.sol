@@ -47,8 +47,11 @@ contract OToken is
 
     /**
      * @notice Initialize the contract
+     * @param name_ Token name
+     * @param symbol_ Token symbol
+     * @param admin Default admin address
      */
-    function initialize(string memory name_, string memory symbol_) public initializer {
+    function initialize(string memory name_, string memory symbol_, address admin) public initializer {
         __ERC20_init(name_, symbol_);
         __ERC20Permit_init(name_);
         __Multicall_init();
@@ -56,7 +59,7 @@ contract OToken is
         __AccessControl_init();
 
         /* Grant roles */
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /*------------------------------------------------------------------------*/

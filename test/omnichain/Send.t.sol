@@ -61,10 +61,14 @@ contract OAdapterSendTest is TestHelperOz5 {
 
         // Deploy token proxies
         TransparentUpgradeableProxy aTokenProxy = new TransparentUpgradeableProxy(
-            address(aTokenImpl), address(this), abi.encodeWithSignature("initialize(string,string)", "aToken", "aToken")
+            address(aTokenImpl),
+            address(this),
+            abi.encodeWithSignature("initialize(string,string,address)", "aToken", "aToken", address(this))
         );
         TransparentUpgradeableProxy bTokenProxy = new TransparentUpgradeableProxy(
-            address(bTokenImpl), address(this), abi.encodeWithSignature("initialize(string,string)", "bToken", "bToken")
+            address(bTokenImpl),
+            address(this),
+            abi.encodeWithSignature("initialize(string,string,address)", "bToken", "bToken", address(this))
         );
         aToken = OToken(address(aTokenProxy));
         bToken = OToken(address(bTokenProxy));
