@@ -2,27 +2,31 @@
 
 ## Usage
 
+Clone:
+
 ```shell
 $ git clone --recursive https://github.com/metastreet-labs/metastreet-usdai-contracts.git
 ```
 
-### Build
+Build:
 
 ```shell
 $ forge build
 ```
 
-### Test
+Test:
 
 ```shell
 $ forge test
 ```
 
-### Submodules
-
-### Update
+## Update Submodules
 
 ```shell
 $ git submodule deinit --force .
 $ git submodule update --init --recursive
 ```
+
+## License
+
+MetaStreet USDai Contracts are primarily BUSL-1.1 [licensed](LICENSE). Interfaces are MIT licensed.
