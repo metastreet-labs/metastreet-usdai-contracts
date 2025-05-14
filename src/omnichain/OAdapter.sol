@@ -28,10 +28,10 @@ contract OAdapter is OFTCore, RateLimiter {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @dev Mintable adapter contructor
-     * @param token_ The address of the wrapped token
-     * @param lzEndpoint_ The LayerZero endpoint address
-     * @param delegate_ The delegate address
+     * @dev OAdapter contructor
+     * @param token_ Wrapped token address
+     * @param lzEndpoint_ LayerZero endpoint address
+     * @param delegate_ Delegate/owner address
      */
     constructor(
         address token_,
