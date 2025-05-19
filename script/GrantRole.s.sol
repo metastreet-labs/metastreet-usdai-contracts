@@ -11,6 +11,13 @@ contract GrantRole is Deployer {
     function run(address target, string memory role, address account) public broadcast {
         console.log('Granting role "%s" to account %s...', role, account);
 
-        IAccessControl(target).grantRole(keccak256(bytes(role)), account);
+        if (IAccessControl(target).hasRole(0x00, msg.sender)) {
+            IAccessControl(target).grantRole(keccak256(bytes(role)), account);
+        } else {
+            console.log("\nCalldata");
+            console.log("Target:   %s", target);
+            console.log("Calldata:");
+            console.logBytes(abi.encodeWithSelector(IAccessControl.grantRole.selector, keccak256(bytes(role)), account));
+        }
     }
 }
