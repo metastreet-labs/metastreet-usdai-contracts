@@ -55,6 +55,7 @@ usage() {
     echo ""
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
+    echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
     echo "  grant-role <target> <role> <account>"
     echo ""
     echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
@@ -183,6 +184,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/PriceOracleAddPriceFeeds.s.sol:PriceOracleAddPriceFeeds" --sig "run(address[],address[])" "$2" "$3"
+        ;;
+
+   "oadapter-set-rate-limits")
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/OAdapterSetRateLimits.s.sol:OAdapterSetRateLimits" --sig "run(address,uint32[],uint256,uint256)" $2 "$3" $4 $5
         ;;
 
    "grant-role")
