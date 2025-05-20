@@ -42,7 +42,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix = abi.encode(address(usdtHomeToken), initialBalance, "", usdaiSendParam, fee.nativeFee);
+        bytes memory suffix = abi.encode(initialBalance, "", usdaiSendParam, fee.nativeFee);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.Deposit, suffix);
 
         // LZ composer option
@@ -121,7 +121,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix = abi.encode(address(usdtHomeToken), initialBalance * 2, "", usdaiSendParam, fee.nativeFee);
+        bytes memory suffix = abi.encode(initialBalance * 2, "", usdaiSendParam, fee.nativeFee);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.Deposit, suffix);
 
         // LZ composer option
@@ -196,7 +196,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix = abi.encode(address(usdtHomeToken), initialBalance, "", usdaiSendParam, 0);
+        bytes memory suffix = abi.encode(initialBalance, "", usdaiSendParam, 0);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.Deposit, suffix);
 
         // LZ composer option

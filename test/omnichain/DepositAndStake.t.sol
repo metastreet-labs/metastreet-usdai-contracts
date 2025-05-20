@@ -44,8 +44,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix =
-            abi.encode(address(usdtHomeToken), initialBalance, "", initialBalance - 1e6, usdaiSendParam, fee.nativeFee);
+        bytes memory suffix = abi.encode(initialBalance, "", initialBalance - 1e6, usdaiSendParam, fee.nativeFee);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.DepositAndStake, suffix);
 
         // LZ composer option
@@ -124,9 +123,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix = abi.encode(
-            address(usdtHomeToken), initialBalance * 2, "", initialBalance - 1e6, usdaiSendParam, fee.nativeFee
-        );
+        bytes memory suffix = abi.encode(initialBalance * 2, "", initialBalance - 1e6, usdaiSendParam, fee.nativeFee);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.DepositAndStake, suffix);
 
         // LZ composer option
@@ -201,8 +198,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix =
-            abi.encode(address(usdtHomeToken), initialBalance, "", initialBalance, usdaiSendParam, fee.nativeFee);
+        bytes memory suffix = abi.encode(initialBalance, "", initialBalance, usdaiSendParam, fee.nativeFee);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.DepositAndStake, suffix);
 
         // LZ composer option
@@ -277,8 +273,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         MessagingFee memory fee = usdaiHomeOAdapter.quoteSend(usdaiSendParam, false);
 
         // Compose message for USDAI away to USDAI home
-        bytes memory suffix =
-            abi.encode(address(usdtHomeToken), initialBalance, "", initialBalance - 1e6, usdaiSendParam, 0);
+        bytes memory suffix = abi.encode(initialBalance, "", initialBalance - 1e6, usdaiSendParam, 0);
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.DepositAndStake, suffix);
 
         // LZ composer option
