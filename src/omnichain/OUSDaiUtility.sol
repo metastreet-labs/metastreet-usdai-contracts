@@ -182,17 +182,13 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /**
      * @notice Deposit the USDai
      * @dev sendParam.to must be an accessible account to receive tokens in the case of action failure
-     * @param depositAmount The amount of USDai to deposit
-     * @param data The data to decode
+     * @param depositToken Deposit token
+     * @param depositAmount Deposit token amount
+     * @param data Additional compose data
      */
-    function _deposit(uint256 depositAmount, bytes memory data) internal {
-        (
-            address depositToken,
-            uint256 usdaiAmountMinimum,
-            bytes memory path,
-            SendParam memory sendParam,
-            uint256 nativeFee
-        ) = abi.decode(data, (address, uint256, bytes, SendParam, uint256));
+    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal {
+        (uint256 usdaiAmountMinimum, bytes memory path, SendParam memory sendParam, uint256 nativeFee) =
+            abi.decode(data, (uint256, bytes, SendParam, uint256));
 
         /* Get the destination address */
         address to = address(uint160(uint256(sendParam.to)));
@@ -231,19 +227,19 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /**
      * @notice Deposit and stake the USDai
      * @dev sendParam.to must be an accessible account to receive tokens in the case of action failure
-     * @param depositAmount The amount of USDai to deposit
-     * @param data The data to decode
+     * @param depositToken Deposit token
+     * @param depositAmount Deposit token amount
+     * @param data Additional compose data
      */
-    function _depositAndStake(uint256 depositAmount, bytes memory data) internal {
+    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal {
         /* Decode the message */
         (
-            address depositToken,
             uint256 usdaiAmountMinimum,
             bytes memory path,
             uint256 minShares,
             SendParam memory sendParam,
             uint256 nativeFee
-        ) = abi.decode(data, (address, uint256, bytes, uint256, SendParam, uint256));
+        ) = abi.decode(data, (uint256, bytes, uint256, SendParam, uint256));
 
         /* Get the destination address */
         address to = address(uint160(uint256(sendParam.to)));
@@ -316,11 +312,14 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         /* Decode the message */
         (ActionType actionType, bytes memory data) = abi.decode(composeMessage, (ActionType, bytes));
 
+        /* Get the deposit token */
+        address depositToken = IOFT(from).token();
+
         /* Decode the message based on the type */
         if (actionType == ActionType.Deposit) {
-            _deposit(amountLD, data);
+            _deposit(depositToken, amountLD, data);
         } else if (actionType == ActionType.DepositAndStake) {
-            _depositAndStake(amountLD, data);
+            _depositAndStake(depositToken, amountLD, data);
         } else {
             revert UnknownAction();
         }
