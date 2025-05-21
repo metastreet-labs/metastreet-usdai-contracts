@@ -75,8 +75,9 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
         );
 
         // Withdraw
-        uint256 usdaiAmount =
-            IPoolPositionManager(stakedUsdai).poolWithdraw(address(metastreetPool1), TICK, redemptionId, 0, path);
+        uint256 usdaiAmount = IPoolPositionManager(stakedUsdai).poolWithdraw(
+            address(metastreetPool1), TICK, redemptionId, type(uint256).max, 0, path
+        );
 
         // USDai amount should be greater than 0
         assertGt(usdaiAmount, 0);
@@ -94,7 +95,9 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
         vm.startPrank(users.manager);
 
         // Withdraw
-        IPoolPositionManager(stakedUsdai).poolWithdraw(address(metastreetPool1), TICK, redemptionId, 0, path);
+        IPoolPositionManager(stakedUsdai).poolWithdraw(
+            address(metastreetPool1), TICK, redemptionId, type(uint256).max, 0, path
+        );
 
         // Validate pool positions
         assertEq(IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1)).length, 0);
