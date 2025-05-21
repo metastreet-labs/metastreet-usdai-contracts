@@ -313,11 +313,15 @@ abstract contract PoolPositionManager is
         address pool,
         uint128 tick,
         uint128 redemptionId,
+        uint256 poolCurrencyAmountMaximum,
         uint256 usdaiAmountMinimum,
         bytes calldata data
     ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant returns (uint256) {
         /* Withdraw */
         (uint256 withdrawnShares, uint256 poolCurrencyAmount) = IPool(pool).withdraw(tick, redemptionId);
+
+        /* Validate pool currency amount */
+        if (poolCurrencyAmount > poolCurrencyAmountMaximum) revert InvalidPoolCurrencyAmount();
 
         /* Garbage collect tick info and pool */
         _garbageCollect(pool, tick, redemptionId);
