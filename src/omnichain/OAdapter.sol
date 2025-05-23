@@ -15,6 +15,15 @@ import "../interfaces/IMintableBurnable.sol";
  */
 contract OAdapter is OFTCore, RateLimiter {
     /*------------------------------------------------------------------------*/
+    /* Constants */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /*------------------------------------------------------------------------*/
     /* Immutable state */
     /*------------------------------------------------------------------------*/
 
