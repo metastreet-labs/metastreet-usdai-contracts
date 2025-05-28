@@ -10,7 +10,12 @@ import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 import {Deployer} from "./utils/Deployer.s.sol";
 
 contract DeployOUSDaiUtility is Deployer {
-    function run(address oAdapter, address lzEndpoint) public broadcast useDeployment returns (address) {
+    function run(
+        address deployer,
+        address lzEndpoint,
+        address[] memory oAdapters,
+        address multisig
+    ) public broadcast useDeployment returns (address) {
         // Deploy OUSDaiUtility implementation
         OUSDaiUtility oUSDaiUtilityImpl = new OUSDaiUtility(
             lzEndpoint,
@@ -21,12 +26,11 @@ contract DeployOUSDaiUtility is Deployer {
         );
         console.log("OUSDaiUtility implementation", address(oUSDaiUtilityImpl));
 
-        address[] memory oAdapters = new address[](1);
-        oAdapters[0] = oAdapter;
-
         // Deploy OUSDaiUtility proxy
         TransparentUpgradeableProxy oUSDaiUtility = new TransparentUpgradeableProxy(
-            address(oUSDaiUtilityImpl), msg.sender, abi.encodeWithSignature("initialize(address[])", oAdapters)
+            address(oUSDaiUtilityImpl),
+            deployer,
+            abi.encodeWithSelector(OUSDaiUtility.initialize.selector, multisig, oAdapters)
         );
         console.log("OUSDaiUtility proxy", address(oUSDaiUtility));
 

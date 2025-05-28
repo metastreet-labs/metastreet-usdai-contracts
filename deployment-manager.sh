@@ -46,7 +46,6 @@ usage() {
     echo "  deploy-price-oracle <M NAV price feed> <tokens> <price feeds>"
     echo "  deploy-oadapter <token> <lz endpoint>"
     echo "  deploy-otoken <name> <symbol>"
-    echo "  deploy-ousdai-utility <o adapter> <lz endpoint>"
     echo ""
     echo "  upgrade-usdai"
     echo "  upgrade-staked-usdai"
@@ -60,6 +59,7 @@ usage() {
     echo ""
     echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
     echo "  deploy-omnichain-environment <deployer> <lz endpoint> <multisig>"
+    echo "  deploy-ousdai-utility <deployer> <lz endpoint> <o adapters> <multisig>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -134,12 +134,12 @@ case $1 in
         ;;
 
    "deploy-ousdai-utility")
-        if [ "$#" -ne 3 ]; then
+        if [ "$#" -ne 5 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOUSDaiUtility.s.sol:DeployOUSDaiUtility" --sig "run(address,address)" $2 $3
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOUSDaiUtility.s.sol:DeployOUSDaiUtility" --sig "run(address,address,address[],address)" $2 $3 "$4" $5
         ;;
 
    "upgrade-usdai")
