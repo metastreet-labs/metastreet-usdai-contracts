@@ -163,16 +163,15 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
     /**
      * @notice Initialize the contract
-     * @param oAdapters The OAdapters to whitelist
+     * @param admin Default admin address
+     * @param oAdapters OAdapters to whitelist
      */
-    function initialize(
-        address[] memory oAdapters
-    ) external initializer {
+    function initialize(address admin, address[] memory oAdapters) external initializer {
         for (uint256 i = 0; i < oAdapters.length; i++) {
             _whitelistedOAdapters.add(oAdapters[i]);
         }
 
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
     }
 
     /*------------------------------------------------------------------------*/
