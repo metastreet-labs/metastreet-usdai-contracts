@@ -1,0 +1,14 @@
+{
+  "name": "metastreet-usdai",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen:arbitrum": "graph codegen subgraph.yaml",
+    "codegen:sepolia": "graph codegen subgraph.sepolia.yaml",
+    "build:arbitrum": "graph build subgraph.yaml",
+    "build:sepolia": "graph build subgraph.sepolia.yaml"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.97.1",
+    "@graphprotocol/graph-ts": "0.37.0"
+  }
+}
