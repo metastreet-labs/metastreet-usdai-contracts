@@ -1,0 +1,30 @@
+{
+  "arbitrum-one": {
+    "USDai": {
+      "address": "0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF",
+      "startBlock": 336209932
+    },
+    "sUSDai": {
+      "address": "0x0B2b2B2076d95dda7817e785989fE353fe955ef9",
+      "startBlock": 336209932
+    },
+    "OUSDaiUtility": {
+      "address": "0x24a92E28a8C5D8812DcfAf44bCb20CC0BaBd1392",
+      "startBlock": 336209932
+    }
+  },
+  "sepolia": {
+    "USDai": {
+      "address": "0xeb29fbaa2d509e43313c196a82f4ad75fa251285",
+      "startBlock": 8311763
+    },
+    "sUSDai": {
+      "address": "0x1897bc1717d4ad5abcfa2ee47edb3265e9f4fd7c",
+      "startBlock": 8277640
+    },
+    "OUSDaiUtility": {
+      "address": "0x0f0198a70f95A2f91564F3BCb0121a745Bd845F1",
+      "startBlock": 8283342
+    }
+  }
+}

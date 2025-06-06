@@ -1,0 +1,70 @@
+################################################################################
+# Event Types
+################################################################################
+
+enum EventType {
+  Deposited # USDai deposit
+  Withdrawn # USDai withdraw
+  Deposit # StakedUSDai deposit
+  Withdraw # StakedUSDai withdraw
+  ComposerDeposit # Composer deposit
+  ComposerDepositAndStake # Composer deposit and stake
+}
+
+################################################################################
+# Event Entities
+################################################################################
+
+type Event @entity(immutable: true) {
+  id: String! # transaction hash + log index
+  type: EventType!
+  contract: Bytes! # address (contract that emitted the event)
+  transactionHash: Bytes! # bytes32 (transaction hash)
+  timestamp: BigInt! # (block timestamp)
+  account: Bytes! # address (user address)
+  deposited: Deposited
+  withdrawn: Withdrawn
+  composerDeposit: ComposerDeposit
+  composerDepositAndStake: ComposerDepositAndStake
+}
+
+type Deposited @entity(immutable: true) {
+  id: String!
+  contract: Bytes! # address
+  account: Bytes! # address (user address)
+  amount: BigInt! # uint256
+  timestamp: BigInt!
+}
+
+type Withdrawn @entity(immutable: true) {
+  id: String!
+  contract: Bytes! # address
+  account: Bytes! # address (user address)
+  amount: BigInt! # uint256
+  timestamp: BigInt!
+}
+
+type ComposerDeposit @entity(immutable: true) {
+  id: String!
+  contract: Bytes! # address
+  dstEid: BigInt! # uint256 (destination endpoint ID)
+  depositToken: Bytes! # address (token deposited)
+  recipient: Bytes! # address (recipient)
+  depositAmount: BigInt! # uint256 (amount of tokens deposited)
+  usdaiAmount: BigInt! # uint256 (amount of USDai minted)
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ComposerDepositAndStake @entity(immutable: true) {
+  id: String!
+  contract: Bytes! # address
+  dstEid: BigInt! # uint256
+  depositToken: Bytes! # address (token deposited)
+  recipient: Bytes! # address (recipient)
+  depositAmount: BigInt! # uint256
+  usdaiAmount: BigInt! # uint256
+  susdaiAmount: BigInt! # uint256 (amount of Staked USDai minted)
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}

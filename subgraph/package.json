@@ -1,0 +1,12 @@
+{
+  "name": "metastreet-usdai-subgraph",
+  "scripts": {
+    "codegen": "graph codegen subgraph.yaml",
+    "build:arbitrum": "graph build --network arbitrum-one subgraph.yaml",
+    "build:sepolia": "graph build --network sepolia subgraph.yaml"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.97.1",
+    "@graphprotocol/graph-ts": "0.37.0"
+  }
+}
