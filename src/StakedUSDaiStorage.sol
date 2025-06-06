@@ -37,6 +37,11 @@ abstract contract StakedUSDaiStorage {
      */
     bytes32 internal constant BRIDGE_ADMIN_ROLE = keccak256("BRIDGE_ADMIN_ROLE");
 
+    /**
+     * @notice Fee admin role
+     */
+    bytes32 internal constant FEE_ADMIN_ROLE = keccak256("FEE_ADMIN_ROLE");
+
     /*------------------------------------------------------------------------*/
     /* Constants */
     /*------------------------------------------------------------------------*/
@@ -75,6 +80,13 @@ abstract contract StakedUSDaiStorage {
      */
     bytes32 private constant BLACKLIST_STORAGE_LOCATION =
         0xd72eee3ef38e7b6c56e7e7a072b9106d43cf4d2b07e30824aa9ed4fd4bd66c00;
+
+    /**
+     * @notice Admin fee storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("stakedUSDai.adminFee")) - 1)) & ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant ADMIN_FEE_STORAGE_LOCATION =
+        0xa1b331a0a008a78165192e004eee9ace2720cd271685ec56c4a0fae3482c6800;
 
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -126,6 +138,16 @@ abstract contract StakedUSDaiStorage {
      */
     struct Blacklist {
         mapping(address => bool) blacklist;
+    }
+
+    /**
+     * @custom:storage-location erc7201:stakedUSDai.adminFee
+     * @param rate Admin fee rate
+     * @param balance Admin fee balance
+     */
+    struct AdminFee {
+        uint256 rate;
+        uint256 balance;
     }
 
     /*------------------------------------------------------------------------*/
@@ -207,6 +229,17 @@ abstract contract StakedUSDaiStorage {
     function _getBlacklistStorage() internal pure returns (Blacklist storage $) {
         assembly {
             $.slot := BLACKLIST_STORAGE_LOCATION
+        }
+    }
+
+    /**
+     * @notice Get reference to ERC-7201 admin fee storage
+     *
+     * @return $ Reference to admin fee storage
+     */
+    function _getAdminFeeStorage() internal pure returns (AdminFee storage $) {
+        assembly {
+            $.slot := ADMIN_FEE_STORAGE_LOCATION
         }
     }
 }

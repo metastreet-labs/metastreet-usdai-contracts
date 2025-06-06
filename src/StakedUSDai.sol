@@ -237,11 +237,12 @@ contract StakedUSDai is
     }
 
     /**
-     * @notice USDai balance in this contract less serviced redemption
-     * @return USDai balance less serviced redemption
+     * @notice USDai balance in this contract less serviced redemption and admin fee
+     * @return USDai balance less serviced redemption and admin fee
      */
     function _usdaiBalance() internal view returns (uint256) {
-        return _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance;
+        return _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance
+            - _getAdminFeeStorage().balance;
     }
 
     /**

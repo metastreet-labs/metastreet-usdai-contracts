@@ -260,7 +260,8 @@ abstract contract PoolPositionManager is
         }
 
         /* Get USDai balance */
-        uint256 usdaiBalance = _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance;
+        uint256 usdaiBalance = _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance
+            - _getAdminFeeStorage().balance;
 
         /* Validate USDai balance */
         if (usdaiAmount > usdaiBalance) revert InsufficientBalance();

@@ -24,6 +24,15 @@ abstract contract BasePositionManager is
     IBasePositionManager
 {
     /*------------------------------------------------------------------------*/
+    /* Constants */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Basis points scale
+     */
+    uint256 internal constant BASIS_POINTS_SCALE = 10_000;
+
+    /*------------------------------------------------------------------------*/
     /* Immutable state */
     /*------------------------------------------------------------------------*/
 
@@ -112,6 +121,13 @@ abstract contract BasePositionManager is
         _wrappedMToken.claimFor(address(this));
     }
 
+    /**
+     * @inheritdoc IBasePositionManager
+     */
+    function adminFee() external view returns (uint256, uint256) {
+        return (_getAdminFeeStorage().balance, _getAdminFeeStorage().rate);
+    }
+
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
     /*------------------------------------------------------------------------*/
@@ -121,7 +137,7 @@ abstract contract BasePositionManager is
      */
     function depositBaseYield(
         uint256 usdaiAmount
-    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant returns (uint256) {
+    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant returns (uint256, uint256) {
         /* Scale down the USDai amount */
         uint256 wrappedMAmount = _unscale(usdaiAmount);
 
@@ -136,9 +152,48 @@ abstract contract BasePositionManager is
         /* Deposit wrapped M token for USDai */
         uint256 usdaiAmount_ = _usdai.deposit(address(_wrappedMToken), wrappedMAmount, 0, address(this));
 
-        /* Emit BaseYieldDeposited */
-        emit BaseYieldDeposited(usdaiAmount_);
+        /* Calculate admin fee */
+        uint256 adminFee_ = _getAdminFeeStorage().rate * usdaiAmount_ / BASIS_POINTS_SCALE;
 
-        return usdaiAmount_;
+        /* Update admin fee balance */
+        _getAdminFeeStorage().balance += adminFee_;
+
+        /* Deposited amount less admin fee */
+        usdaiAmount_ -= adminFee_;
+
+        /* Emit BaseYieldDeposited */
+        emit BaseYieldDeposited(usdaiAmount_, adminFee_);
+
+        return (usdaiAmount_, adminFee_);
+    }
+
+    /**
+     * @inheritdoc IBasePositionManager
+     */
+    function setAdminFeeRate(
+        uint256 rate
+    ) external onlyRole(FEE_ADMIN_ROLE) {
+        /* Validate rate */
+        if (rate > BASIS_POINTS_SCALE) revert InvalidRate();
+
+        /* Update rate */
+        _getAdminFeeStorage().rate = rate;
+
+        /* Emit AdminFeeRateSet */
+        emit AdminFeeRateSet(rate);
+    }
+
+    /**
+     * @inheritdoc IBasePositionManager
+     */
+    function withdrawAdminFee(address to, uint256 amount) external onlyRole(FEE_ADMIN_ROLE) {
+        /* Update balance */
+        _getAdminFeeStorage().balance -= amount;
+
+        /* Transfer USDai */
+        _usdai.transfer(to, amount);
+
+        /* Emit AdminFeeWithdrawn */
+        emit AdminFeeWithdrawn(to, amount);
     }
 }

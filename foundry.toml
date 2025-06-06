@@ -5,7 +5,7 @@ out = "out"
 libs = ["lib"]
 via-ir = true
 optimizer = true
-optimizer_runs = 149
+optimizer_runs = 100
 evm_version = "cancun"
 fs_permissions = [{ access = "read-write", path = "./deployments/"}]
 block_gas_limit = 10000000000
