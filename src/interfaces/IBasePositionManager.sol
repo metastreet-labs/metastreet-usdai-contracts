@@ -12,9 +12,10 @@ interface IBasePositionManager {
 
     /**
      * @notice Base yield deposited
-     * @param usdaiAmount USDai amount
+     * @param depositedAmount Deposited USDai amount
+     * @param adminFee Admin fee
      */
-    event BaseYieldDeposited(uint256 usdaiAmount);
+    event BaseYieldDeposited(uint256 depositedAmount, uint256 adminFee);
 
     /*------------------------------------------------------------------------*/
     /* Getter */
@@ -25,6 +26,13 @@ interface IBasePositionManager {
      * @return Claimable base yield in USDai
      */
     function claimableBaseYield() external view returns (uint256);
+
+    /**
+     * @notice Admin fee rate
+     * @return Admin fee rate
+     * @return Admin fee recipient
+     */
+    function adminFee() external view returns (uint256, address);
 
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
@@ -38,9 +46,10 @@ interface IBasePositionManager {
     /**
      * @notice Deposit base yield
      * @param usdaiAmount USDai amount
-     * @return USDai amount deposited
+     * @return Deposited USDai amount
+     * @return Admin fee
      */
     function depositBaseYield(
         uint256 usdaiAmount
-    ) external returns (uint256);
+    ) external returns (uint256, uint256);
 }

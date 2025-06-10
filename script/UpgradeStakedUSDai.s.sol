@@ -11,10 +11,15 @@ import {StakedUSDai} from "src/StakedUSDai.sol";
 import {Deployer} from "./utils/Deployer.s.sol";
 
 contract UpgradeStakedUSDai is Deployer {
-    function run() public broadcast useDeployment returns (address) {
+    function run(uint256 adminFeeRate, address adminFeeRecipient) public broadcast useDeployment returns (address) {
         // Deploy StakedUSDai implemetation
-        StakedUSDai stakedUSDaiImpl =
-            new StakedUSDai(_deployment.USDai, IUSDai(_deployment.USDai).baseToken(), _deployment.priceOracle);
+        StakedUSDai stakedUSDaiImpl = new StakedUSDai(
+            _deployment.USDai,
+            IUSDai(_deployment.USDai).baseToken(),
+            adminFeeRate,
+            adminFeeRecipient,
+            _deployment.priceOracle
+        );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         /* Lookup proxy admin */

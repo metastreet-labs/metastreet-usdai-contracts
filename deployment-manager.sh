@@ -48,7 +48,7 @@ usage() {
     echo "  deploy-otoken <name> <symbol>"
     echo ""
     echo "  upgrade-usdai"
-    echo "  upgrade-staked-usdai"
+    echo "  upgrade-staked-usdai <admin fee rate> <admin fee recipient>"
     echo "  upgrade-otoken <token>"
     echo "  upgrade-ousdai-utility <lz endpoint>"
     echo ""
@@ -147,7 +147,12 @@ case $1 in
         ;;
 
    "upgrade-staked-usdai")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai" --sig "run()"
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai" --sig "run(uint256,address)" $2 $3
         ;;
 
    "upgrade-otoken")
