@@ -34,16 +34,26 @@ contract StakedUSDaiHarvestBaseYieldTest is BaseTest {
 
         assertGt(claimableBaseYield, 0, "Claimable base yield should be greater than 0");
 
-        stakedUsdai.claimBaseYield();
-        stakedUsdai.depositBaseYield(claimableBaseYield);
+        uint256 adminBalanceBefore = usdai.balanceOf(address(users.admin));
 
+        stakedUsdai.claimBaseYield();
+        (uint256 depositAmount, uint256 adminFee) = stakedUsdai.depositBaseYield(claimableBaseYield);
+
+        assertGt(adminFee, 0, "Admin fee should be greater than 0");
         assertEq(stakedUsdai.claimableBaseYield(), 0, "Claimable base yield should be 0");
 
         assertEq(
             usdai.balanceOf(address(stakedUsdai)),
-            initialUsdaiBalance + claimableBaseYield,
+            initialUsdaiBalance + depositAmount,
             "USDai balance should be equal to initial balance plus claimable base yield"
         );
+
+        assertEq(
+            usdai.balanceOf(address(users.admin)),
+            adminBalanceBefore + adminFee,
+            "Admin balance should be equal to initial balance plus admin fee"
+        );
+
         vm.stopPrank();
     }
 }
