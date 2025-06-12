@@ -12,6 +12,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 
 import {PositionManager} from "./PositionManager.sol";
 import {StakedUSDaiStorage} from "../StakedUSDaiStorage.sol";
+import {PoolPositionManagerLogic} from "./PoolPositionManagerLogic.sol";
 
 import {IPoolPositionManager} from "../interfaces/IPoolPositionManager.sol";
 import {IPool} from "../interfaces/external/IPool.sol";
@@ -41,11 +42,6 @@ abstract contract PoolPositionManager is
      * @dev keccak256(abi.encode(uint256(keccak256("stakedUSDai.pools")) - 1)) & ~bytes32(uint256(0xff));
      */
     bytes32 private constant POOLS_STORAGE_LOCATION = 0x0a32e6e3ec9caf40523489fb56ffc3afa6eadc68c0df235d444c084ba724fc00;
-
-    /**
-     * @notice Fixed point scale
-     */
-    uint256 private constant FIXED_POINT_SCALE = 1e18;
 
     /*------------------------------------------------------------------------*/
     /* Structures */
@@ -138,102 +134,9 @@ abstract contract PoolPositionManager is
      * @inheritdoc PositionManager
      */
     function _assets(
-        ValuationType valuationType
+        PositionManager.ValuationType valuationType
     ) internal view virtual override returns (uint256 nav_) {
-        /* Compute NAV */
-        for (uint256 i; i < _getPoolsStorage().pools.length(); i++) {
-            IPool pool = IPool(_getPoolsStorage().pools.at(i));
-
-            /* Get pool value in terms of USDai and add to NAV */
-            nav_ += _value(pool.currencyToken(), _getPoolPosition(pool, valuationType));
-        }
-    }
-
-    /**
-     * @notice Get pool position
-     * @param pool Pool
-     * @param valuationType Valuation type
-     * @return Pool position value
-     */
-    function _getPoolPosition(IPool pool, ValuationType valuationType) internal view returns (uint256) {
-        /* Get pool position */
-        PoolPosition storage position = _getPoolsStorage().position[address(pool)];
-
-        /* Compute value across all ticks */
-        uint256 value;
-        for (uint256 i; i < position.ticks.length(); i++) {
-            uint128 tick = uint128(position.ticks.at(i));
-
-            /* Get shares */
-            (uint256 shares,) = pool.deposits(address(this), tick);
-
-            /* Get pending shares */
-            uint256 pendingShares;
-            for (uint256 j; j < position.redemptionIds[tick].length(); j++) {
-                (uint128 pending,,) = pool.redemptions(address(this), tick, uint128(position.redemptionIds[tick].at(j)));
-                pendingShares += pending;
-            }
-
-            value += (
-                valuationType == ValuationType.OPTIMISTIC
-                    ? pool.depositSharePrice(tick) * (shares + pendingShares)
-                    : pool.redemptionSharePrice(tick) * (shares + pendingShares)
-            ) / FIXED_POINT_SCALE;
-        }
-
-        return value;
-    }
-
-    /**
-     * @notice Cleans up tracking data for a redemption, tick, or pool if fully serviced and empty.
-     * @param pool Pool address
-     * @param tick Tick
-     * @param redemptionId Redemption ID to check and potentially garbage collect
-     */
-    function _garbageCollect(address pool, uint128 tick, uint128 redemptionId) internal {
-        /* Check if the specific redemption is fully serviced */
-        (uint128 pendingShares,,) = IPool(pool).redemptions(address(this), tick, redemptionId);
-        if (pendingShares != 0) return;
-
-        /* Get pool position */
-        Pools storage pools_ = _getPoolsStorage();
-        PoolPosition storage position = pools_.position[pool];
-
-        /* Remove the fully serviced redemption ID */
-        position.redemptionIds[tick].remove(redemptionId);
-
-        /* Check if the tick can be removed */
-        if (position.redemptionIds[tick].length() != 0) return;
-
-        /* Check if the tick has deposits */
-        (uint128 depositedShares,) = IPool(pool).deposits(address(this), tick);
-        if (depositedShares != 0) return;
-
-        /* Remove the tick from the pool */
-        position.ticks.remove(tick);
-
-        /* Check if the pool itself can be removed */
-        if (position.ticks.length() != 0) return;
-
-        /* Remove the entire pool position and pool */
-        delete pools_.position[pool];
-        pools_.pools.remove(pool);
-    }
-
-    /*
-     * @notice Get value in USDai
-     * @param currencyToken Currency token address
-     * @param amount Amount of currency token
-     * @return Value in USDai
-     */
-    function _value(address currencyToken, uint256 amount) internal view returns (uint256) {
-        /* Get price of currency token in terms of USDai */
-        uint256 price = _priceOracle.price(currencyToken);
-
-        /* Get decimals of currency token */
-        uint256 decimals = IERC20Metadata(currencyToken).decimals();
-
-        return Math.mulDiv(amount, price, 10 ** decimals);
+        return PoolPositionManagerLogic._assets(_getPoolsStorage(), _priceOracle, valuationType);
     }
 
     /*------------------------------------------------------------------------*/
@@ -324,7 +227,7 @@ abstract contract PoolPositionManager is
         if (poolCurrencyAmount > poolCurrencyAmountMaximum) revert InvalidPoolCurrencyAmount();
 
         /* Garbage collect tick info and pool */
-        _garbageCollect(pool, tick, redemptionId);
+        PoolPositionManagerLogic._garbageCollect(_getPoolsStorage(), pool, tick, redemptionId);
 
         /* Check if withdraw produced currency */
         if (poolCurrencyAmount == 0) return 0;
