@@ -218,6 +218,10 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             /* Transfer the deposit token to owner */
             IERC20(depositToken).transfer(to, depositAmount);
 
+            /* Refund the msg.value */
+            (bool success,) = payable(to).call{value: msg.value}("");
+            success;
+
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
         }
@@ -273,12 +277,20 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                 /* Transfer the usdai token to owner */
                 _usdai.transfer(to, usdaiAmount);
 
+                /* Refund the msg.value */
+                (bool success,) = payable(to).call{value: msg.value}("");
+                success;
+
                 /* Emit the failed action event */
                 emit ActionFailed("Stake", reason);
             }
         } catch (bytes memory reason) {
             /* Transfer the deposit token to owner */
             IERC20(depositToken).transfer(to, depositAmount);
+
+            /* Refund the msg.value */
+            (bool success,) = payable(to).call{value: msg.value}("");
+            success;
 
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
