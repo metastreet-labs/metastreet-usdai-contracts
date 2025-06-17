@@ -24,6 +24,15 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /*------------------------------------------------------------------------*/
+    /* Constants */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.1";
+
+    /*------------------------------------------------------------------------*/
     /* Structures */
     /*------------------------------------------------------------------------*/
 
