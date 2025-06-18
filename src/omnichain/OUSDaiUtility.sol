@@ -64,21 +64,37 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
     /**
      * @notice Composer deposit event
-     * @param depositToken Token to deposit
-     * @param depositAmount Amount of tokens to deposit
+     * @param dstEid Destination chain EID
+     * @param depositToken Deposit token
+     * @param recipient Recipient address
+     * @param depositAmount Amount of deposit token
      * @param usdaiAmount Amount of USDai received
      */
-    event ComposerDeposit(address indexed depositToken, uint256 depositAmount, uint256 usdaiAmount);
+    event ComposerDeposit(
+        uint256 indexed dstEid,
+        address indexed depositToken,
+        address indexed recipient,
+        uint256 depositAmount,
+        uint256 usdaiAmount
+    );
 
     /**
      * @notice Composer deposit and stake event
+     * @param dstEid Destination chain EID
      * @param depositToken Token to deposit
-     * @param depositAmount Amount of tokens to deposit
+     * @param recipient Recipient address
+     * @param depositToken Deposit token
+     * @param depositAmount Amount of deposit token
      * @param usdaiAmount Amount of USDai received
      * @param susdaiAmount Amount of Staked USDai received
      */
     event ComposerDepositAndStake(
-        address indexed depositToken, uint256 depositAmount, uint256 usdaiAmount, uint256 susdaiAmount
+        uint256 indexed dstEid,
+        address indexed depositToken,
+        address indexed recipient,
+        uint256 depositAmount,
+        uint256 usdaiAmount,
+        uint256 susdaiAmount
     );
 
     /**
@@ -215,7 +231,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                 sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
             ) {
                 /* Emit the deposit event */
-                emit ComposerDeposit(depositToken, depositAmount, usdaiAmount);
+                emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
             } catch (bytes memory reason) {
                 /* Transfer the usdai to owner */
                 _usdai.transfer(to, usdaiAmount);
@@ -274,7 +290,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                     sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
                 ) {
                     /* Emit the deposit and stake event */
-                    emit ComposerDepositAndStake(depositToken, depositAmount, usdaiAmount, susdaiAmount);
+                    emit ComposerDepositAndStake(
+                        sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
+                    );
                 } catch (bytes memory reason) {
                     /* Transfer the staked USDai to owner */
                     IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
