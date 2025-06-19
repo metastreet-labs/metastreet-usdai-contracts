@@ -1,3 +1,7 @@
+* OUSDaiUtility v1.2 - 06/19/2025
+    * Add destination eid and recipient parameters to ComposerDeposit and
+      ComposerDepositAndStake events.
+
 * OUSDaiUtility v1.1 - 06/18/2025
     * Add native fee refund in case of revert.
 
