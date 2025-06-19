@@ -20,7 +20,8 @@ contract UpgradeOUSDaiUtility is Deployer {
             _deployment.USDai,
             _deployment.stakedUSDai,
             _deployment.oAdapterUSDai,
-            _deployment.oAdapterStakedUSDai
+            _deployment.oAdapterStakedUSDai,
+            _deployment.usdaiQueuedDepositor
         );
         console.log("OUSDaiUtility implementation", address(oUSDaiUtilityImpl));
 

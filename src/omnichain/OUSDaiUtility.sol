@@ -14,6 +14,7 @@ import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
 import "../interfaces/IUSDai.sol";
 import "../interfaces/IStakedUSDai.sol";
+import "../interfaces/IUSDaiQueuedDepositor.sol";
 
 /**
  * @title Omnichain Utility
@@ -41,7 +42,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      */
     enum ActionType {
         Deposit,
-        DepositAndStake
+        DepositAndStake,
+        QueuedDeposit /* deposit only, or deposit and stake */
     }
 
     /*------------------------------------------------------------------------*/
@@ -98,6 +100,20 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     );
 
     /**
+     * @notice Queued deposit event
+     * @param queueType Queue type
+     * @param depositToken Token to deposit
+     * @param depositAmount Amount of tokens to deposit
+     * @param recipient Recipient
+     */
+    event ComposerQueuedDeposit(
+        IUSDaiQueuedDepositor.QueueType indexed queueType,
+        address indexed depositToken,
+        address indexed recipient,
+        uint256 depositAmount
+    );
+
+    /**
      * @notice Action failed event
      * @param action Action that failed
      * @param reason Reason for action failure
@@ -145,6 +161,11 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      */
     IOFT internal immutable _stakedUsdaiOAdapter;
 
+    /**
+     * @notice The USDai queued depositor on the destination chain
+     */
+    IUSDaiQueuedDepositor internal immutable _usdaiQueuedDepositor;
+
     /*------------------------------------------------------------------------*/
     /* State */
     /*------------------------------------------------------------------------*/
@@ -171,7 +192,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         address usdai_,
         address stakedUsdai_,
         address usdaiOAdapter_,
-        address stakedUsdaiOAdapter_
+        address stakedUsdaiOAdapter_,
+        address usdaiQueuedDepositor_
     ) {
         _disableInitializers();
 
@@ -180,6 +202,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         _stakedUsdai = IStakedUSDai(stakedUsdai_);
         _usdaiOAdapter = IOFT(usdaiOAdapter_);
         _stakedUsdaiOAdapter = IOFT(stakedUsdaiOAdapter_);
+        _usdaiQueuedDepositor = IUSDaiQueuedDepositor(usdaiQueuedDepositor_);
     }
 
     /*------------------------------------------------------------------------*/
@@ -327,6 +350,33 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         }
     }
 
+    /**
+     * @notice Deposit the deposit token into queue
+     * @param depositToken Deposit token
+     * @param depositAmount Deposit token amount
+     * @param data Additional compose data
+     */
+    function _queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) internal {
+        /* Decode the message */
+        (IUSDaiQueuedDepositor.QueueType queueType, address recipient, uint32 dstEid) =
+            abi.decode(data, (IUSDaiQueuedDepositor.QueueType, address, uint32));
+
+        /* Approve the queue depositor contract to spend the deposit token */
+        IERC20(depositToken).forceApprove(address(_usdaiQueuedDepositor), depositAmount);
+
+        /* Deposit the deposit token into queue depositor */
+        try _usdaiQueuedDepositor.deposit(queueType, depositToken, depositAmount, recipient, dstEid) {
+            /* Emit the queued deposit event */
+            emit ComposerQueuedDeposit(queueType, depositToken, recipient, depositAmount);
+        } catch (bytes memory reason) {
+            /* Transfer the deposit token to owner */
+            IERC20(depositToken).transfer(recipient, depositAmount);
+
+            /* Emit the failed action event */
+            emit ActionFailed("QueuedDeposit", reason);
+        }
+    }
+
     /*------------------------------------------------------------------------*/
     /* External API */
     /*------------------------------------------------------------------------*/
@@ -361,6 +411,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             _deposit(depositToken, amountLD, data);
         } else if (actionType == ActionType.DepositAndStake) {
             _depositAndStake(depositToken, amountLD, data);
+        } else if (actionType == ActionType.QueuedDeposit) {
+            _queuedDeposit(depositToken, amountLD, data);
         } else {
             revert UnknownAction();
         }
