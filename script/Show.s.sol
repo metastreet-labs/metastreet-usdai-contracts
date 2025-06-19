@@ -13,18 +13,19 @@ contract Show is Deployer {
         /* Deserialize */
         _deserialize();
 
-        console.log("USDai:               %s", _deployment.USDai);
-        console.log("StakedUSDai:         %s", _deployment.stakedUSDai);
-        console.log("SwapAdapter:         %s", _deployment.swapAdapter);
-        console.log("PriceOracle:         %s", _deployment.priceOracle);
+        console.log("USDai:                 %s", _deployment.USDai);
+        console.log("StakedUSDai:           %s", _deployment.stakedUSDai);
+        console.log("SwapAdapter:           %s", _deployment.swapAdapter);
+        console.log("PriceOracle:           %s", _deployment.priceOracle);
         console.log("");
-        console.log("OAdapterUSDai:       %s", _deployment.oAdapterUSDai);
-        console.log("OAdapterStakedUSDai: %s", _deployment.oAdapterStakedUSDai);
+        console.log("OAdapterUSDai:         %s", _deployment.oAdapterUSDai);
+        console.log("OAdapterStakedUSDai:   %s", _deployment.oAdapterStakedUSDai);
         console.log("");
-        console.log("OTokenUSDai:         %s", _deployment.oTokenUSDai);
-        console.log("OTokenStakedUSDai:   %s", _deployment.oTokenStakedUSDai);
+        console.log("OTokenUSDai:           %s", _deployment.oTokenUSDai);
+        console.log("OTokenStakedUSDai:     %s", _deployment.oTokenStakedUSDai);
         console.log("");
-        console.log("OUSDaiUtility:       %s", _deployment.oUSDaiUtility);
+        console.log("OUSDaiUtility:         %s", _deployment.oUSDaiUtility);
+        console.log("USDaiQueuedDepositor:  %s", _deployment.usdaiQueuedDepositor);
 
         console.log("Printing deployments completed");
     }

@@ -32,7 +32,8 @@ import {TestHelperOz5} from "@layerzerolabs/test-devtools-evm-foundry/contracts/
 
 // Implementation imports
 import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
-import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
+import {USDaiQueuedDepositor} from "src/queuedDepositor/USDaiQueuedDepositor.sol";
+import {ReceiptToken} from "src/queuedDepositor/ReceiptToken.sol";
 
 // Mock imports
 import {MockUSDai} from "../mocks/MockUSDai.sol";
@@ -41,6 +42,9 @@ import {MockStakedUSDai} from "../mocks/MockStakedUSDai.sol";
 // Interface imports
 import {IUSDai} from "src/interfaces/IUSDai.sol";
 import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
+import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
+
+import {TestERC20} from "../tokens/TestERC20.sol";
 
 /**
  * @title Omnichain Base test setup
@@ -52,12 +56,16 @@ import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
 abstract contract OmnichainBaseTest is TestHelperOz5 {
     using OptionsBuilder for bytes;
 
+    IUSDaiQueuedDepositor internal usdaiQueuedDepositor;
+
     uint32 internal usdtHomeEid = 1;
     uint32 internal usdtAwayEid = 2;
     uint32 internal usdaiHomeEid = 3;
     uint32 internal usdaiAwayEid = 4;
     uint32 internal stakedUsdaiHomeEid = 5;
     uint32 internal stakedUsdaiAwayEid = 6;
+
+    TestERC20 internal usdtHomeToken6Decimals;
 
     OToken internal usdtHomeToken;
     OToken internal usdtAwayToken;
@@ -75,12 +83,16 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
 
     OUSDaiUtility internal oUsdaiUtility;
 
-    uint256 internal initialBalance = 100_000 ether;
+    uint256 internal initialBalance = 20_000_000 ether;
 
     IUSDai internal usdai;
     IStakedUSDai internal stakedUsdai;
 
     address internal user = address(0x1);
+    address internal blacklistedUser = address(0x2);
+
+    address internal queuedUSDaiToken;
+    address internal queuedStakedUSDaiToken;
 
     function setUp() public virtual override {
         // Call the base setup function from the TestHelperOz5 contract
@@ -109,6 +121,7 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
 
         // Provide initial Ether balances to users for testing purposes
         vm.deal(user, 1000 ether);
+        vm.deal(blacklistedUser, 1000 ether);
 
         // Initialize 6 endpoints, using UltraLightNode as the library type
         setUpEndpoints(6, LibraryType.UltraLightNode);
@@ -118,6 +131,9 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         OToken usdtAwayTokenImpl = new OToken();
         OToken usdaiAwayTokenImpl = new OToken();
         OToken stakedUsdaiAwayTokenImpl = new OToken();
+
+        vm.prank(user);
+        usdtHomeToken6Decimals = new TestERC20("USDT Home Token", "USDT", 6, initialBalance / 1e12);
 
         // Deploy USDT proxies
         TransparentUpgradeableProxy usdtHomeTokenProxy = new TransparentUpgradeableProxy(
@@ -224,6 +240,39 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         stakedUsdaiHomeOAdapter.setRateLimits(rateLimitConfigsStakedUsdaiHome);
         stakedUsdaiAwayOAdapter.setRateLimits(rateLimitConfigsStakedUsdaiAway);
 
+        // Deploy receipt tokens
+        ReceiptToken receiptTokenImpl = new ReceiptToken();
+
+        // Deploy usdai queued depositor
+        address usdaiQueuedDepositorImpl = address(
+            new USDaiQueuedDepositor(
+                address(usdai),
+                address(stakedUsdai),
+                address(usdaiHomeOAdapter),
+                address(stakedUsdaiHomeOAdapter),
+                address(receiptTokenImpl)
+            )
+        );
+
+        /* Deploy usdai queued depositor proxy */
+        address[] memory whitelistedTokens = new address[](2);
+        whitelistedTokens[0] = address(usdtHomeToken);
+        whitelistedTokens[1] = address(usdtHomeToken6Decimals);
+        uint256[] memory minAmounts = new uint256[](2);
+        minAmounts[0] = 1_000_000 * 1e18;
+        minAmounts[1] = 1_000_000 * 1e6;
+        TransparentUpgradeableProxy usdaiQueuedDepositorProxy = new TransparentUpgradeableProxy(
+            usdaiQueuedDepositorImpl,
+            address(this),
+            abi.encodeWithSignature(
+                "initialize(address,address[],uint256[])", address(this), whitelistedTokens, minAmounts
+            )
+        );
+        usdaiQueuedDepositor = USDaiQueuedDepositor(address(usdaiQueuedDepositorProxy));
+        AccessControl(address(usdaiQueuedDepositor)).grantRole(keccak256("CONTROLLER_ADMIN_ROLE"), address(this));
+        queuedUSDaiToken = address(usdaiQueuedDepositor.queuedUSDaiToken());
+        queuedStakedUSDaiToken = address(usdaiQueuedDepositor.queuedStakedUSDaiToken());
+
         // Configure and wire the USDT OAdapters together
         address[] memory oAdapters = new address[](6);
         oAdapters[0] = address(usdtHomeOAdapter);
@@ -242,7 +291,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
             address(usdai),
             address(stakedUsdai),
             address(usdaiHomeOAdapter),
-            address(stakedUsdaiHomeOAdapter)
+            address(stakedUsdaiHomeOAdapter),
+            address(usdaiQueuedDepositor)
         );
         TransparentUpgradeableProxy oUsdaiUtilityProxy = new TransparentUpgradeableProxy(
             address(oUsdaiUtilityImpl),
@@ -266,5 +316,10 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         // Mint tokens to users
         AccessControl(address(usdtAwayToken)).grantRole(usdtAwayToken.BRIDGE_ADMIN_ROLE(), address(this));
         usdtAwayToken.mint(user, initialBalance);
+        usdtAwayToken.mint(blacklistedUser, initialBalance);
+
+        // Set user as blacklisted
+        AccessControl(address(stakedUsdai)).grantRole(keccak256("BLACKLIST_ADMIN_ROLE"), address(this));
+        stakedUsdai.setBlacklist(blacklistedUser, true);
     }
 }
