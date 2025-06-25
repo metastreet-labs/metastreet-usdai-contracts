@@ -1,3 +1,6 @@
+* StakedUSDai v1.1 - 06/25/2025
+    * Add admin fee support.
+
 * OUSDaiUtility v1.2 - 06/19/2025
     * Add destination eid and recipient parameters to ComposerDeposit and
       ComposerDepositAndStake events.
