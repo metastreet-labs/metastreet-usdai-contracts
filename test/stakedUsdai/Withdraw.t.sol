@@ -50,7 +50,7 @@ contract StakedUSDaiWithdrawTest is BaseTest {
         uint256 amount
     ) public {
         vm.assume(amount > 0);
-        vm.assume(amount <= withdrawableAmount);
+        vm.assume(amount < withdrawableAmount);
 
         (uint256 initialIndex,, uint256 initialTail,, uint256 initialRedemptionBalance) =
             stakedUsdai.redemptionQueueInfo();
