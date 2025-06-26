@@ -137,6 +137,11 @@ abstract contract StakedUSDaiStorage {
      */
     IUSDai internal immutable _usdai;
 
+    /**
+     * @notice QEV registry
+     */
+    address internal immutable _qevRegistry;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -144,11 +149,11 @@ abstract contract StakedUSDaiStorage {
     /**
      * @notice Constructor
      * @param usdai USDai
+     * @param qevRegistry QEV registry
      */
-    constructor(
-        address usdai
-    ) {
+    constructor(address usdai, address qevRegistry) {
         _usdai = IUSDai(usdai);
+        _qevRegistry = qevRegistry;
     }
 
     /*------------------------------------------------------------------------*/
