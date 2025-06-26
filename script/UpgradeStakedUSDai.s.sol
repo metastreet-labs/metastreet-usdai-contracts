@@ -15,6 +15,7 @@ contract UpgradeStakedUSDai is Deployer {
         // Deploy StakedUSDai implemetation
         StakedUSDai stakedUSDaiImpl = new StakedUSDai(
             _deployment.USDai,
+            _deployment.qevRegistry,
             IUSDai(_deployment.USDai).baseToken(),
             adminFeeRate,
             adminFeeRecipient,

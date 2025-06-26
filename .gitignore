@@ -13,3 +13,6 @@ out/
 
 # Ignore local deployments
 deployments/local.json
+
+# Ignore helpers
+.claude
