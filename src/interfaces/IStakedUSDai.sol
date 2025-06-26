@@ -103,6 +103,18 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
      */
     event RedemptionsServiced(uint256 shares, uint256 amount, bool allRedemptionsServiced);
 
+    /**
+     * @notice Redemptions Reordered
+     * @param auctionId Auction ID
+     * @param count Count
+     * @param totalPendingSharesBurnt Total pending shares burnt
+     * @param totalAdminFee Total admin fee
+     * @param isCompleted True if reordering is completed
+     */
+    event RedemptionsReordered(
+        uint64 auctionId, uint256 count, uint256 totalPendingSharesBurnt, uint256 totalAdminFee, bool isCompleted
+    );
+
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
@@ -169,6 +181,12 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     function redemptionSharePrice() external view returns (uint256);
 
     /**
+     * @notice Get QEV registry
+     * @return QEV registry
+     */
+    function qevRegistry() external view returns (address);
+
+    /**
      * @notice Get bridged supply
      * @return Bridged supply
      */
@@ -233,4 +251,13 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     function serviceRedemptions(
         uint256 shares
     ) external returns (uint256);
+
+    /**
+     * @notice Service QEV
+     * @param auctionId Auction ID
+     * @param count Count
+     * @return Total pending shares burnt
+     * @return Total admin fee
+     */
+    function reorderRedemptions(uint64 auctionId, uint256 count) external returns (uint256, uint256);
 }

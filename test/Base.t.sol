@@ -5,6 +5,7 @@ import {Vm} from "forge-std/Vm.sol";
 
 import {Test} from "forge-std/Test.sol";
 
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -18,6 +19,7 @@ import {MockLoanRouter} from "./mocks/MockLoanRouter.sol";
 
 import {USDai} from "src/USDai.sol";
 import {StakedUSDai} from "src/StakedUSDai.sol";
+import {QEVRegistry} from "src/QEVRegistry.sol";
 import {ChainlinkPriceOracle} from "src/oracles/ChainlinkPriceOracle.sol";
 import {UniswapV3SwapAdapter} from "src/swapAdapters/UniswapV3SwapAdapter.sol";
 import {IWrappedMToken} from "src/interfaces/external/IWrappedMToken.sol";
@@ -99,6 +101,8 @@ abstract contract BaseTest is Test {
     UniswapV3SwapAdapter internal uniswapV3SwapAdapter;
     MockLoanRouter internal mockLoanRouter;
     ChainlinkPriceOracle internal priceOracle;
+    QEVRegistry internal qevRegistryImpl;
+    QEVRegistry internal qevRegistry;
     IUSDai internal usdai;
     StakedUSDai internal stakedUsdai;
     IPool internal metastreetPool1;
@@ -126,6 +130,7 @@ abstract contract BaseTest is Test {
 
         deployMockLoanRouter();
 
+        deployQEVRegistry();
         deployUniswapV3SwapAdapter();
         deployTestMnavPriceFeed();
         deployPriceOracle();
@@ -164,6 +169,24 @@ abstract contract BaseTest is Test {
         UniswapPoolHelpers.setupUniswapPool(
             address(users.admin), address(usd), address(WRAPPED_M_TOKEN), 20_000_000 ether, 20_000_000 ether
         );
+        vm.stopPrank();
+    }
+
+    function deployQEVRegistry() internal {
+        vm.startPrank(users.deployer);
+
+        // Deploy QEV registry implementation with address(0) first
+        qevRegistryImpl = new QEVRegistry(address(0), 100, users.admin);
+
+        // Deploy QEV registry proxy
+        TransparentUpgradeableProxy qevRegistryProxy = new TransparentUpgradeableProxy(
+            address(qevRegistryImpl), address(users.admin), abi.encodeWithSignature("initialize()")
+        );
+        qevRegistry = QEVRegistry(address(qevRegistryProxy));
+
+        // Grant auction admin role to manager
+        AccessControl(address(qevRegistry)).grantRole(keccak256("AUCTION_ADMIN_ROLE"), users.manager);
+
         vm.stopPrank();
     }
 
@@ -303,6 +326,7 @@ abstract contract BaseTest is Test {
             address(usdai),
             address(WRAPPED_M_TOKEN),
             address(priceOracle),
+            address(qevRegistry),
             address(mockLoanRouter),
             address(users.admin),
             uint64(block.timestamp),
@@ -317,8 +341,15 @@ abstract contract BaseTest is Test {
             abi.encodeWithSignature("initialize(address)", users.deployer)
         );
 
-        /* Deploy staked usdai */
         stakedUsdai = StakedUSDai(address(stakedUsdaiProxy));
+
+        // Now fix the QEV registry to set the correct StakedUSDai address
+        hackQEVRegistryAddress();
+
+        // Grant auction admin role to manager and queue processor admin role to StakedUSDai
+        AccessControl(address(qevRegistry)).grantRole(
+            keccak256("QUEUE_PROCESSOR_ADMIN_ROLE"), address(stakedUsdaiProxy)
+        );
 
         /* Grant roles */
         stakedUsdai.grantRole(keccak256("BLACKLIST_ADMIN_ROLE"), address(users.deployer));
@@ -506,5 +537,13 @@ abstract contract BaseTest is Test {
         (bool success,) = M_TOKEN.call(abi.encodeWithSignature("updateIndex(uint128)", currentIndex + 1000));
         require(success, "Update M token index failed");
         vm.stopPrank();
+    }
+
+    function hackQEVRegistryAddress() internal {
+        // Create a new QEV registry with the correct address
+        QEVRegistry correctImpl = new QEVRegistry(address(stakedUsdai), 100, users.admin);
+
+        // Replace the bytecode
+        vm.etch(address(qevRegistryImpl), address(correctImpl).code);
     }
 }
