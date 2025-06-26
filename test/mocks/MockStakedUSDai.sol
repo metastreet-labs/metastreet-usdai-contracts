@@ -16,6 +16,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "src/StakedUSDaiStorage.sol";
 import "src/RedemptionLogic.sol";
+import "src/QEVLogic.sol";
 
 import "src/positionManagers/BasePositionManager.sol";
 import "src/positionManagers/PoolPositionManager.sol";
@@ -71,8 +72,13 @@ contract MockStakedUSDai is
      * @notice sUSD.ai Constructor
      */
     constructor(
-        address usdai_
-    ) StakedUSDaiStorage(usdai_) BasePositionManager(address(0), 0, msg.sender) PoolPositionManager(address(0)) {
+        address usdai_,
+        address qevRegistry_
+    )
+        StakedUSDaiStorage(usdai_, qevRegistry_)
+        BasePositionManager(address(0), 0, msg.sender)
+        PoolPositionManager(address(0))
+    {
         _disableInitializers();
     }
 
@@ -228,6 +234,13 @@ contract MockStakedUSDai is
      */
     function totalShares() public view returns (uint256) {
         return totalSupply() + _getBridgedSupplyStorage().bridgedSupply + _getRedemptionStateStorage().pending;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function qevRegistry() external view returns (address) {
+        return _qevRegistry;
     }
 
     /*------------------------------------------------------------------------*/
@@ -744,6 +757,25 @@ contract MockStakedUSDai is
         emit RedemptionsServiced(shares, amountProcessed, allRedemptionsServiced);
 
         return amountProcessed;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function reorderRedemptions(
+        uint256 auctionId,
+        uint256 count
+    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonZeroUint(count) returns (uint256, uint256) {
+        (uint256 totalPendingSharesBurnt, uint256 totalAdminFee, address adminFeeRecipient, bool isCompleted) =
+            QEVLogic._reorderRedemptions(_getRedemptionStateStorage(), _qevRegistry, auctionId, count);
+
+        /* Mint shares to admin fee recipient */
+        _mint(adminFeeRecipient, totalAdminFee);
+
+        /* Emit RedemptionsReordered */
+        emit RedemptionsReordered(auctionId, count, totalPendingSharesBurnt, totalAdminFee, isCompleted);
+
+        return (totalPendingSharesBurnt, totalAdminFee);
     }
 
     /*------------------------------------------------------------------------*/
