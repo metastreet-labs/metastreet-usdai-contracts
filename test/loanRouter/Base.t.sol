@@ -237,6 +237,7 @@ abstract contract BaseLoanRouterTest is Test {
             USDAI,
             WRAPPED_M_TOKEN,
             address(priceOracle),
+            address(0),
             address(loanRouter),
             BASE_YIELD_ADMIN_FEE_RECIPIENT,
             uint64(block.timestamp),

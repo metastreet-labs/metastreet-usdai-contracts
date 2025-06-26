@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./StakedUSDaiStorage.sol";
 
 import "./interfaces/IStakedUSDai.sol";
+import "./interfaces/IQEVRegistry.sol";
 
 /**
  * @title Redemption Logic
@@ -349,6 +350,7 @@ library RedemptionLogic {
      */
     function _processRedemptions(
         StakedUSDaiStorage.RedemptionState storage redemptionState_,
+        address qevRegistry,
         uint256 shares,
         uint256 redemptionSharePrice_
     ) external returns (uint256, bool) {
@@ -356,6 +358,11 @@ library RedemptionLogic {
         if (redemptionState_.pending < shares) {
             revert IStakedUSDai.InvalidRedemptionState();
         }
+
+        /* Validate previous auction is fully reordered */
+        uint64 previousAuctionId = IQEVRegistry(qevRegistry).previousAuctionId();
+        (uint256 bidCount, uint256 processedBidCount,) = IQEVRegistry(qevRegistry).auction(previousAuctionId);
+        if (processedBidCount != bidCount) revert IStakedUSDai.InvalidRedemptionState();
 
         /* Get head redemption ID */
         uint256 head = redemptionState_.head;

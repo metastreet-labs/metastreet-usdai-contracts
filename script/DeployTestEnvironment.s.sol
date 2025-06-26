@@ -11,6 +11,7 @@ import {UniswapV3SwapAdapter} from "src/swapAdapters/UniswapV3SwapAdapter.sol";
 import {ChainlinkPriceOracle} from "src/oracles/ChainlinkPriceOracle.sol";
 import {USDai} from "src/USDai.sol";
 import {StakedUSDai} from "src/StakedUSDai.sol";
+import {QEVRegistry} from "src/QEVRegistry.sol";
 import {Deployer} from "./utils/Deployer.s.sol";
 
 contract DeployTestEnvironment is Deployer {
@@ -21,7 +22,7 @@ contract DeployTestEnvironment is Deployer {
         address loanRouter,
         address[] calldata tokens,
         address[] calldata priceFeeds
-    ) public broadcast useDeployment returns (address, address, address, address) {
+    ) public broadcast useDeployment returns (address, address, address, address, address) {
         // Deploy UniswapV3SwapAdapter
         UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter, tokens);
         console.log("UniswapV3SwapAdapter", address(swapAdapter));
@@ -40,11 +41,21 @@ contract DeployTestEnvironment is Deployer {
         );
         console.log("USDai proxy", address(USDai_));
 
+        // Deploy QEVRegistry implemetation
+        QEVRegistry qevRegistry = new QEVRegistry(address(0), 100, msg.sender);
+        console.log("QEVRegistry", address(qevRegistry));
+
+        // Deploy QEVRegistry proxy
+        TransparentUpgradeableProxy qevRegistry_ =
+            new TransparentUpgradeableProxy(address(qevRegistry), msg.sender, abi.encodeWithSignature("initialize()"));
+        console.log("QEVRegistry proxy", address(qevRegistry_));
+
         // Deploy StakedUSDai
         StakedUSDai stakedUSDaiImpl = new StakedUSDai(
             address(USDai_),
             wrappedMToken,
             address(priceOracle),
+            address(qevRegistry_),
             loanRouter,
             msg.sender,
             uint64(block.timestamp),
@@ -67,7 +78,9 @@ contract DeployTestEnvironment is Deployer {
         _deployment.priceOracle = address(priceOracle);
         _deployment.USDai = address(USDai_);
         _deployment.stakedUSDai = address(stakedUSDai);
+        _deployment.qevRegistry = address(qevRegistry_);
 
-        return (address(swapAdapter), address(priceOracle), address(USDai_), address(stakedUSDai));
+        return
+            (address(swapAdapter), address(priceOracle), address(USDai_), address(stakedUSDai), address(qevRegistry_));
     }
 }

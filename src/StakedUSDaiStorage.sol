@@ -144,6 +144,11 @@ abstract contract StakedUSDaiStorage {
     IPriceOracle internal immutable _priceOracle;
 
     /**
+     * @notice QEV registry
+     */
+    address internal immutable _qevRegistry;
+
+    /**
      * @notice Admin fee recipient
      */
     address internal immutable _adminFeeRecipient;
@@ -163,10 +168,18 @@ abstract contract StakedUSDaiStorage {
      * @param priceOracle Price oracle
      * @param adminFeeRecipient Admin fee recipient
      * @param genesisTimestamp Genesis timestamp
+     * @param qevRegistry QEV registry
      */
-    constructor(address usdai, address priceOracle, address adminFeeRecipient, uint64 genesisTimestamp) {
+    constructor(
+        address usdai,
+        address priceOracle,
+        address qevRegistry,
+        address adminFeeRecipient,
+        uint64 genesisTimestamp
+    ) {
         _usdai = IUSDai(usdai);
         _priceOracle = IPriceOracle(priceOracle);
+        _qevRegistry = qevRegistry;
         _adminFeeRecipient = adminFeeRecipient;
         _genesisTimestamp = genesisTimestamp;
     }
