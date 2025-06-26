@@ -106,7 +106,7 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         usdai = IUSDai(address(usdaiProxy));
 
         // Deploy mock staked usdai implementation
-        IStakedUSDai stakedUsdaiImpl = new MockStakedUSDai(address(usdai));
+        IStakedUSDai stakedUsdaiImpl = new MockStakedUSDai(address(usdai), address(0));
 
         /* Deploy staked usdai proxy */
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(
