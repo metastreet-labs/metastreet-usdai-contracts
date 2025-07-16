@@ -51,15 +51,18 @@ usage() {
     echo "  upgrade-staked-usdai <admin fee rate> <admin fee recipient>"
     echo "  upgrade-otoken <token>"
     echo "  upgrade-ousdai-utility <lz endpoint>"
+    echo "  upgrade-usdai-queued-depositor"
     echo ""
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
     echo "  grant-role <target> <role> <account>"
+    echo "  transfer-ownership <proxy> <account>"
     echo ""
     echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
     echo "  deploy-omnichain-environment <deployer> <lz endpoint> <multisig>"
     echo "  deploy-ousdai-utility <deployer> <lz endpoint> <o adapters> <multisig>"
+    echo "  deploy-usdai-queued-depositor <deployer> <multisig> <whitelisted tokens> <min amounts>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -142,6 +145,15 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOUSDaiUtility.s.sol:DeployOUSDaiUtility" --sig "run(address,address,address[],address)" $2 $3 "$4" $5
         ;;
 
+   "deploy-usdai-queued-depositor")
+        if [ "$#" -ne 5 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,address[],uint256[])" $2 $3 "$4" "$5"
+        ;;
+
    "upgrade-usdai")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run()"
         ;;
@@ -171,6 +183,10 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeOUSDaiUtility.s.sol:UpgradeOUSDaiUtility" --sig "run(address)" $2
+        ;;
+
+   "upgrade-usdai-queued-depositor")
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDaiQueuedDepositor.s.sol:UpgradeUSDaiQueuedDepositor" --sig "run()"
         ;;
 
    "swap-adapter-set-token-whitelist")
@@ -207,6 +223,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
+        ;;
+
+   "transfer-ownership")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/TransferOwnership.s.sol:TransferOwnership" --sig "run(address,address)" $2 $3
         ;;
 
    "deploy-production-environment")
