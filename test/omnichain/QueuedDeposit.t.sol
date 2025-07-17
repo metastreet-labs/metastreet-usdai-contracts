@@ -78,6 +78,9 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending2, amount * 2);
         assertEq(queueItems2.length, 2);
 
+        // Verify that the queued USDai was minted to the user
+        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), amount * 2);
+
         vm.stopPrank();
     }
 
@@ -129,6 +132,9 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending2, amount * 2);
         assertEq(queueItems2.length, 2);
 
+        // Verify that the queued USDai was minted to the user
+        assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), amount * 2);
+
         vm.stopPrank();
     }
 
@@ -145,7 +151,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.QueuedDeposit, suffix);
 
         // LZ composer option
-        bytes memory composerOptions = receiveOptions.addExecutorLzComposeOption(0, 500_000, uint128(0));
+        bytes memory composerOptions = receiveOptions.addExecutorLzComposeOption(0, 1_050_000, uint128(0));
 
         // Send param for USD away to USD home
         SendParam memory usdtSendParam = SendParam({
@@ -198,6 +204,9 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem.dstEid, usdtAwayEid);
         assertEq(queueItem.depositor, address(oUsdaiUtility));
         assertEq(queueItem.recipient, user);
+
+        // Verify that the queued USDai was minted to the user
+        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), usdtSendParam.minAmountLD);
 
         vm.stopPrank();
     }
@@ -275,6 +284,22 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         vm.startPrank(user);
         vm.expectRevert(IUSDaiQueuedDepositor.InvalidToken.selector);
         usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdai), 100, user, 0);
+        vm.stopPrank();
+    }
+
+    function test__USDaiQueuedDeposit_RevertWhen_TransferringReceiptToken() public {
+        uint256 amount = 1_000_000 ether;
+
+        // User approves USDai to spend their USD
+        vm.startPrank(user);
+        usdtHomeToken.approve(address(usdaiQueuedDepositor), amount);
+
+        // User deposits into USDai queued depositor
+        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), amount, user, 0);
+
+        vm.expectRevert();
+        IERC20(queuedUSDaiToken).transfer(address(usdaiQueuedDepositor), amount);
+
         vm.stopPrank();
     }
 }

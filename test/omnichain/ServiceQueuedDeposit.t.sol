@@ -141,6 +141,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         );
 
         assertEq(usdai.balanceOf(user), 3_000_000 ether);
+        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), 0);
     }
 
     function test__USDaiServiceQueuedLocalDeposit_WithBlacklistedAccount() public {
@@ -288,6 +289,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(
             IERC20(address(stakedUsdai)).balanceOf(user), 500_000 ether - 1e6 + minShares1 + minShares2 + minShares3
         );
+        assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), 0);
     }
 
     function test__USDaiServiceQueuedOmnichainDeposit() public {

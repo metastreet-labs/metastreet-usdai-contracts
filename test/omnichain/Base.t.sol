@@ -32,7 +32,8 @@ import {TestHelperOz5} from "@layerzerolabs/test-devtools-evm-foundry/contracts/
 
 // Implementation imports
 import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
-import {USDaiQueuedDepositor} from "src/USDaiQueuedDepositor.sol";
+import {USDaiQueuedDepositor} from "src/queuedDepositor/USDaiQueuedDepositor.sol";
+import {ReceiptToken} from "src/queuedDepositor/ReceiptToken.sol";
 
 // Mock imports
 import {MockUSDai} from "../mocks/MockUSDai.sol";
@@ -85,6 +86,9 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
 
     address internal user = address(0x1);
     address internal blacklistedUser = address(0x2);
+
+    address internal queuedUSDaiToken;
+    address internal queuedStakedUSDaiToken;
 
     function setUp() public virtual override {
         // Call the base setup function from the TestHelperOz5 contract
@@ -229,10 +233,17 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         stakedUsdaiHomeOAdapter.setRateLimits(rateLimitConfigsStakedUsdaiHome);
         stakedUsdaiAwayOAdapter.setRateLimits(rateLimitConfigsStakedUsdaiAway);
 
+        // Deploy receipt tokens
+        ReceiptToken receiptTokenImpl = new ReceiptToken();
+
         // Deploy usdai queued depositor
         address usdaiQueuedDepositorImpl = address(
             new USDaiQueuedDepositor(
-                address(usdai), address(stakedUsdai), address(usdaiHomeOAdapter), address(stakedUsdaiHomeOAdapter)
+                address(usdai),
+                address(stakedUsdai),
+                address(usdaiHomeOAdapter),
+                address(stakedUsdaiHomeOAdapter),
+                address(receiptTokenImpl)
             )
         );
 
@@ -250,6 +261,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         );
         usdaiQueuedDepositor = USDaiQueuedDepositor(address(usdaiQueuedDepositorProxy));
         AccessControl(address(usdaiQueuedDepositor)).grantRole(keccak256("CONTROLLER_ADMIN_ROLE"), address(this));
+        queuedUSDaiToken = address(usdaiQueuedDepositor.queuedUSDaiToken());
+        queuedStakedUSDaiToken = address(usdaiQueuedDepositor.queuedStakedUSDaiToken());
 
         // Configure and wire the USDT OAdapters together
         address[] memory oAdapters = new address[](6);

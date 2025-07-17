@@ -131,6 +131,14 @@ interface IUSDaiQueuedDepositor {
      */
     event ActionFailed(string action, bytes reason);
 
+    /**
+     * @notice Receipt token deployed
+     * @param depositToken Deposit token
+     * @param queueType Queue type
+     * @param receiptToken Receipt token
+     */
+    event ReceiptTokenDeployed(address indexed depositToken, QueueType indexed queueType, address indexed receiptToken);
+
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
@@ -175,6 +183,24 @@ interface IUSDaiQueuedDepositor {
     function whitelistedTokenMinAmount(
         address token
     ) external view returns (uint256);
+
+    /**
+     * @notice Receipt token implementation
+     * @return Receipt token implementation
+     */
+    function receiptTokenImplementation() external view returns (address);
+
+    /**
+     * @notice Queued USDai Token
+     * @return Queued USDai Token
+     */
+    function queuedUSDaiToken() external view returns (address);
+
+    /**
+     * @notice Queued Staked USDai Token
+     * @return Queued Staked USDai Token
+     */
+    function queuedStakedUSDaiToken() external view returns (address);
 
     /**
      * @notice Queue info

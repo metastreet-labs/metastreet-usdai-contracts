@@ -2,10 +2,14 @@
 pragma solidity 0.8.29;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
+import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -14,9 +18,11 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {IOFT as IOFT_, SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
-import "./interfaces/IUSDai.sol";
-import {IStakedUSDai as IStakedUSDai_} from "./interfaces/IStakedUSDai.sol";
-import "./interfaces/IUSDaiQueuedDepositor.sol";
+import "./ReceiptToken.sol";
+
+import "src/interfaces/IUSDai.sol";
+import {IStakedUSDai as IStakedUSDai_} from "src/interfaces/IStakedUSDai.sol";
+import "src/interfaces/IUSDaiQueuedDepositor.sol";
 
 /**
  * @title IOFT (extension of LayerZero's IOFT)
@@ -74,18 +80,26 @@ contract USDaiQueuedDepositor is
 
     /**
      * @notice Whitelisted tokens storage location
-     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.whitelistedTokens_")) - 1)) &
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.whitelistedTokens")) - 1)) &
      * ~bytes32(uint256(0xff));
      */
     bytes32 private constant WHITELISTED_TOKENS_STORAGE_LOCATION =
-        0x8d92cd31b423b5844c967753c563af28e445b51c14470570e0845d7633070f00;
+        0xae8373c513d60a87649c929c9ed639f44732aae4408e77a19fe920d679776700;
 
     /**
      * @notice Queue state storage location
-     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.queueState_")) - 1)) & ~bytes32(uint256(0xff));
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.queueState")) - 1)) & ~bytes32(uint256(0xff));
      */
     bytes32 private constant QUEUE_STATE_STORAGE_LOCATION =
-        0x737aa2c4bfc2bb6044715d21c0e37d6ada90b3fd83e1f93c38958b15ceedcc00;
+        0xde17916dd48def670a35b2a4d73c98b59c767a72e42b298050b9c5cddd25fa00;
+
+    /**
+     * @notice Receipt tokens storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.receiptTokens")) - 1)) &
+     * ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant RECEIPT_TOKENS_STORAGE_LOCATION =
+        0x0b1935fa33a5b9486fb92ab02635f3c9d624ac3df1e1ee01c88d6052bb824d00;
 
     /*------------------------------------------------------------------------*/
     /* Immutable state */
@@ -121,6 +135,25 @@ contract USDaiQueuedDepositor is
      */
     uint256 internal immutable _stakedUsdaiDecimalConversionRate;
 
+    /**
+     * @notice Receipt token implementation
+     */
+    address internal immutable _receiptTokenImplementation;
+
+    /*------------------------------------------------------------------------*/
+    /* State */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Receipt token
+     */
+    ReceiptToken internal _queuedUSDaiToken;
+
+    /**
+     * @notice Queued deposit receipt token
+     */
+    ReceiptToken internal _queuedStakedUSDaiToken;
+
     /*------------------------------------------------------------------------*/
     /* Structures */
     /*------------------------------------------------------------------------*/
@@ -140,18 +173,26 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @custom:storage-location erc7201:usdaiUtility.queueState
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.queueState
      */
     struct QueueState {
         mapping(QueueType => mapping(address => Queue)) queues;
     }
 
     /**
-     * @custom:storage-location erc7201:usdaiUtility.whitelistedTokens
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.whitelistedTokens
      */
     struct WhitelistedTokens {
         EnumerableSet.AddressSet whitelistedTokens;
         mapping(address => uint256) minAmounts;
+    }
+
+    /**
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.receiptTokens
+     */
+    struct ReceiptTokens {
+        ReceiptToken queuedUSDaiToken;
+        ReceiptToken queuedStakedUSDaiToken;
     }
 
     /*------------------------------------------------------------------------*/
@@ -164,8 +205,15 @@ contract USDaiQueuedDepositor is
      * @param stakedUsdai_ Staked USDai token
      * @param usdaiOAdapter_ USDai OAdapter
      * @param stakedUsdaiOAdapter_ Staked USDai OAdapter
+     * @param receiptTokenImplementation_ Receipt token implementation
      */
-    constructor(address usdai_, address stakedUsdai_, address usdaiOAdapter_, address stakedUsdaiOAdapter_) {
+    constructor(
+        address usdai_,
+        address stakedUsdai_,
+        address usdaiOAdapter_,
+        address stakedUsdaiOAdapter_,
+        address receiptTokenImplementation_
+    ) {
         _usdai = IUSDai(usdai_);
         _stakedUsdai = IStakedUSDai(stakedUsdai_);
 
@@ -174,6 +222,8 @@ contract USDaiQueuedDepositor is
 
         _usdaiDecimalConversionRate = _usdaiOAdapter.decimalConversionRate();
         _stakedUsdaiDecimalConversionRate = _stakedUsdaiOAdapter.decimalConversionRate();
+
+        _receiptTokenImplementation = receiptTokenImplementation_;
 
         _disableInitializers();
     }
@@ -204,10 +254,18 @@ contract USDaiQueuedDepositor is
         /* Whitelist tokens */
         for (uint256 i; i < whitelistedTokens_.length; i++) {
             if (whitelistedTokens_[i] == address(0)) revert InvalidToken();
-
             _getWhitelistedTokensStorage().whitelistedTokens.add(whitelistedTokens_[i]);
             _getWhitelistedTokensStorage().minAmounts[whitelistedTokens_[i]] = minAmounts[i];
         }
+
+        /* Get receipt tokens storage */
+        ReceiptTokens storage receiptTokens = _getReceiptTokensStorage();
+
+        /* Deploy queued USDai receipt token */
+        receiptTokens.queuedUSDaiToken = _createReceiptTokenProxy("Queued USDai", "qUSDai");
+
+        /* Deploy queued staked USDai receipt token */
+        receiptTokens.queuedStakedUSDaiToken = _createReceiptTokenProxy("Queued Staked USDai", "qsUSDai");
 
         /* Grant roles */
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -228,10 +286,41 @@ contract USDaiQueuedDepositor is
         }
     }
 
+    /**
+     * @notice Get reference to ERC-7201 whitelisted tokens storage
+     *
+     * @return $ Reference to whitelisted tokens storage
+     */
     function _getWhitelistedTokensStorage() internal pure returns (WhitelistedTokens storage $) {
         assembly {
             $.slot := WHITELISTED_TOKENS_STORAGE_LOCATION
         }
+    }
+
+    /**
+     * @notice Get reference to ERC-7201 receipt tokens storage
+     *
+     * @return $ Reference to receipt tokens storage
+     */
+    function _getReceiptTokensStorage() internal pure returns (ReceiptTokens storage $) {
+        assembly {
+            $.slot := RECEIPT_TOKENS_STORAGE_LOCATION
+        }
+    }
+
+    /**
+     * @notice Create a receipt token proxy
+     * @param name Token name
+     * @param symbol Token symbol
+     * @return ReceiptToken The deployed receipt token proxy
+     */
+    function _createReceiptTokenProxy(string memory name, string memory symbol) internal returns (ReceiptToken) {
+        address proxy = address(
+            new ERC1967Proxy(
+                address(_receiptTokenImplementation), abi.encodeWithSignature("initialize(string,string)", name, symbol)
+            )
+        );
+        return ReceiptToken(proxy);
     }
 
     /**
@@ -362,6 +451,11 @@ contract USDaiQueuedDepositor is
             uint256 servicedDeposit = Math.min(item.pendingDeposit, remainingServiceAmount);
             uint256 transferAmount = Math.mulDiv(amount, servicedDeposit, serviceAmount);
 
+            /* Burn receipt token. Note: unable to cache outside while loop due to stack too deep error */
+            queueType == QueueType.Deposit
+                ? _getReceiptTokensStorage().queuedUSDaiToken.burn(item.recipient, servicedDeposit)
+                : _getReceiptTokensStorage().queuedStakedUSDaiToken.burn(item.recipient, servicedDeposit);
+
             /* Update remaining service amount */
             remainingServiceAmount -= servicedDeposit;
             item.pendingDeposit -= servicedDeposit;
@@ -490,6 +584,27 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
+    function receiptTokenImplementation() external view returns (address) {
+        return address(_receiptTokenImplementation);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function queuedUSDaiToken() external view returns (address) {
+        return address(_getReceiptTokensStorage().queuedUSDaiToken);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function queuedStakedUSDaiToken() external view returns (address) {
+        return address(_getReceiptTokensStorage().queuedStakedUSDaiToken);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
     function queueInfo(
         QueueType queueType,
         address depositToken,
@@ -566,6 +681,15 @@ contract USDaiQueuedDepositor is
 
         /* Add item to caller's queue indexes */
         queue.queueIndexes[recipient].add(queueIndex);
+
+        /* Mint receipt token */
+        if (queueType == QueueType.Deposit) {
+            _getReceiptTokensStorage().queuedUSDaiToken.mint(recipient, amount);
+        } else if (queueType == QueueType.DepositAndStake) {
+            _getReceiptTokensStorage().queuedStakedUSDaiToken.mint(recipient, amount);
+        } else {
+            revert InvalidQueueType();
+        }
 
         /* Emit Deposit event */
         emit Deposit(queueType, depositToken, queueIndex, amount, recipient);
