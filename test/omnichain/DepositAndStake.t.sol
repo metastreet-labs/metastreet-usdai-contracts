@@ -102,6 +102,74 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         vm.stopPrank();
     }
 
+    function test__OUSDaiUtilityDepositUsdAndStake_LocalDestination() public {
+        vm.startPrank(user);
+
+        // LZ receive option
+        bytes memory receiveOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200_000, 0);
+
+        // Send param for USDAI away to USDAI home
+        SendParam memory usdaiSendParam = SendParam(0, addressToBytes32(user), 0, 0, "", "", "");
+
+        // Compose message for USDAI away to USDAI home
+        bytes memory suffix = abi.encode(initialBalance, "", initialBalance - 1e6, usdaiSendParam, 0);
+        bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.DepositAndStake, suffix);
+
+        // LZ composer option
+        bytes memory composerOptions = receiveOptions.addExecutorLzComposeOption(0, 1_000_000, 0);
+
+        // Send param for USD away to USD home
+        SendParam memory usdtSendParam = SendParam({
+            dstEid: usdtHomeEid,
+            to: addressToBytes32(address(oUsdaiUtility)),
+            amountLD: initialBalance,
+            minAmountLD: initialBalance,
+            extraOptions: composerOptions,
+            composeMsg: composeMsg,
+            oftCmd: ""
+        });
+
+        // Quote the fee for sending USD from away to home
+        (,, OFTReceipt memory receipt) = usdtAwayOAdapter.quoteOFT(usdtSendParam);
+        usdtSendParam.minAmountLD = receipt.amountReceivedLD;
+
+        // Compose message for USD away to USD home
+        MessagingFee memory fee = usdtAwayOAdapter.quoteSend(usdtSendParam, false);
+
+        // Send the USD
+        (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) =
+            usdtAwayOAdapter.send{value: fee.nativeFee}(usdtSendParam, fee, payable(address(this)));
+
+        // Verify that the packets were correctly sent to the destination chain
+        verifyPackets(usdtHomeEid, addressToBytes32(address(usdtHomeOAdapter)));
+
+        // Recreate the compose message for the composer receiver
+        bytes memory composerMsg_ = OFTComposeMsgCodec.encode(
+            msgReceipt.nonce,
+            usdtAwayEid,
+            oftReceipt.amountReceivedLD,
+            abi.encodePacked(addressToBytes32(user), composeMsg)
+        );
+
+        // Execute the compose message
+        this.lzCompose(
+            usdtHomeEid,
+            address(usdtHomeOAdapter),
+            composerOptions,
+            msgReceipt.guid,
+            address(oUsdaiUtility),
+            composerMsg_
+        );
+
+        // Verify that the packets were correctly sent to the destination chain
+        verifyPackets(stakedUsdaiAwayEid, addressToBytes32(address(stakedUsdaiAwayOAdapter)));
+
+        // Assert that the staked USDAI home token was minted to the user
+        assertEq(IERC20(address(stakedUsdai)).balanceOf(user), initialBalance - 1e6);
+
+        vm.stopPrank();
+    }
+
     function test__OUSDaiUtilityDepositUsdAndStake_InvalidDeposit() public {
         vm.startPrank(user);
 
