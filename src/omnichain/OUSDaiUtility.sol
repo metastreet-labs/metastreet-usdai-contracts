@@ -192,6 +192,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param oAdapters OAdapters to whitelist
      */
     function initialize(address admin, address[] memory oAdapters) external initializer {
+        __ReentrancyGuard_init();
+        __AccessControl_init();
+
         for (uint256 i = 0; i < oAdapters.length; i++) {
             _whitelistedOAdapters.add(oAdapters[i]);
         }
