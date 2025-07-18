@@ -249,10 +249,21 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         try _usdai.deposit(depositToken, depositAmount, usdaiAmountMinimum, address(this), path) returns (
             uint256 usdaiAmount
         ) {
+            /* Transfer the USDai to local destination */
+            if (sendParam.dstEid == 0) {
+                /* Transfer the USDai to recipient */
+                _usdai.transfer(to, usdaiAmount);
+
+                /* Emit the deposit event */
+                emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
+
+                return;
+            }
+
             /* Update the sendParam with the USDai amount */
             sendParam.amountLD = usdaiAmount;
 
-            /* Send the USDai back to source chain */
+            /* Send the USDai to destination chain */
             try _usdaiOAdapter.send{value: nativeFee}(
                 sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
             ) {
@@ -308,6 +319,19 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             _usdai.approve(address(_stakedUsdai), usdaiAmount);
 
             try _stakedUsdai.deposit(usdaiAmount, address(this), minShares) returns (uint256 susdaiAmount) {
+                /* Transfer the staked USDai to local destination */
+                if (sendParam.dstEid == 0) {
+                    /* Transfer the staked USDai to recipient */
+                    IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
+
+                    /* Emit the deposit and stake event */
+                    emit ComposerDepositAndStake(
+                        sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
+                    );
+
+                    return;
+                }
+
                 /* Update the sendParam with the staked USDai amount */
                 sendParam.amountLD = susdaiAmount;
 
