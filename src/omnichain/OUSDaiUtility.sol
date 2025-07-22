@@ -12,6 +12,7 @@ import "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroCompose
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
+import "../interfaces/IOUSDaiUtility.sol";
 import "../interfaces/IUSDai.sol";
 import "../interfaces/IStakedUSDai.sol";
 import "../interfaces/IUSDaiQueuedDepositor.sol";
@@ -20,7 +21,7 @@ import "../interfaces/IUSDaiQueuedDepositor.sol";
  * @title Omnichain Utility
  * @author MetaStreet Foundation
  */
-contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, AccessControlUpgradeable, IOUSDaiUtility {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -32,105 +33,6 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @notice Implementation version
      */
     string public constant IMPLEMENTATION_VERSION = "1.2";
-
-    /*------------------------------------------------------------------------*/
-    /* Structures */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Action type
-     */
-    enum ActionType {
-        Deposit,
-        DepositAndStake,
-        QueuedDeposit /* deposit only, or deposit and stake */
-    }
-
-    /*------------------------------------------------------------------------*/
-    /* Errors */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Invalid address
-     */
-    error InvalidAddress();
-
-    /**
-     * @notice Unknown Action
-     */
-    error UnknownAction();
-
-    /*------------------------------------------------------------------------*/
-    /* Events */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Composer deposit event
-     * @param dstEid Destination chain EID
-     * @param depositToken Deposit token
-     * @param recipient Recipient address
-     * @param depositAmount Amount of deposit token
-     * @param usdaiAmount Amount of USDai received
-     */
-    event ComposerDeposit(
-        uint256 indexed dstEid,
-        address indexed depositToken,
-        address indexed recipient,
-        uint256 depositAmount,
-        uint256 usdaiAmount
-    );
-
-    /**
-     * @notice Composer deposit and stake event
-     * @param dstEid Destination chain EID
-     * @param depositToken Token to deposit
-     * @param recipient Recipient address
-     * @param depositToken Deposit token
-     * @param depositAmount Amount of deposit token
-     * @param usdaiAmount Amount of USDai received
-     * @param susdaiAmount Amount of Staked USDai received
-     */
-    event ComposerDepositAndStake(
-        uint256 indexed dstEid,
-        address indexed depositToken,
-        address indexed recipient,
-        uint256 depositAmount,
-        uint256 usdaiAmount,
-        uint256 susdaiAmount
-    );
-
-    /**
-     * @notice Queued deposit event
-     * @param queueType Queue type
-     * @param depositToken Token to deposit
-     * @param depositAmount Amount of tokens to deposit
-     * @param recipient Recipient
-     */
-    event ComposerQueuedDeposit(
-        IUSDaiQueuedDepositor.QueueType indexed queueType,
-        address indexed depositToken,
-        address indexed recipient,
-        uint256 depositAmount
-    );
-
-    /**
-     * @notice Action failed event
-     * @param action Action that failed
-     * @param reason Reason for action failure
-     */
-    event ActionFailed(string indexed action, bytes reason);
-
-    /**
-     * @notice Whitelisted OAdapters added event
-     * @param oAdapters OAdapters added
-     */
-    event WhitelistedOAdaptersAdded(address[] oAdapters);
-
-    /**
-     * @notice Whitelisted OAdapters removed event
-     * @param oAdapters OAdapters removed
-     */
-    event WhitelistedOAdaptersRemoved(address[] oAdapters);
 
     /*------------------------------------------------------------------------*/
     /* Immutable state */
@@ -452,8 +354,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Add whitelisted OAdapters
-     * @param oAdapters OAdapters to whitelist
+     * @inheritdoc IOUSDaiUtility
      */
     function addWhitelistedOAdapters(
         address[] memory oAdapters
@@ -467,8 +368,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /**
-     * @notice Remove whitelisted OAdapters
-     * @param oAdapters OAdapters to remove
+     * @inheritdoc IOUSDaiUtility
      */
     function removeWhitelistedOAdapters(
         address[] memory oAdapters
@@ -482,10 +382,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /**
-     * @notice Rescue tokens
-     * @param token Token to rescue
-     * @param to Destination address
-     * @param amount Amount of tokens to rescue
+     * @inheritdoc IOUSDaiUtility
      */
     function rescue(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         IERC20(token).transfer(to, amount);
