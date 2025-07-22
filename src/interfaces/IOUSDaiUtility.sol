@@ -35,6 +35,16 @@ interface IOUSDaiUtility {
      */
     error UnknownAction();
 
+    /**
+     * @notice Deposit failed
+     */
+    error DepositFailed();
+
+    /**
+     * @notice Deposit and stake failed
+     */
+    error DepositAndStakeFailed();
+
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
@@ -106,6 +116,26 @@ interface IOUSDaiUtility {
      * @param oAdapters OAdapters removed
      */
     event WhitelistedOAdaptersRemoved(address[] oAdapters);
+
+    /*------------------------------------------------------------------------*/
+    /* Public API */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Deposit the deposit token
+     * @param depositToken Deposit token
+     * @param depositAmount Deposit token amount
+     * @param data Additional compose data
+     */
+    function deposit(address depositToken, uint256 depositAmount, bytes memory data) external payable;
+
+    /**
+     * @notice Deposit and stake the deposit token
+     * @param depositToken Deposit token
+     * @param depositAmount Deposit token amount
+     * @param data Additional compose data
+     */
+    function depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) external payable;
 
     /*------------------------------------------------------------------------*/
     /* Permissioned API */

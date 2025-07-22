@@ -18,6 +18,7 @@ import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/li
 import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
+import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -148,7 +149,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // Compose message for deposit on home chain
         bytes memory suffix = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, usdtAwayEid);
-        bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.QueuedDeposit, suffix);
+        bytes memory composeMsg = abi.encode(IOUSDaiUtility.ActionType.QueuedDeposit, suffix);
 
         // LZ composer option
         bytes memory composerOptions = receiveOptions.addExecutorLzComposeOption(0, 1_050_000, uint128(0));
@@ -223,7 +224,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // Compose message for deposit on home chain
         bytes memory suffix = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, usdtAwayEid);
-        bytes memory composeMsg = abi.encode(OUSDaiUtility.ActionType.QueuedDeposit, suffix);
+        bytes memory composeMsg = abi.encode(IOUSDaiUtility.ActionType.QueuedDeposit, suffix);
 
         // LZ composer option
         bytes memory composerOptions = receiveOptions.addExecutorLzComposeOption(0, 500_000, uint128(0));
