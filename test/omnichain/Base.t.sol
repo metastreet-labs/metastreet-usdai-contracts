@@ -317,6 +317,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         AccessControl(address(usdtAwayToken)).grantRole(usdtAwayToken.BRIDGE_ADMIN_ROLE(), address(this));
         usdtAwayToken.mint(user, initialBalance);
         usdtAwayToken.mint(blacklistedUser, initialBalance);
+        AccessControl(address(usdtHomeToken)).grantRole(usdtHomeToken.BRIDGE_ADMIN_ROLE(), address(this));
+        usdtHomeToken.mint(user, initialBalance);
 
         // Set user as blacklisted
         AccessControl(address(stakedUsdai)).grantRole(keccak256("BLACKLIST_ADMIN_ROLE"), address(this));
