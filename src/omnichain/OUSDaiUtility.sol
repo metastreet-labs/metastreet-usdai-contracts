@@ -137,8 +137,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the deposit was successful, false otherwise
      */
-    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         (uint256 usdaiAmountMinimum, bytes memory path, SendParam memory sendParam, uint256 nativeFee) =
             abi.decode(data, (uint256, bytes, SendParam, uint256));
 
@@ -159,7 +160,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                 /* Emit the deposit event */
                 emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
 
-                return;
+                return true;
             }
 
             /* Update the sendParam with the USDai amount */
@@ -171,6 +172,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             ) {
                 /* Emit the deposit event */
                 emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
+
+                return true;
             } catch (bytes memory reason) {
                 /* Transfer the usdai to owner */
                 _usdai.transfer(to, usdaiAmount);
@@ -189,6 +192,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
         }
+
+        return false;
     }
 
     /**
@@ -197,8 +202,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the deposit and stake was successful, false otherwise
      */
-    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         /* Decode the message */
         (
             uint256 usdaiAmountMinimum,
@@ -231,7 +237,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                         sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
                     );
 
-                    return;
+                    return true;
                 }
 
                 /* Update the sendParam with the staked USDai amount */
@@ -245,6 +251,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                     emit ComposerDepositAndStake(
                         sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
                     );
+
+                    return true;
                 } catch (bytes memory reason) {
                     /* Transfer the staked USDai to owner */
                     IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
@@ -274,6 +282,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
         }
+
+        return false;
     }
 
     /**
@@ -342,6 +352,32 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         } else {
             revert UnknownAction();
         }
+    }
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function deposit(address depositToken, uint256 depositAmount, bytes memory data) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Deposit the deposit token */
+        if (!_deposit(depositToken, depositAmount, data)) revert DepositFailed();
+    }
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function depositAndStake(
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data
+    ) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Deposit and stake */
+        if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
     }
 
     /**
