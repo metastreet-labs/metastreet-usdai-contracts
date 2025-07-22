@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
@@ -46,7 +46,7 @@ interface IStakedUSDai is IStakedUSDai_ {
  */
 contract USDaiQueuedDepositor is
     MulticallUpgradeable,
-    ReentrancyGuardUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
     AccessControlUpgradeable,
     IUSDaiQueuedDepositor
 {
@@ -248,7 +248,7 @@ contract USDaiQueuedDepositor is
 
         /* Initialize dependencies */
         __Multicall_init();
-        __ReentrancyGuard_init();
+        __ReentrancyGuardTransient_init();
         __AccessControl_init();
 
         /* Whitelist tokens */
@@ -570,6 +570,15 @@ contract USDaiQueuedDepositor is
      */
     function whitelistedTokens() external view returns (address[] memory) {
         return _getWhitelistedTokensStorage().whitelistedTokens.values();
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function isWhitelistedToken(
+        address token
+    ) external view returns (bool) {
+        return _getWhitelistedTokensStorage().whitelistedTokens.contains(token);
     }
 
     /**

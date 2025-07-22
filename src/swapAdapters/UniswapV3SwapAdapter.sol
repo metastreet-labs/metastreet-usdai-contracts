@@ -209,6 +209,17 @@ contract UniswapV3SwapAdapter is ISwapAdapter, AccessControl {
         return _whitelistedTokens.values();
     }
 
+    /**
+     * @notice Check if a token is whitelisted
+     * @param token Token
+     * @return True if the token is whitelisted, false otherwise
+     */
+    function isWhitelistedToken(
+        address token
+    ) external view returns (bool) {
+        return _whitelistedTokens.contains(token);
+    }
+
     /*------------------------------------------------------------------------*/
     /* Helpers */
     /*------------------------------------------------------------------------*/

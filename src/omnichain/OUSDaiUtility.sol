@@ -12,6 +12,7 @@ import "@layerzerolabs/lz-evm-protocol-v2/contracts/interfaces/ILayerZeroCompose
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
+import "../interfaces/IOUSDaiUtility.sol";
 import "../interfaces/IUSDai.sol";
 import "../interfaces/IStakedUSDai.sol";
 import "../interfaces/IUSDaiQueuedDepositor.sol";
@@ -20,7 +21,7 @@ import "../interfaces/IUSDaiQueuedDepositor.sol";
  * @title Omnichain Utility
  * @author MetaStreet Foundation
  */
-contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, AccessControlUpgradeable {
+contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, AccessControlUpgradeable, IOUSDaiUtility {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -32,105 +33,6 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @notice Implementation version
      */
     string public constant IMPLEMENTATION_VERSION = "1.2";
-
-    /*------------------------------------------------------------------------*/
-    /* Structures */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Action type
-     */
-    enum ActionType {
-        Deposit,
-        DepositAndStake,
-        QueuedDeposit /* deposit only, or deposit and stake */
-    }
-
-    /*------------------------------------------------------------------------*/
-    /* Errors */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Invalid address
-     */
-    error InvalidAddress();
-
-    /**
-     * @notice Unknown Action
-     */
-    error UnknownAction();
-
-    /*------------------------------------------------------------------------*/
-    /* Events */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Composer deposit event
-     * @param dstEid Destination chain EID
-     * @param depositToken Deposit token
-     * @param recipient Recipient address
-     * @param depositAmount Amount of deposit token
-     * @param usdaiAmount Amount of USDai received
-     */
-    event ComposerDeposit(
-        uint256 indexed dstEid,
-        address indexed depositToken,
-        address indexed recipient,
-        uint256 depositAmount,
-        uint256 usdaiAmount
-    );
-
-    /**
-     * @notice Composer deposit and stake event
-     * @param dstEid Destination chain EID
-     * @param depositToken Token to deposit
-     * @param recipient Recipient address
-     * @param depositToken Deposit token
-     * @param depositAmount Amount of deposit token
-     * @param usdaiAmount Amount of USDai received
-     * @param susdaiAmount Amount of Staked USDai received
-     */
-    event ComposerDepositAndStake(
-        uint256 indexed dstEid,
-        address indexed depositToken,
-        address indexed recipient,
-        uint256 depositAmount,
-        uint256 usdaiAmount,
-        uint256 susdaiAmount
-    );
-
-    /**
-     * @notice Queued deposit event
-     * @param queueType Queue type
-     * @param depositToken Token to deposit
-     * @param depositAmount Amount of tokens to deposit
-     * @param recipient Recipient
-     */
-    event ComposerQueuedDeposit(
-        IUSDaiQueuedDepositor.QueueType indexed queueType,
-        address indexed depositToken,
-        address indexed recipient,
-        uint256 depositAmount
-    );
-
-    /**
-     * @notice Action failed event
-     * @param action Action that failed
-     * @param reason Reason for action failure
-     */
-    event ActionFailed(string indexed action, bytes reason);
-
-    /**
-     * @notice Whitelisted OAdapters added event
-     * @param oAdapters OAdapters added
-     */
-    event WhitelistedOAdaptersAdded(address[] oAdapters);
-
-    /**
-     * @notice Whitelisted OAdapters removed event
-     * @param oAdapters OAdapters removed
-     */
-    event WhitelistedOAdaptersRemoved(address[] oAdapters);
 
     /*------------------------------------------------------------------------*/
     /* Immutable state */
@@ -235,8 +137,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the deposit was successful, false otherwise
      */
-    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         (uint256 usdaiAmountMinimum, bytes memory path, SendParam memory sendParam, uint256 nativeFee) =
             abi.decode(data, (uint256, bytes, SendParam, uint256));
 
@@ -249,15 +152,28 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         try _usdai.deposit(depositToken, depositAmount, usdaiAmountMinimum, address(this), path) returns (
             uint256 usdaiAmount
         ) {
+            /* Transfer the USDai to local destination */
+            if (sendParam.dstEid == 0) {
+                /* Transfer the USDai to recipient */
+                _usdai.transfer(to, usdaiAmount);
+
+                /* Emit the deposit event */
+                emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
+
+                return true;
+            }
+
             /* Update the sendParam with the USDai amount */
             sendParam.amountLD = usdaiAmount;
 
-            /* Send the USDai back to source chain */
+            /* Send the USDai to destination chain */
             try _usdaiOAdapter.send{value: nativeFee}(
                 sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
             ) {
                 /* Emit the deposit event */
                 emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
+
+                return true;
             } catch (bytes memory reason) {
                 /* Transfer the usdai to owner */
                 _usdai.transfer(to, usdaiAmount);
@@ -276,6 +192,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
         }
+
+        return false;
     }
 
     /**
@@ -284,8 +202,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the deposit and stake was successful, false otherwise
      */
-    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         /* Decode the message */
         (
             uint256 usdaiAmountMinimum,
@@ -308,6 +227,19 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             _usdai.approve(address(_stakedUsdai), usdaiAmount);
 
             try _stakedUsdai.deposit(usdaiAmount, address(this), minShares) returns (uint256 susdaiAmount) {
+                /* Transfer the staked USDai to local destination */
+                if (sendParam.dstEid == 0) {
+                    /* Transfer the staked USDai to recipient */
+                    IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
+
+                    /* Emit the deposit and stake event */
+                    emit ComposerDepositAndStake(
+                        sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
+                    );
+
+                    return true;
+                }
+
                 /* Update the sendParam with the staked USDai amount */
                 sendParam.amountLD = susdaiAmount;
 
@@ -319,6 +251,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                     emit ComposerDepositAndStake(
                         sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
                     );
+
+                    return true;
                 } catch (bytes memory reason) {
                     /* Transfer the staked USDai to owner */
                     IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
@@ -348,6 +282,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
         }
+
+        return false;
     }
 
     /**
@@ -419,6 +355,32 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function deposit(address depositToken, uint256 depositAmount, bytes memory data) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Deposit the deposit token */
+        if (!_deposit(depositToken, depositAmount, data)) revert DepositFailed();
+    }
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function depositAndStake(
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data
+    ) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Deposit and stake */
+        if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
+    }
+
+    /**
      * @notice Receive ETH
      */
     receive() external payable {}
@@ -428,8 +390,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Add whitelisted OAdapters
-     * @param oAdapters OAdapters to whitelist
+     * @inheritdoc IOUSDaiUtility
      */
     function addWhitelistedOAdapters(
         address[] memory oAdapters
@@ -443,8 +404,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /**
-     * @notice Remove whitelisted OAdapters
-     * @param oAdapters OAdapters to remove
+     * @inheritdoc IOUSDaiUtility
      */
     function removeWhitelistedOAdapters(
         address[] memory oAdapters
@@ -458,10 +418,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /**
-     * @notice Rescue tokens
-     * @param token Token to rescue
-     * @param to Destination address
-     * @param amount Amount of tokens to rescue
+     * @inheritdoc IOUSDaiUtility
      */
     function rescue(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
         IERC20(token).transfer(to, amount);
