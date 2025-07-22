@@ -575,6 +575,15 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
+    function isWhitelistedToken(
+        address token
+    ) external view returns (bool) {
+        return _getWhitelistedTokensStorage().whitelistedTokens.contains(token);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
     function whitelistedTokenMinAmount(
         address token
     ) external view returns (uint256) {

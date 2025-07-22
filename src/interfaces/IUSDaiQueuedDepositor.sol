@@ -185,6 +185,15 @@ interface IUSDaiQueuedDepositor {
     ) external view returns (uint256);
 
     /**
+     * @notice Check if a token is whitelisted
+     * @param token Token
+     * @return True if the token is whitelisted, false otherwise
+     */
+    function isWhitelistedToken(
+        address token
+    ) external view returns (bool);
+
+    /**
      * @notice Receipt token implementation
      * @return Receipt token implementation
      */
