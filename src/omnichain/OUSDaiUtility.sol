@@ -137,8 +137,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the deposit was successful, false otherwise
      */
-    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _deposit(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         (uint256 usdaiAmountMinimum, bytes memory path, SendParam memory sendParam, uint256 nativeFee) =
             abi.decode(data, (uint256, bytes, SendParam, uint256));
 
@@ -158,25 +159,25 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
                 /* Emit the deposit event */
                 emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
+            } else {
+                /* Update the sendParam with the USDai amount */
+                sendParam.amountLD = usdaiAmount;
 
-                return;
-            }
+                /* Send the USDai to destination chain */
+                try _usdaiOAdapter.send{value: nativeFee}(
+                    sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
+                ) {
+                    /* Emit the deposit event */
+                    emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
+                } catch (bytes memory reason) {
+                    /* Transfer the usdai to owner */
+                    _usdai.transfer(to, usdaiAmount);
 
-            /* Update the sendParam with the USDai amount */
-            sendParam.amountLD = usdaiAmount;
+                    /* Emit the failed action event */
+                    emit ActionFailed("Send", reason);
 
-            /* Send the USDai to destination chain */
-            try _usdaiOAdapter.send{value: nativeFee}(
-                sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
-            ) {
-                /* Emit the deposit event */
-                emit ComposerDeposit(sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount);
-            } catch (bytes memory reason) {
-                /* Transfer the usdai to owner */
-                _usdai.transfer(to, usdaiAmount);
-
-                /* Emit the failed action event */
-                emit ActionFailed("Send", reason);
+                    return false;
+                }
             }
         } catch (bytes memory reason) {
             /* Transfer the deposit token to owner */
@@ -188,7 +189,11 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
+
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -197,8 +202,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the deposit and stake was successful, false otherwise
      */
-    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         /* Decode the message */
         (
             uint256 usdaiAmountMinimum,
@@ -230,27 +236,27 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                     emit ComposerDepositAndStake(
                         sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
                     );
+                } else {
+                    /* Update the sendParam with the staked USDai amount */
+                    sendParam.amountLD = susdaiAmount;
 
-                    return;
-                }
+                    /* Send the staked USDai back to source chain */
+                    try _stakedUsdaiOAdapter.send{value: nativeFee}(
+                        sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
+                    ) {
+                        /* Emit the deposit and stake event */
+                        emit ComposerDepositAndStake(
+                            sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
+                        );
+                    } catch (bytes memory reason) {
+                        /* Transfer the staked USDai to owner */
+                        IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
 
-                /* Update the sendParam with the staked USDai amount */
-                sendParam.amountLD = susdaiAmount;
+                        /* Emit the failed action event */
+                        emit ActionFailed("Send", reason);
 
-                /* Send the staked USDai back to source chain */
-                try _stakedUsdaiOAdapter.send{value: nativeFee}(
-                    sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
-                ) {
-                    /* Emit the deposit and stake event */
-                    emit ComposerDepositAndStake(
-                        sendParam.dstEid, depositToken, to, depositAmount, usdaiAmount, susdaiAmount
-                    );
-                } catch (bytes memory reason) {
-                    /* Transfer the staked USDai to owner */
-                    IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
-
-                    /* Emit the failed action event */
-                    emit ActionFailed("Send", reason);
+                        return false;
+                    }
                 }
             } catch (bytes memory reason) {
                 /* Transfer the usdai token to owner */
@@ -262,6 +268,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
                 /* Emit the failed action event */
                 emit ActionFailed("Stake", reason);
+
+                return false;
             }
         } catch (bytes memory reason) {
             /* Transfer the deposit token to owner */
@@ -273,7 +281,11 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
+
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -342,6 +354,32 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         } else {
             revert UnknownAction();
         }
+    }
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function deposit(address depositToken, uint256 depositAmount, bytes memory data) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Deposit the deposit token */
+        if (!_deposit(depositToken, depositAmount, data)) revert DepositFailed();
+    }
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function depositAndStake(
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data
+    ) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Deposit and stake */
+        if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
     }
 
     /**
