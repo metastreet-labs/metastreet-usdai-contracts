@@ -36,6 +36,8 @@ contract StakedUSDaiHarvestBaseYieldTest is BaseTest {
 
         uint256 adminBalanceBefore = usdai.balanceOf(address(users.admin));
 
+        uint256 navBefore = stakedUsdai.nav();
+
         stakedUsdai.claimBaseYield();
         (uint256 depositAmount, uint256 adminFee) = stakedUsdai.depositBaseYield(claimableBaseYield);
 
@@ -53,6 +55,8 @@ contract StakedUSDaiHarvestBaseYieldTest is BaseTest {
             adminBalanceBefore + adminFee,
             "Admin balance should be equal to initial balance plus admin fee"
         );
+
+        assertEq(navBefore, stakedUsdai.nav(), "Nav should be equal to nav after");
 
         vm.stopPrank();
     }

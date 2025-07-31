@@ -77,7 +77,13 @@ abstract contract BasePositionManager is
     function _assets(
         ValuationType
     ) internal view virtual override returns (uint256) {
-        return _scale(_wrappedMToken.balanceOf(address(this))) + claimableBaseYield();
+        /* Scaled balance of wrapped M token */
+        uint256 scaledBalance = _scale(_wrappedMToken.balanceOf(address(this)));
+
+        /* Calculate admin fee */
+        uint256 adminFee = ((scaledBalance + claimableBaseYield()) * _adminFeeRate) / BASIS_POINTS_SCALE;
+
+        return scaledBalance + claimableBaseYield() - adminFee;
     }
 
     /**
@@ -175,7 +181,7 @@ abstract contract BasePositionManager is
         uint256 adminFee_ = (usdaiAmount_ * _adminFeeRate) / BASIS_POINTS_SCALE;
 
         /* Transfer admin fee to admin fee recipient */
-        if (_adminFeeRecipient != address(0) && adminFee_ > 0) {
+        if (adminFee_ > 0) {
             _usdai.transfer(_adminFeeRecipient, adminFee_);
 
             /* Calculate amount less admin fee */
