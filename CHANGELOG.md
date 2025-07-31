@@ -1,3 +1,6 @@
+* StakedUSDai v1.2 - 07/31/2025
+    * Net out admin fee in NAV calculation.
+
 * StakedUSDai v1.1 - 06/25/2025
     * Add admin fee support.
 
