@@ -353,6 +353,68 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(IERC20(address(stakedUsdaiAwayToken)).balanceOf(user), amountWithoutDust);
     }
 
+    function test__USDaiServiceQueuedOmnichainDeposit_LocalSource_LocalDestination() public {
+        vm.startPrank(user);
+
+        // Data
+        bytes memory data = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Approve the USDAI utility to spend the USD
+        usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
+
+        // Deposit the USD
+        oUsdaiUtility.queuedDeposit(address(usdtHomeToken), initialBalance, data);
+
+        // Assert that the USDAI home token was minted to the user
+        assertEq(usdtHomeToken.balanceOf(address(usdaiQueuedDepositor)), initialBalance);
+
+        vm.stopPrank();
+
+        // Service the deposit
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(address(usdtHomeToken), initialBalance, initialBalance, "", initialBalance - 1e6)
+        );
+
+        // Assert that the USDAI home token was minted to the user
+        assertEq(usdai.balanceOf(user), initialBalance);
+
+        // Assert that the USDT home token was burned
+        assertEq(usdtHomeToken.balanceOf(address(usdaiQueuedDepositor)), 0);
+    }
+
+    function test__USDaiServiceQueuedOmnichainDeposit_LocalSource_ForeignDestination() public {
+        vm.startPrank(user);
+
+        // Data
+        bytes memory data = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, usdaiAwayEid);
+
+        // Approve the USDAI utility to spend the USD
+        usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
+
+        // Deposit the USD
+        oUsdaiUtility.queuedDeposit(address(usdtHomeToken), initialBalance, data);
+
+        vm.stopPrank();
+
+        // Deal some ETH to the USDai queued depositor to cover the native fee
+        vm.deal(address(usdaiQueuedDepositor), 100 ether);
+
+        // Service the deposit
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(address(usdtHomeToken), initialBalance, initialBalance, "", initialBalance - 1e6)
+        );
+
+        // Verify that the packets were correctly sent to the destination chain
+        verifyPackets(usdaiAwayEid, addressToBytes32(address(usdaiAwayOAdapter)));
+
+        // Assert that the USDAI away token was minted to the user
+        assertEq(usdaiAwayToken.balanceOf(user), initialBalance);
+
+        vm.stopPrank();
+    }
+
     function test__USDaiServiceQueuedOmnichainDepositAndStake_RevertWhen_InsufficientBalance() public {
         uint256 amount = 1_000_000 ether;
 
