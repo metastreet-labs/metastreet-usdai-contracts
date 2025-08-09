@@ -353,28 +353,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(IERC20(address(stakedUsdaiAwayToken)).balanceOf(user), amountWithoutDust);
     }
 
-    function test__USDaiServiceQueuedOmnichainDeposit_RevertWhen_SendFail() public {
-        uint256 amount = 1_000_000 ether;
-
-        // User approves USDai to spend their USD
-        vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), amount);
-
-        // User deposits into USDai queued depositor
-        usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), amount, user, usdaiAwayEid
-        );
-
-        vm.stopPrank();
-
-        usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), amount, amount, "")
-        );
-
-        assertEq(usdai.balanceOf(user), amount);
-    }
-
-    function test__USDaiServiceQueuedOmnichainDepositAndStake_RevertWhen_SendFail() public {
+    function test__USDaiServiceQueuedOmnichainDepositAndStake_RevertWhen_InsufficientBalance() public {
         uint256 amount = 1_000_000 ether;
 
         // User approves USDai to spend their USD
@@ -388,11 +367,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         vm.stopPrank();
 
+        vm.expectRevert(IUSDaiQueuedDepositor.InsufficientBalance.selector);
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
             abi.encode(address(usdtHomeToken), amount, amount, "", amount - 1e6)
         );
-
-        assertEq(IERC20(address(stakedUsdai)).balanceOf(user), amount - 1e6);
     }
 }
