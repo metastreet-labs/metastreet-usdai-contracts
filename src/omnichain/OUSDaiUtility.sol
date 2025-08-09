@@ -293,8 +293,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @return success True if the queue deposit was successful, false otherwise
      */
-    function _queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) internal {
+    function _queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         /* Decode the message */
         (IUSDaiQueuedDepositor.QueueType queueType, address recipient, uint32 dstEid) =
             abi.decode(data, (IUSDaiQueuedDepositor.QueueType, address, uint32));
@@ -312,7 +313,11 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
             /* Emit the failed action event */
             emit ActionFailed("QueuedDeposit", reason);
+
+            return false;
         }
+
+        return true;
     }
 
     /*------------------------------------------------------------------------*/
@@ -380,6 +385,21 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
 
         /* Deposit and stake */
         if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
+    }
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function queuedDeposit(
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data
+    ) external payable nonReentrant {
+        /* Transfer the deposit token to the utility */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
+
+        /* Queue deposit */
+        if (!_queuedDeposit(depositToken, depositAmount, data)) revert QueueDepositFailed();
     }
 
     /**
