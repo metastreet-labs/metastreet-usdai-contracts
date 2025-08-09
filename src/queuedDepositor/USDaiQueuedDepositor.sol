@@ -393,6 +393,9 @@ contract USDaiQueuedDepositor is
         /* Quote send */
         MessagingFee memory fee = oAdapter.quoteSend(sendParam, false);
 
+        /* Validate that the contract has enough balance to cover the native fee */
+        if (address(this).balance < fee.nativeFee) revert InsufficientBalance();
+
         /* Send */
         try oAdapter.send{value: fee.nativeFee}(sendParam, fee, payable(address(this))) {}
         catch (bytes memory reason) {

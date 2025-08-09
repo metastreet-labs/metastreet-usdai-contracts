@@ -45,6 +45,11 @@ interface IOUSDaiUtility {
      */
     error DepositAndStakeFailed();
 
+    /**
+     * @notice Queue deposit failed
+     */
+    error QueueDepositFailed();
+
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
@@ -136,6 +141,14 @@ interface IOUSDaiUtility {
      * @param data Additional compose data
      */
     function depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) external payable;
+
+    /**
+     * @notice Deposit and or stake through queued depositor
+     * @param depositToken Deposit token
+     * @param depositAmount Deposit token amount
+     * @param data Additional compose data
+     */
+    function queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) external payable;
 
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
