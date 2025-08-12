@@ -100,6 +100,7 @@ interface IUSDaiQueuedDepositor {
      * @param servicedDeposit Serviced deposit
      * @param transferAmount Transfer amount
      * @param recipient Recipient
+     * @param dstEid Destination EID
      */
     event Serviced(
         QueueType indexed queueType,
@@ -108,7 +109,8 @@ interface IUSDaiQueuedDepositor {
         uint256 queueIndex,
         uint256 servicedDeposit,
         uint256 transferAmount,
-        address recipient
+        address recipient,
+        uint32 dstEid
     );
 
     /**

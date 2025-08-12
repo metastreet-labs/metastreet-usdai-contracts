@@ -468,7 +468,7 @@ contract USDaiQueuedDepositor is
 
             /* Emit the serviced event */
             emit Serviced(
-                queueType, item.depositor, depositToken, head, servicedDeposit, transferAmount, item.recipient
+                queueType, item.depositor, depositToken, head, servicedDeposit, transferAmount, item.recipient, item.dstEid
             );
 
             /* Update head */
