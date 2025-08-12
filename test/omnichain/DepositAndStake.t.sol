@@ -185,7 +185,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.depositAndStake(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.DepositAndStake, address(usdtHomeToken), initialBalance, data);
 
         // Assert that the sUSDAI home token was minted to the user
         assertEq(IERC20(address(stakedUsdai)).balanceOf(user), initialBalance - 1e6);
@@ -432,7 +432,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
 
         // Deposit the USD
         vm.expectRevert(IOUSDaiUtility.DepositAndStakeFailed.selector);
-        oUsdaiUtility.depositAndStake(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.DepositAndStake, address(usdtHomeToken), initialBalance, data);
 
         vm.stopPrank();
     }

@@ -17,6 +17,7 @@ import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/li
 
 import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 
+import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -363,7 +364,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.queuedDeposit(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), initialBalance, data);
 
         // Assert that the USDAI home token was minted to the user
         assertEq(usdtHomeToken.balanceOf(address(usdaiQueuedDepositor)), initialBalance);
@@ -393,7 +394,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.queuedDeposit(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), initialBalance, data);
 
         vm.stopPrank();
 
