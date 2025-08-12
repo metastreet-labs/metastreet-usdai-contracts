@@ -184,7 +184,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.deposit(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.Deposit, address(usdtHomeToken), initialBalance, data);
 
         // Assert that the USDAI home token was minted to the user
         assertEq(usdai.balanceOf(user), initialBalance);
@@ -219,7 +219,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.deposit{value: fee.nativeFee}(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose{value: fee.nativeFee}(IOUSDaiUtility.ActionType.Deposit, address(usdtHomeToken), initialBalance, data);
 
         // Verify that the packets were correctly sent to the destination chain
         verifyPackets(usdaiAwayEid, addressToBytes32(address(usdaiAwayOAdapter)));
@@ -319,7 +319,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
 
         // Deposit the USD
         vm.expectRevert(IOUSDaiUtility.DepositFailed.selector);
-        oUsdaiUtility.deposit(address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.Deposit, address(usdtHomeToken), initialBalance, data);
 
         vm.stopPrank();
     }

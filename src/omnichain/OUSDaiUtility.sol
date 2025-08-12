@@ -364,42 +364,19 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /**
      * @inheritdoc IOUSDaiUtility
      */
-    function deposit(address depositToken, uint256 depositAmount, bytes memory data) external payable nonReentrant {
+    function localCompose(ActionType actionType, address depositToken, uint256 depositAmount, bytes memory data) external payable nonReentrant {
         /* Transfer the deposit token to the utility */
         IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
 
-        /* Deposit the deposit token */
-        if (!_deposit(depositToken, depositAmount, data)) revert DepositFailed();
-    }
-
-    /**
-     * @inheritdoc IOUSDaiUtility
-     */
-    function depositAndStake(
-        address depositToken,
-        uint256 depositAmount,
-        bytes memory data
-    ) external payable nonReentrant {
-        /* Transfer the deposit token to the utility */
-        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
-
-        /* Deposit and stake */
-        if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
-    }
-
-    /**
-     * @inheritdoc IOUSDaiUtility
-     */
-    function queuedDeposit(
-        address depositToken,
-        uint256 depositAmount,
-        bytes memory data
-    ) external payable nonReentrant {
-        /* Transfer the deposit token to the utility */
-        IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
-
-        /* Queue deposit */
-        if (!_queuedDeposit(depositToken, depositAmount, data)) revert QueueDepositFailed();
+        if (actionType == ActionType.Deposit) {
+            if (!_deposit(depositToken, depositAmount, data)) revert DepositFailed();
+        } else if (actionType == ActionType.DepositAndStake) {
+            if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
+        } else if (actionType == ActionType.QueuedDeposit) {
+            if (!_queuedDeposit(depositToken, depositAmount, data)) revert QueuedDepositFailed();
+        } else {
+            revert UnknownAction();
+        }
     }
 
     /**

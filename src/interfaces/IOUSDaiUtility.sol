@@ -48,7 +48,7 @@ interface IOUSDaiUtility {
     /**
      * @notice Queue deposit failed
      */
-    error QueueDepositFailed();
+    error QueuedDepositFailed();
 
     /*------------------------------------------------------------------------*/
     /* Events */
@@ -127,28 +127,13 @@ interface IOUSDaiUtility {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Deposit the deposit token
+     * @notice Entry point for actions originating on local chain
+     * @param actionType Action type
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
      */
-    function deposit(address depositToken, uint256 depositAmount, bytes memory data) external payable;
-
-    /**
-     * @notice Deposit and stake the deposit token
-     * @param depositToken Deposit token
-     * @param depositAmount Deposit token amount
-     * @param data Additional compose data
-     */
-    function depositAndStake(address depositToken, uint256 depositAmount, bytes memory data) external payable;
-
-    /**
-     * @notice Deposit and or stake through queued depositor
-     * @param depositToken Deposit token
-     * @param depositAmount Deposit token amount
-     * @param data Additional compose data
-     */
-    function queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) external payable;
+    function localCompose(ActionType actionType, address depositToken, uint256 depositAmount, bytes memory data) external payable;
 
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
