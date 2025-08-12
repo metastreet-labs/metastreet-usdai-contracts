@@ -54,7 +54,7 @@ usage() {
     echo "  upgrade-usdai-queued-depositor"
     echo ""
     echo "  swap-adapter-set-token-whitelist <tokens>"
-    echo "  price-oracle-set-price-feeds <tokens> <price feeds>"
+    echo "  price-oracle-add-price-feeds <tokens> <price feeds>"
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
     echo "  grant-role <target> <role> <account>"
     echo "  transfer-ownership <proxy> <account>"
