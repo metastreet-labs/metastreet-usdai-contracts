@@ -18,7 +18,7 @@ interface IOUSDaiUtility {
     enum ActionType {
         Deposit,
         DepositAndStake,
-        QueuedDeposit /* deposit only, or deposit and stake */
+        QueuedDeposit /* deposit, or deposit and stake */
     }
 
     /*------------------------------------------------------------------------*/
@@ -46,7 +46,7 @@ interface IOUSDaiUtility {
     error DepositAndStakeFailed();
 
     /**
-     * @notice Queue deposit failed
+     * @notice Queued deposit failed
      */
     error QueuedDepositFailed();
 
@@ -133,7 +133,12 @@ interface IOUSDaiUtility {
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
      */
-    function localCompose(ActionType actionType, address depositToken, uint256 depositAmount, bytes memory data) external payable;
+    function localCompose(
+        ActionType actionType,
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data
+    ) external payable;
 
     /*------------------------------------------------------------------------*/
     /* Permissioned API */

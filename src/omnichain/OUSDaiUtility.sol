@@ -18,7 +18,7 @@ import "../interfaces/IStakedUSDai.sol";
 import "../interfaces/IUSDaiQueuedDepositor.sol";
 
 /**
- * @title Omnichain Utility
+ * @title Omnichain USDai Utility
  * @author MetaStreet Foundation
  */
 contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, AccessControlUpgradeable, IOUSDaiUtility {
@@ -39,32 +39,32 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice The LayerZero endpoint for this contract to interact with
+     * @notice LayerZero endpoint for this contract to interact with
      */
     address internal immutable _endpoint;
 
     /**
-     * @notice The USDai contract on the destination chain
+     * @notice USDai contract on the destination chain
      */
     IUSDai internal immutable _usdai;
 
     /**
-     * @notice The USDai adapter on the destination chain
+     * @notice USDai adapter on the destination chain
      */
     IOFT internal immutable _usdaiOAdapter;
 
     /**
-     * @notice The StakedUSDai contract on the destination chain
+     * @notice StakedUSDai contract on the destination chain
      */
     IStakedUSDai internal immutable _stakedUsdai;
 
     /**
-     * @notice The StakedUSDai adapter on the destination chain
+     * @notice StakedUSDai adapter on the destination chain
      */
     IOFT internal immutable _stakedUsdaiOAdapter;
 
     /**
-     * @notice The USDai queued depositor on the destination chain
+     * @notice USDai queued depositor on the destination chain
      */
     IUSDaiQueuedDepositor internal immutable _usdaiQueuedDepositor;
 
@@ -73,7 +73,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice The whitelisted OAdapters
+     * @notice Whitelisted OAdapters
      */
     EnumerableSet.AddressSet internal _whitelistedOAdapters;
 
@@ -82,12 +82,13 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @dev Constructs a new PingPong contract instance
-     * @param endpoint_ The LayerZero endpoint for this contract to interact with
-     * @param usdai_ The USDai contract on the destination chain
-     * @param stakedUsdai_ The StakedUSDai contract on the destination chain
-     * @param usdaiOAdapter_ The USDai adapter on the destination chain
-     * @param stakedUsdaiOAdapter_ The StakedUSDai adapter on the destination chain
+     * @notice OUSDaiUtility Constructor
+     * @param endpoint_ LayerZero endpoint
+     * @param usdai_ USDai contract
+     * @param stakedUsdai_ StakedUSDai contract
+     * @param usdaiOAdapter_ USDai omnichain adapter
+     * @param stakedUsdaiOAdapter_ StakedUSDai omnichain adapter
+     * @param usdaiQueuedDepositor_ USDai queued depositor
      */
     constructor(
         address endpoint_,
@@ -112,7 +113,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Initialize the contract
+     * @notice Initializer
      * @param admin Default admin address
      * @param oAdapters OAdapters to whitelist
      */
@@ -132,7 +133,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Deposit the USDai
+     * @notice Deposit USDai
      * @dev sendParam.to must be an accessible account to receive tokens in the case of action failure
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
@@ -289,21 +290,21 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /**
-     * @notice Deposit the deposit token into queue
+     * @notice Deposit the deposit token with the queued depositor
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
-     * @return success True if the queue deposit was successful, false otherwise
+     * @return success True if the queued deposit was successful, false otherwise
      */
     function _queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
         /* Decode the message */
         (IUSDaiQueuedDepositor.QueueType queueType, address recipient, uint32 dstEid) =
             abi.decode(data, (IUSDaiQueuedDepositor.QueueType, address, uint32));
 
-        /* Approve the queue depositor contract to spend the deposit token */
+        /* Approve the queued depositor contract to spend the deposit token */
         IERC20(depositToken).forceApprove(address(_usdaiQueuedDepositor), depositAmount);
 
-        /* Deposit the deposit token into queue depositor */
+        /* Deposit the deposit token into queued depositor */
         try _usdaiQueuedDepositor.deposit(queueType, depositToken, depositAmount, recipient, dstEid) {
             /* Emit the queued deposit event */
             emit ComposerQueuedDeposit(queueType, depositToken, recipient, depositAmount);
@@ -364,7 +365,12 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /**
      * @inheritdoc IOUSDaiUtility
      */
-    function localCompose(ActionType actionType, address depositToken, uint256 depositAmount, bytes memory data) external payable nonReentrant {
+    function localCompose(
+        ActionType actionType,
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data
+    ) external payable nonReentrant {
         /* Transfer the deposit token to the utility */
         IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
 
