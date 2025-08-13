@@ -4,11 +4,13 @@ pragma solidity 0.8.29;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "../interfaces/IReceiptToken.sol";
+
 /**
  * @title Queued Depositor Receipt Token (ERC20)
  * @author MetaStreet Foundation
  */
-contract ReceiptToken is ERC20Upgradeable, OwnableUpgradeable {
+contract ReceiptToken is ERC20Upgradeable, OwnableUpgradeable, IReceiptToken {
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -60,22 +62,18 @@ contract ReceiptToken is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     /*------------------------------------------------------------------------*/
-    /* USDai Queued Depositor API */
+    /* Receipt Token API */
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Mint receipt token
-     * @param to Account
-     * @param amount Amount to mint
+     * @inheritdoc IReceiptToken
      */
     function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
 
     /**
-     * @notice Burn receipt token
-     * @param from Account
-     * @param amount Amount to burn
+     * @inheritdoc IReceiptToken
      */
     function burn(address from, uint256 amount) external onlyOwner {
         _burn(from, amount);

@@ -219,7 +219,9 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.localCompose{value: fee.nativeFee}(IOUSDaiUtility.ActionType.Deposit, address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose{value: fee.nativeFee}(
+            IOUSDaiUtility.ActionType.Deposit, address(usdtHomeToken), initialBalance, data
+        );
 
         // Verify that the packets were correctly sent to the destination chain
         verifyPackets(usdaiAwayEid, addressToBytes32(address(usdaiAwayOAdapter)));

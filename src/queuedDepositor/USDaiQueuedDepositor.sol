@@ -18,11 +18,12 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {IOFT as IOFT_, SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
-import "./ReceiptToken.sol";
+import "./ReceiptTokenProxy.sol";
 
 import "src/interfaces/IUSDai.sol";
 import {IStakedUSDai as IStakedUSDai_} from "src/interfaces/IStakedUSDai.sol";
 import "src/interfaces/IUSDaiQueuedDepositor.sol";
+import "src/interfaces/IReceiptToken.sol";
 
 /**
  * @title IOFT (extension of LayerZero's IOFT)
@@ -141,20 +142,6 @@ contract USDaiQueuedDepositor is
     address internal immutable _receiptTokenImplementation;
 
     /*------------------------------------------------------------------------*/
-    /* State */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Receipt token
-     */
-    ReceiptToken internal _queuedUSDaiToken;
-
-    /**
-     * @notice Queued deposit receipt token
-     */
-    ReceiptToken internal _queuedStakedUSDaiToken;
-
-    /*------------------------------------------------------------------------*/
     /* Structures */
     /*------------------------------------------------------------------------*/
 
@@ -189,8 +176,8 @@ contract USDaiQueuedDepositor is
      * @custom:storage-location erc7201:usdaiQueuedDepositor.receiptTokens
      */
     struct ReceiptTokens {
-        ReceiptToken queuedUSDaiToken;
-        ReceiptToken queuedStakedUSDaiToken;
+        IReceiptToken queuedUSDaiToken;
+        IReceiptToken queuedStakedUSDaiToken;
     }
 
     /*------------------------------------------------------------------------*/
@@ -198,7 +185,7 @@ contract USDaiQueuedDepositor is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice sUSDai Constructor
+     * @notice USDai Queued Depositor Constructor
      * @param usdai_ USDai token
      * @param stakedUsdai_ Staked USDai token
      * @param usdaiOAdapter_ USDai OAdapter
@@ -312,13 +299,15 @@ contract USDaiQueuedDepositor is
      * @param symbol Token symbol
      * @return ReceiptToken The deployed receipt token proxy
      */
-    function _createReceiptTokenProxy(string memory name, string memory symbol) internal returns (ReceiptToken) {
+    function _createReceiptTokenProxy(string memory name, string memory symbol) internal returns (IReceiptToken) {
         address proxy = address(
-            new ERC1967Proxy(
-                address(_receiptTokenImplementation), abi.encodeWithSignature("initialize(string,string)", name, symbol)
+            new ReceiptTokenProxy(
+                address(this),
+                _receiptTokenImplementation,
+                abi.encodeWithSignature("initialize(string,string)", name, symbol)
             )
         );
-        return ReceiptToken(proxy);
+        return IReceiptToken(proxy);
     }
 
     /**
@@ -602,7 +591,7 @@ contract USDaiQueuedDepositor is
      * @inheritdoc IUSDaiQueuedDepositor
      */
     function receiptTokenImplementation() external view returns (address) {
-        return address(_receiptTokenImplementation);
+        return _receiptTokenImplementation;
     }
 
     /**

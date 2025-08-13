@@ -364,7 +364,9 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), initialBalance, data
+        );
 
         // Assert that the USDAI home token was minted to the user
         assertEq(usdtHomeToken.balanceOf(address(usdaiQueuedDepositor)), initialBalance);
@@ -394,7 +396,9 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         usdtHomeToken.approve(address(oUsdaiUtility), initialBalance);
 
         // Deposit the USD
-        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), initialBalance, data);
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), initialBalance, data
+        );
 
         vm.stopPrank();
 
