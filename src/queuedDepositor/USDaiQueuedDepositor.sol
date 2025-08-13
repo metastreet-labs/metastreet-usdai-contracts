@@ -163,13 +163,11 @@ contract USDaiQueuedDepositor is
      * @dev head Queue item at index that will be serviced next
      * @dev pending Total amount of deposit pending to be serviced
      * @dev queue Queue of items
-     * @dev queueIndexes Mapping of depositor to queue indexes
      */
     struct Queue {
         uint256 head;
         uint256 pending;
         QueueItem[] queue;
-        mapping(address => EnumerableSet.UintSet) queueIndexes;
     }
 
     /**
@@ -384,7 +382,7 @@ contract USDaiQueuedDepositor is
             dstEid: item.dstEid,
             to: bytes32(uint256(uint160(item.recipient))),
             amountLD: transferAmount,
-            minAmountLD: _removeDust(transferAmount, true),
+            minAmountLD: _removeDust(transferAmount, queueType == QueueType.Deposit),
             extraOptions: OptionsBuilder.newOptions().addExecutorLzReceiveOption(GAS_LIMIT, 0),
             composeMsg: "",
             oftCmd: ""
@@ -468,7 +466,14 @@ contract USDaiQueuedDepositor is
 
             /* Emit the serviced event */
             emit Serviced(
-                queueType, item.depositor, depositToken, head, servicedDeposit, transferAmount, item.recipient, item.dstEid
+                queueType,
+                depositToken,
+                head,
+                item.depositor,
+                servicedDeposit,
+                transferAmount,
+                item.recipient,
+                item.dstEid
             );
 
             /* Update head */
@@ -691,9 +696,6 @@ contract USDaiQueuedDepositor is
         /* Update queue pending */
         queue.pending += amount;
 
-        /* Add item to caller's queue indexes */
-        queue.queueIndexes[recipient].add(queueIndex);
-
         /* Mint receipt token */
         if (queueType == QueueType.Deposit) {
             _getReceiptTokensStorage().queuedUSDaiToken.mint(recipient, amount);
@@ -704,7 +706,7 @@ contract USDaiQueuedDepositor is
         }
 
         /* Emit Deposit event */
-        emit Deposit(queueType, depositToken, queueIndex, amount, recipient);
+        emit Deposit(queueType, depositToken, queueIndex, msg.sender, amount, recipient);
 
         return queueIndex;
     }
@@ -716,7 +718,10 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
-    function service(QueueType queueType, bytes calldata data) external payable onlyRole(CONTROLLER_ADMIN_ROLE) {
+    function service(
+        QueueType queueType,
+        bytes calldata data
+    ) external payable nonReentrant onlyRole(CONTROLLER_ADMIN_ROLE) {
         if (queueType == QueueType.Deposit) {
             _deposit(data);
         } else if (queueType == QueueType.DepositAndStake) {

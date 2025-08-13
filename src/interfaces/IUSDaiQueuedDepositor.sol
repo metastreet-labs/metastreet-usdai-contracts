@@ -80,6 +80,7 @@ interface IUSDaiQueuedDepositor {
      * @param queueType Queue type
      * @param depositToken Deposit token
      * @param queueIndex Queue index
+     * @param depositor Depositor
      * @param amount Amount
      * @param recipient Recipient
      */
@@ -87,6 +88,7 @@ interface IUSDaiQueuedDepositor {
         QueueType indexed queueType,
         address indexed depositToken,
         uint256 indexed queueIndex,
+        address depositor,
         uint256 amount,
         address recipient
     );
@@ -94,9 +96,9 @@ interface IUSDaiQueuedDepositor {
     /**
      * @notice Serviced event
      * @param queueType Queue type
-     * @param depositor Depositor
      * @param depositToken Deposit token
      * @param queueIndex Queue index
+     * @param depositor Depositor
      * @param servicedDeposit Serviced deposit
      * @param transferAmount Transfer amount
      * @param recipient Recipient
@@ -104,9 +106,9 @@ interface IUSDaiQueuedDepositor {
      */
     event Serviced(
         QueueType indexed queueType,
-        address indexed depositor,
         address indexed depositToken,
-        uint256 queueIndex,
+        uint256 indexed queueIndex,
+        address depositor,
         uint256 servicedDeposit,
         uint256 transferAmount,
         address recipient,
@@ -132,14 +134,6 @@ interface IUSDaiQueuedDepositor {
      * @param reason Reason
      */
     event ActionFailed(string action, bytes reason);
-
-    /**
-     * @notice Receipt token deployed
-     * @param depositToken Deposit token
-     * @param queueType Queue type
-     * @param receiptToken Receipt token
-     */
-    event ReceiptTokenDeployed(address indexed depositToken, QueueType indexed queueType, address indexed receiptToken);
 
     /*------------------------------------------------------------------------*/
     /* Getters */
