@@ -112,14 +112,14 @@ contract USDaiQueuedDepositor is
     IUSDai internal immutable _usdai;
 
     /**
-     * @notice USDai OAdapter
-     */
-    IOFT internal immutable _usdaiOAdapter;
-
-    /**
      * @notice Staked USDai token
      */
     IStakedUSDai internal immutable _stakedUsdai;
+
+    /**
+     * @notice USDai OAdapter
+     */
+    IOFT internal immutable _usdaiOAdapter;
 
     /**
      * @notice Staked USDai OAdapter
@@ -323,6 +323,17 @@ contract USDaiQueuedDepositor is
     }
 
     /**
+     * @notice Scale factor
+     * @param token Token
+     * @return Scale factor
+     */
+    function _scaleFactor(
+        address token
+    ) internal view returns (uint256) {
+        return 10 ** (18 - IERC20Metadata(token).decimals());
+    }
+
+    /**
      * @notice Transfer USDai or sUSDai locally
      * @dev Try-catch to prevent denial-of-service due to blacklisted accounts
      * @param queueType Queue type
@@ -432,6 +443,9 @@ contract USDaiQueuedDepositor is
         /* Get queue state */
         Queue storage queue = _getQueueStateStorage().queues[queueType][depositToken];
 
+        /* Get scale factor */
+        uint256 scaleFactor = _scaleFactor(depositToken);
+
         uint256 head = queue.head;
         uint256 remainingServiceAmount = serviceAmount;
         while (remainingServiceAmount > 0 && head < queue.queue.length) {
@@ -443,8 +457,8 @@ contract USDaiQueuedDepositor is
 
             /* Burn receipt token. Note: unable to cache outside while loop due to stack too deep error */
             queueType == QueueType.Deposit
-                ? _getReceiptTokensStorage().queuedUSDaiToken.burn(item.recipient, servicedDeposit)
-                : _getReceiptTokensStorage().queuedStakedUSDaiToken.burn(item.recipient, servicedDeposit);
+                ? _getReceiptTokensStorage().queuedUSDaiToken.burn(item.recipient, scaleFactor * servicedDeposit)
+                : _getReceiptTokensStorage().queuedStakedUSDaiToken.burn(item.recipient, scaleFactor * servicedDeposit);
 
             /* Update remaining service amount */
             remainingServiceAmount -= servicedDeposit;
@@ -488,7 +502,7 @@ contract USDaiQueuedDepositor is
         (address depositToken, uint256 serviceAmount, uint256 usdaiAmountMinimum, bytes memory path) =
             abi.decode(data, (address, uint256, uint256, bytes));
 
-        /* Validate service amount is more than or equal to the pending deposit */
+        /* Validate scaled service amount is more than or equal to the pending deposit */
         if (_getQueueStateStorage().queues[QueueType.Deposit][depositToken].pending < serviceAmount) {
             revert InvalidAmount();
         }
@@ -685,11 +699,14 @@ contract USDaiQueuedDepositor is
         /* Update queue pending */
         queue.pending += amount;
 
+        /* Scale the amount */
+        uint256 scaledAmount = _scaleFactor(depositToken) * amount;
+
         /* Mint receipt token */
         if (queueType == QueueType.Deposit) {
-            _getReceiptTokensStorage().queuedUSDaiToken.mint(recipient, amount);
+            _getReceiptTokensStorage().queuedUSDaiToken.mint(recipient, scaledAmount);
         } else if (queueType == QueueType.DepositAndStake) {
-            _getReceiptTokensStorage().queuedStakedUSDaiToken.mint(recipient, amount);
+            _getReceiptTokensStorage().queuedStakedUSDaiToken.mint(recipient, scaledAmount);
         } else {
             revert InvalidQueueType();
         }

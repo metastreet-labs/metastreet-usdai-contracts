@@ -85,6 +85,60 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
     }
 
+    function testFuzz__USDaiQueuedLocalDeposit_6Decimals(
+        uint256 amount
+    ) public {
+        vm.assume(amount >= 1_000_000 * 1e6);
+        vm.assume(amount <= 10_000_000 * 1e6);
+
+        // User approves USDai to spend their USD
+        vm.startPrank(user);
+        usdtHomeToken6Decimals.approve(address(usdaiQueuedDepositor), amount * 2);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), amount, user, 0
+        );
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex1
+        );
+        assertEq(queueItem1.pendingDeposit, amount);
+        assertEq(queueItem1.dstEid, 0);
+        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.recipient, user);
+
+        (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head1, 0);
+        assertEq(pending1, amount);
+        assertEq(queueItems1.length, 1);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), amount, user, 0
+        );
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex2
+        );
+        assertEq(queueItem2.pendingDeposit, amount);
+        assertEq(queueItem2.dstEid, 0);
+        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.recipient, user);
+
+        (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head2, 0);
+        assertEq(pending2, amount * 2);
+        assertEq(queueItems2.length, 2);
+
+        // Verify that the queued USDai was minted to the user
+        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), amount * 2 * 1e12);
+
+        vm.stopPrank();
+    }
+
     function testFuzz__USDaiQueuedLocalDepositAndStake(
         uint256 amount
     ) public {
@@ -135,6 +189,60 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // Verify that the queued USDai was minted to the user
         assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), amount * 2);
+
+        vm.stopPrank();
+    }
+
+    function testFuzz__USDaiQueuedLocalDepositAndStake_6Decimals(
+        uint256 amount
+    ) public {
+        vm.assume(amount >= 1_000_000 * 1e6);
+        vm.assume(amount <= 10_000_000 * 1e6);
+
+        // User approves USDai to spend their USD
+        vm.startPrank(user);
+        usdtHomeToken6Decimals.approve(address(usdaiQueuedDepositor), amount * 2);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), amount, user, 0
+        );
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), queueIndex1
+        );
+        assertEq(queueItem1.pendingDeposit, amount);
+        assertEq(queueItem1.dstEid, 0);
+        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.recipient, user);
+
+        (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head1, 0);
+        assertEq(pending1, amount);
+        assertEq(queueItems1.length, 1);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), amount, user, 0
+        );
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), queueIndex2
+        );
+        assertEq(queueItem2.pendingDeposit, amount);
+        assertEq(queueItem2.dstEid, 0);
+        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.recipient, user);
+
+        (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head2, 0);
+        assertEq(pending2, amount * 2);
+        assertEq(queueItems2.length, 2);
+
+        // Verify that the queued USDai was minted to the user
+        assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), amount * 2 * 1e12);
 
         vm.stopPrank();
     }

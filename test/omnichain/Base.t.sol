@@ -45,6 +45,8 @@ import {IUSDai} from "src/interfaces/IUSDai.sol";
 import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
 
+import {TestERC20} from "../tokens/TestERC20.sol";
+
 /**
  * @title Omnichain Base test setup
  *
@@ -63,6 +65,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
     uint32 internal usdaiAwayEid = 4;
     uint32 internal stakedUsdaiHomeEid = 5;
     uint32 internal stakedUsdaiAwayEid = 6;
+
+    TestERC20 internal usdtHomeToken6Decimals;
 
     OToken internal usdtHomeToken;
     OToken internal usdtAwayToken;
@@ -128,6 +132,9 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         OToken usdtAwayTokenImpl = new OToken();
         OToken usdaiAwayTokenImpl = new OToken();
         OToken stakedUsdaiAwayTokenImpl = new OToken();
+
+        vm.prank(user);
+        usdtHomeToken6Decimals = new TestERC20("USDT Home Token", "USDT", 6, initialBalance / 1e12);
 
         // Deploy USDT proxies
         TransparentUpgradeableProxy usdtHomeTokenProxy = new TransparentUpgradeableProxy(
@@ -249,10 +256,12 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         );
 
         /* Deploy usdai queued depositor proxy */
-        address[] memory whitelistedTokens = new address[](1);
+        address[] memory whitelistedTokens = new address[](2);
         whitelistedTokens[0] = address(usdtHomeToken);
-        uint256[] memory minAmounts = new uint256[](1);
+        whitelistedTokens[1] = address(usdtHomeToken6Decimals);
+        uint256[] memory minAmounts = new uint256[](2);
         minAmounts[0] = 1_000_000 * 1e18;
+        minAmounts[1] = 1_000_000 * 1e6;
         TransparentUpgradeableProxy usdaiQueuedDepositorProxy = new TransparentUpgradeableProxy(
             usdaiQueuedDepositorImpl,
             address(this),

@@ -145,6 +145,121 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(IERC20(queuedUSDaiToken).balanceOf(user), 0);
     }
 
+    function test__USDaiServiceQueuedLocalDeposit_6Decimals() public {
+        uint256 amount = 1_000_000 * 1e6;
+
+        // User approves USDai to spend their USD
+        vm.startPrank(user);
+        usdtHomeToken6Decimals.approve(address(usdaiQueuedDepositor), amount * 3);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), amount, user, 0
+        );
+
+        vm.stopPrank();
+
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(address(usdtHomeToken6Decimals), 500_000 * 1e6, 500_000 * 1e6, "")
+        );
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex1
+        );
+        assertEq(queueItem1.pendingDeposit, amount - 500_000 * 1e6);
+        assertEq(queueItem1.dstEid, 0);
+        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.recipient, user);
+
+        (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head1, 0);
+        assertEq(pending1, amount - 500_000 * 1e6);
+        assertEq(queueItems1.length, 1);
+
+        assertEq(usdai.balanceOf(user), 500_000 ether);
+
+        vm.startPrank(user);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 1_000_000 * 1e6, user, 0
+        );
+
+        vm.stopPrank();
+
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(address(usdtHomeToken6Decimals), 1_000_000 * 1e6, 1_000_000 * 1e6, "")
+        );
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex2
+        );
+        assertEq(queueItem2.pendingDeposit, 500_000 * 1e6);
+        assertEq(queueItem2.dstEid, 0);
+        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.recipient, user);
+
+        (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head2, 1);
+        assertEq(pending2, 500_000 * 1e6);
+        assertEq(queueItems2.length, 2);
+
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(address(usdtHomeToken6Decimals), 500_000 * 1e6, 500_000 * 1e6, "")
+        );
+
+        (uint256 head3, uint256 pending3, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head3, 2);
+        assertEq(pending3, 0);
+        assertEq(queueItems3.length, 2);
+
+        assertEq(usdai.balanceOf(user), 2_000_000 ether);
+
+        vm.expectRevert();
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken6Decimals), 100, 100, "")
+        );
+
+        vm.startPrank(user);
+
+        // User deposits into USDai queued depositor
+        uint256 queueIndex3 = usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 1_000_000 * 1e6, user, 0
+        );
+
+        vm.stopPrank();
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem4 = usdaiQueuedDepositor.queueItem(
+            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex3
+        );
+        assertEq(queueItem4.pendingDeposit, 1_000_000 * 1e6);
+        assertEq(queueItem4.dstEid, 0);
+        assertEq(queueItem4.depositor, user);
+        assertEq(queueItem4.recipient, user);
+
+        (uint256 head4, uint256 pending4, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) = usdaiQueuedDepositor
+            .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
+        assertEq(head4, 2);
+        assertEq(pending4, 1_000_000 * 1e6);
+        assertEq(queueItems4.length, 3);
+
+        assertEq(usdai.balanceOf(user), 2_000_000 ether);
+
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(address(usdtHomeToken6Decimals), 1_000_000 * 1e6, 1_000_000 * 1e6, "")
+        );
+
+        assertEq(usdai.balanceOf(user), 3_000_000 ether);
+        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), 0);
+    }
+
     function test__USDaiServiceQueuedLocalDeposit_WithBlacklistedAccount() public {
         uint256 amount = 1_000_000 ether;
 
