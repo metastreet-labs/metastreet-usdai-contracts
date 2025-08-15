@@ -1,3 +1,6 @@
+* USDaiQueuedDepositor v1.0 - 08/15/2025
+    * Initial release.
+
 * StakedUSDai v1.2 - 07/31/2025
     * Net out admin fee in NAV calculation.
 
