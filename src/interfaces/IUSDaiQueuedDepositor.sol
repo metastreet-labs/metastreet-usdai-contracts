@@ -119,14 +119,22 @@ interface IUSDaiQueuedDepositor {
      * @notice Whitelisted tokens added
      * @param tokens Tokens
      * @param minAmounts Minimum amounts
+     * @param depositCaps Deposit caps
      */
-    event WhitelistedTokensAdded(address[] tokens, uint256[] minAmounts);
+    event WhitelistedTokensAdded(address[] tokens, uint256[] minAmounts, uint256[] depositCaps);
 
     /**
      * @notice Whitelisted tokens removed
      * @param tokens Tokens
      */
     event WhitelistedTokensRemoved(address[] tokens);
+
+    /**
+     * @notice Deposit cap set
+     * @param token Token
+     * @param cap Deposit cap
+     */
+    event DepositCapSet(address token, uint256 cap);
 
     /**
      * @notice Action failed
@@ -215,6 +223,7 @@ interface IUSDaiQueuedDepositor {
      * @param count Count
      * @return head Queue item to be serviced next
      * @return pending Pending amount of deposit to be serviced
+     * @return depositCap Deposit cap
      * @return queueItems Queue items
      */
     function queueInfo(
@@ -222,7 +231,7 @@ interface IUSDaiQueuedDepositor {
         address depositToken,
         uint256 offset,
         uint256 count
-    ) external view returns (uint256 head, uint256 pending, QueueItem[] memory queueItems);
+    ) external view returns (uint256 head, uint256 pending, uint256 depositCap, QueueItem[] memory queueItems);
 
     /**
      * @notice Queue item
@@ -288,8 +297,13 @@ interface IUSDaiQueuedDepositor {
      * @notice Add whitelisted tokens
      * @param tokens Tokens to whitelist
      * @param minAmounts Minimum amounts
+     * @param depositCaps Deposit caps
      */
-    function addWhitelistedTokens(address[] calldata tokens, uint256[] calldata minAmounts) external;
+    function addWhitelistedTokens(
+        address[] calldata tokens,
+        uint256[] calldata minAmounts,
+        uint256[] calldata depositCaps
+    ) external;
 
     /**
      * @notice Remove whitelisted tokens
@@ -298,4 +312,11 @@ interface IUSDaiQueuedDepositor {
     function removeWhitelistedTokens(
         address[] calldata tokens
     ) external;
+
+    /**
+     * @notice Set deposit cap
+     * @param token Token
+     * @param cap Deposit cap
+     */
+    function setDepositCap(address token, uint256 cap) external;
 }

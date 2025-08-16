@@ -12,6 +12,15 @@ import "../interfaces/IReceiptToken.sol";
  */
 contract ReceiptToken is ERC20Upgradeable, OwnableUpgradeable, IReceiptToken {
     /*------------------------------------------------------------------------*/
+    /* Constants */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Implementation version
+     */
+    string public constant IMPLEMENTATION_VERSION = "1.0";
+
+    /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
 

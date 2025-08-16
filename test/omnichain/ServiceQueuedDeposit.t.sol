@@ -59,7 +59,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem1.depositor, user);
         assertEq(queueItem1.recipient, user);
 
-        (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) =
+        (uint256 head1, uint256 pending1,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) =
             usdaiQueuedDepositor.queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 0, 100);
         assertEq(head1, 0);
         assertEq(pending1, amount - 500_000 ether);
@@ -88,7 +88,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem2.depositor, user);
         assertEq(queueItem2.recipient, user);
 
-        (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) =
+        (uint256 head2, uint256 pending2,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) =
             usdaiQueuedDepositor.queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 0, 100);
         assertEq(head2, 1);
         assertEq(pending2, 500_000 ether);
@@ -99,7 +99,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
             abi.encode(address(usdtHomeToken), 500_000 ether, 500_000 ether, "")
         );
 
-        (uint256 head3, uint256 pending3, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) =
+        (uint256 head3, uint256 pending3,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) =
             usdaiQueuedDepositor.queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 0, 100);
         assertEq(head3, 2);
         assertEq(pending3, 0);
@@ -128,7 +128,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem4.depositor, user);
         assertEq(queueItem4.recipient, user);
 
-        (uint256 head4, uint256 pending4, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) =
+        (uint256 head4, uint256 pending4,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) =
             usdaiQueuedDepositor.queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 0, 100);
         assertEq(head4, 2);
         assertEq(pending4, 1_000_000 ether);
@@ -172,7 +172,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem1.depositor, user);
         assertEq(queueItem1.recipient, user);
 
-        (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
+        (uint256 head1, uint256 pending1,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
         assertEq(head1, 0);
         assertEq(pending1, amount - 500_000 * 1e6);
@@ -202,7 +202,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem2.depositor, user);
         assertEq(queueItem2.recipient, user);
 
-        (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
+        (uint256 head2, uint256 pending2,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
         assertEq(head2, 1);
         assertEq(pending2, 500_000 * 1e6);
@@ -213,7 +213,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
             abi.encode(address(usdtHomeToken6Decimals), 500_000 * 1e6, 500_000 * 1e6, "")
         );
 
-        (uint256 head3, uint256 pending3, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) = usdaiQueuedDepositor
+        (uint256 head3, uint256 pending3,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
         assertEq(head3, 2);
         assertEq(pending3, 0);
@@ -243,7 +243,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem4.depositor, user);
         assertEq(queueItem4.recipient, user);
 
-        (uint256 head4, uint256 pending4, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) = usdaiQueuedDepositor
+        (uint256 head4, uint256 pending4,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0, 100);
         assertEq(head4, 2);
         assertEq(pending4, 1_000_000 * 1e6);
@@ -313,7 +313,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem1.depositor, user);
         assertEq(queueItem1.recipient, user);
 
-        (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
+        (uint256 head1, uint256 pending1,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 0, 100);
         assertEq(head1, 0);
         assertEq(pending1, amount - 500_000 ether);
@@ -347,7 +347,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem2.depositor, user);
         assertEq(queueItem2.recipient, user);
 
-        (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
+        (uint256 head2, uint256 pending2,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 0, 100);
         assertEq(head2, 1);
         assertEq(pending2, 500_000 ether);
@@ -361,7 +361,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
             abi.encode(address(usdtHomeToken), 500_000 ether, 500_000 ether, "", minShares2)
         );
 
-        (uint256 head3, uint256 pending3, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) = usdaiQueuedDepositor
+        (uint256 head3, uint256 pending3,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 0, 100);
         assertEq(head3, 2);
         assertEq(pending3, 0);
@@ -386,7 +386,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem4.depositor, user);
         assertEq(queueItem4.recipient, user);
 
-        (uint256 head4, uint256 pending4, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) = usdaiQueuedDepositor
+        (uint256 head4, uint256 pending4,, IUSDaiQueuedDepositor.QueueItem[] memory queueItems4) = usdaiQueuedDepositor
             .queueInfo(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 0, 100);
         assertEq(head4, 2);
         assertEq(pending4, 1_000_000 ether);
