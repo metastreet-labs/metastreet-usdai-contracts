@@ -1,3 +1,6 @@
+* USDaiQueuedDepositor v1.1 - 08/16/2025
+    * Add support for deposit cap.
+
 * OUSDaiUtility v1.3 - 08/15/2025
     * Add support for local chain send, deposit, deposit and stake, and queued
       deposit.
