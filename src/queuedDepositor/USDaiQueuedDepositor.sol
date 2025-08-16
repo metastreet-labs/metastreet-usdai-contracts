@@ -175,6 +175,7 @@ contract USDaiQueuedDepositor is
     struct WhitelistedTokens {
         EnumerableSet.AddressSet whitelistedTokens;
         mapping(address => uint256) minAmounts;
+        mapping(address => uint256) depositCap;
     }
 
     /**
@@ -227,11 +228,13 @@ contract USDaiQueuedDepositor is
      * @param admin Default admin address
      * @param whitelistedTokens_ Whitelisted tokens
      * @param minAmounts Minimum amounts
+     * @param depositCaps Deposit caps
      */
     function initialize(
         address admin,
         address[] memory whitelistedTokens_,
-        uint256[] memory minAmounts
+        uint256[] memory minAmounts,
+        uint256[] memory depositCaps
     ) external initializer {
         /* Validate input */
         if (whitelistedTokens_.length != minAmounts.length) revert InvalidParameters();
@@ -246,6 +249,7 @@ contract USDaiQueuedDepositor is
             if (whitelistedTokens_[i] == address(0)) revert InvalidToken();
             _getWhitelistedTokensStorage().whitelistedTokens.add(whitelistedTokens_[i]);
             _getWhitelistedTokensStorage().minAmounts[whitelistedTokens_[i]] = minAmounts[i];
+            _getWhitelistedTokensStorage().depositCap[whitelistedTokens_[i]] = depositCaps[i];
         }
 
         /* Get receipt tokens storage */
@@ -635,7 +639,7 @@ contract USDaiQueuedDepositor is
         address depositToken,
         uint256 offset,
         uint256 count
-    ) external view returns (uint256, uint256, QueueItem[] memory) {
+    ) external view returns (uint256, uint256, uint256, QueueItem[] memory) {
         Queue storage queue = _getQueueStateStorage().queues[queueType][depositToken];
 
         /* Clamp on count */
@@ -649,7 +653,10 @@ contract USDaiQueuedDepositor is
             queueItems[i - offset] = queue.queue[i];
         }
 
-        return (queue.head, queue.pending, queueItems);
+        /* Get deposit cap for queue */
+        uint256 depositCap = _getWhitelistedTokensStorage().depositCap[depositToken];
+
+        return (queue.head, queue.pending, depositCap, queueItems);
     }
 
     /**
@@ -687,11 +694,17 @@ contract USDaiQueuedDepositor is
         /* Validate recipient */
         if (recipient == address(0)) revert InvalidRecipient();
 
-        /* Transfer the deposit token to the queue depositor */
-        IERC20(depositToken).transferFrom(msg.sender, address(this), amount);
-
         /* Get queue */
         Queue storage queue = _getQueueStateStorage().queues[queueType][depositToken];
+
+        /* Get deposit cap for queue */
+        uint256 depositCap = _getWhitelistedTokensStorage().depositCap[depositToken];
+
+        /* Validate deposit is within deposit cap */
+        if (depositCap != 0 && depositCap < queue.pending + amount) revert InvalidAmount();
+
+        /* Transfer the deposit token to the queue depositor */
+        IERC20(depositToken).transferFrom(msg.sender, address(this), amount);
 
         /* Get queue index */
         uint256 queueIndex = queue.queue.length;
@@ -762,7 +775,8 @@ contract USDaiQueuedDepositor is
      */
     function addWhitelistedTokens(
         address[] memory tokens,
-        uint256[] memory minAmounts
+        uint256[] memory minAmounts,
+        uint256[] memory depositCaps
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Validate input */
         if (tokens.length != minAmounts.length) revert InvalidParameters();
@@ -772,10 +786,11 @@ contract USDaiQueuedDepositor is
             if (tokens[i] == address(0)) revert InvalidToken();
             _getWhitelistedTokensStorage().whitelistedTokens.add(tokens[i]);
             _getWhitelistedTokensStorage().minAmounts[tokens[i]] = minAmounts[i];
+            _getWhitelistedTokensStorage().depositCap[tokens[i]] = depositCaps[i];
         }
 
         /* Emit whitelisted tokens added event */
-        emit WhitelistedTokensAdded(tokens, minAmounts);
+        emit WhitelistedTokensAdded(tokens, minAmounts, depositCaps);
     }
 
     /**
@@ -787,9 +802,24 @@ contract USDaiQueuedDepositor is
         for (uint256 i; i < tokens.length; i++) {
             _getWhitelistedTokensStorage().whitelistedTokens.remove(tokens[i]);
             _getWhitelistedTokensStorage().minAmounts[tokens[i]] = 0;
+            _getWhitelistedTokensStorage().depositCap[tokens[i]] = 0;
         }
 
         /* Emit whitelisted tokens removed event */
         emit WhitelistedTokensRemoved(tokens);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function setDepositCap(address token, uint256 cap) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        /* Validate deposit token */
+        if (!_getWhitelistedTokensStorage().whitelistedTokens.contains(token)) revert InvalidToken();
+
+        /* Set deposit cap */
+        _getWhitelistedTokensStorage().depositCap[token] = cap;
+
+        /* Emit deposit cap set event */
+        emit DepositCapSet(token, cap);
     }
 }

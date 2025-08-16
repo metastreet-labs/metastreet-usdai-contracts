@@ -261,11 +261,18 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         uint256[] memory minAmounts = new uint256[](2);
         minAmounts[0] = 1_000_000 * 1e18;
         minAmounts[1] = 1_000_000 * 1e6;
+        uint256[] memory depositCaps = new uint256[](2);
+        depositCaps[0] = 0;
+        depositCaps[1] = 0;
         TransparentUpgradeableProxy usdaiQueuedDepositorProxy = new TransparentUpgradeableProxy(
             usdaiQueuedDepositorImpl,
             address(this),
             abi.encodeWithSignature(
-                "initialize(address,address[],uint256[])", address(this), whitelistedTokens, minAmounts
+                "initialize(address,address[],uint256[],uint256[])",
+                address(this),
+                whitelistedTokens,
+                minAmounts,
+                depositCaps
             )
         );
         usdaiQueuedDepositor = USDaiQueuedDepositor(address(usdaiQueuedDepositorProxy));

@@ -15,7 +15,8 @@ contract DeployUSDaiQueuedDepositor is Deployer {
         address deployer,
         address multisig,
         address[] memory whitelistedTokens,
-        uint256[] memory minAmounts
+        uint256[] memory minAmounts,
+        uint256[] memory depositCaps
     ) public broadcast useDeployment returns (address) {
         // Deploy receipt token implementation
         ReceiptToken receiptTokenImpl = new ReceiptToken();
@@ -35,7 +36,9 @@ contract DeployUSDaiQueuedDepositor is Deployer {
         TransparentUpgradeableProxy usdaiQueuedDepositor = new TransparentUpgradeableProxy(
             address(usdaiQueuedDepostiorImpl),
             deployer,
-            abi.encodeWithSelector(USDaiQueuedDepositor.initialize.selector, multisig, whitelistedTokens, minAmounts)
+            abi.encodeWithSelector(
+                USDaiQueuedDepositor.initialize.selector, multisig, whitelistedTokens, minAmounts, depositCaps
+            )
         );
         console.log("USDaiQueuedDepositor proxy", address(usdaiQueuedDepositor));
 
