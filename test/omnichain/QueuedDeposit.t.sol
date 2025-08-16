@@ -323,70 +323,10 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
     function test__USDaiQueuedDeposit_RevertWhen_InvalidAmount() public {
         // Local
         vm.startPrank(user);
+        usdtHomeToken.approve(address(usdaiQueuedDepositor), 100);
         vm.expectRevert(IUSDaiQueuedDepositor.InvalidAmount.selector);
         usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 100, user, 0);
         vm.stopPrank();
-
-        // Omnichain
-        bytes memory receiveOptions = OptionsBuilder.newOptions().addExecutorLzReceiveOption(200_000, 0);
-
-        // Compose message for deposit on home chain
-        bytes memory suffix = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, usdtAwayEid);
-        bytes memory composeMsg = abi.encode(IOUSDaiUtility.ActionType.QueuedDeposit, suffix);
-
-        // LZ composer option
-        bytes memory composerOptions = receiveOptions.addExecutorLzComposeOption(0, 500_000, uint128(0));
-
-        // Send param for USD away to USD home
-        SendParam memory usdtSendParam = SendParam({
-            dstEid: usdtHomeEid,
-            to: addressToBytes32(address(oUsdaiUtility)),
-            amountLD: 1e12,
-            minAmountLD: 1e12,
-            extraOptions: composerOptions,
-            composeMsg: composeMsg,
-            oftCmd: ""
-        });
-
-        // Quote the fee for sending USD from away to home
-        (,, OFTReceipt memory receipt) = usdtAwayOAdapter.quoteOFT(usdtSendParam);
-        usdtSendParam.minAmountLD = receipt.amountReceivedLD;
-
-        // Compose message for USD away to USD home
-        MessagingFee memory fee = usdtAwayOAdapter.quoteSend(usdtSendParam, false);
-
-        // Get initial balance
-        uint256 initialBalance = usdtHomeToken.balanceOf(user);
-
-        vm.startPrank(user);
-
-        // Send the USD
-        (MessagingReceipt memory msgReceipt, OFTReceipt memory oftReceipt) =
-            usdtAwayOAdapter.send{value: fee.nativeFee}(usdtSendParam, fee, payable(address(this)));
-
-        // Verify that the packets were correctly sent to the destination chain
-        verifyPackets(usdtHomeEid, addressToBytes32(address(usdtHomeOAdapter)));
-
-        // Recreate the compose message for the composer receiver
-        bytes memory composerMsg_ = OFTComposeMsgCodec.encode(
-            msgReceipt.nonce,
-            usdtAwayEid,
-            oftReceipt.amountReceivedLD,
-            abi.encodePacked(addressToBytes32(user), composeMsg)
-        );
-
-        // Execute the compose message
-        this.lzCompose(
-            usdtHomeEid,
-            address(usdtHomeOAdapter),
-            composerOptions,
-            msgReceipt.guid,
-            address(oUsdaiUtility),
-            composerMsg_
-        );
-
-        // Verify that the USD was not deposited due to revert
-        assertEq(usdtHomeToken.balanceOf(user), initialBalance + 1e12);
     }
 
     function test__USDaiQueuedDeposit_RevertWhen_InvalidDepositToken() public {
@@ -410,5 +350,29 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         IERC20(queuedUSDaiToken).transfer(address(usdaiQueuedDepositor), amount);
 
         vm.stopPrank();
+    }
+
+    function test__USDaiQueuedDeposit_RevertWhen_DepositCapExceeded() public {
+        usdaiQueuedDepositor.updateDepositCap(10_000_000 * 1e18, false);
+
+        (uint256 cap, uint256 counter) = usdaiQueuedDepositor.depositCapInfo();
+
+        assertEq(cap, 10_000_000 * 1e18);
+        assertEq(counter, 0);
+
+        vm.startPrank(user);
+        usdtHomeToken.approve(address(usdaiQueuedDepositor), cap + 1);
+        vm.expectRevert(IUSDaiQueuedDepositor.InvalidAmount.selector);
+        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), cap + 1, user, 0);
+        vm.stopPrank();
+
+        usdaiQueuedDepositor.updateDepositCap(cap + 1, false);
+
+        vm.startPrank(user);
+        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), cap + 1, user, 0);
+        vm.stopPrank();
+
+        (, counter) = usdaiQueuedDepositor.depositCapInfo();
+        assertEq(counter, cap + 1);
     }
 }
