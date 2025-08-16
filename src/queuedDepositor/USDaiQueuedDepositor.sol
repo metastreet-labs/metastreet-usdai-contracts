@@ -107,6 +107,14 @@ contract USDaiQueuedDepositor is
     bytes32 private constant RECEIPT_TOKENS_STORAGE_LOCATION =
         0x0b1935fa33a5b9486fb92ab02635f3c9d624ac3df1e1ee01c88d6052bb824d00;
 
+    /**
+     * @notice Deposit cap storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositCap")) - 1)) &
+     * ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant DEPOSIT_CAP_STORAGE_LOCATION =
+        0x5f4558a12a832f571ea97f326448c96240f9dce8a5a766ecf3dfe3896a796c00;
+
     /*------------------------------------------------------------------------*/
     /* Immutable state */
     /*------------------------------------------------------------------------*/
@@ -185,6 +193,14 @@ contract USDaiQueuedDepositor is
         IReceiptToken queuedStakedUSDaiToken;
     }
 
+    /**
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCap
+     */
+    struct DepositCap {
+        uint256 cap;
+        uint256 total;
+    }
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -225,11 +241,12 @@ contract USDaiQueuedDepositor is
     /**
      * @notice Initialize the contract
      * @param admin Default admin address
+     * @param depositCap_ Deposit cap
      * @param whitelistedTokens_ Whitelisted tokens
-     * @param minAmounts Minimum amounts
      */
     function initialize(
         address admin,
+        uint256 depositCap_,
         address[] memory whitelistedTokens_,
         uint256[] memory minAmounts
     ) external initializer {
@@ -247,6 +264,9 @@ contract USDaiQueuedDepositor is
             _getWhitelistedTokensStorage().whitelistedTokens.add(whitelistedTokens_[i]);
             _getWhitelistedTokensStorage().minAmounts[whitelistedTokens_[i]] = minAmounts[i];
         }
+
+        /* Set deposit cap */
+        _getDepositCapStorage().cap = depositCap_;
 
         /* Get receipt tokens storage */
         ReceiptTokens storage receiptTokens = _getReceiptTokensStorage();
@@ -295,6 +315,17 @@ contract USDaiQueuedDepositor is
     function _getReceiptTokensStorage() internal pure returns (ReceiptTokens storage $) {
         assembly {
             $.slot := RECEIPT_TOKENS_STORAGE_LOCATION
+        }
+    }
+
+    /**
+     * @notice Get reference to ERC-7201 deposit cap storage
+     *
+     * @return $ Reference to deposit cap storage
+     */
+    function _getDepositCapStorage() internal pure returns (DepositCap storage $) {
+        assembly {
+            $.slot := DEPOSIT_CAP_STORAGE_LOCATION
         }
     }
 
@@ -663,6 +694,13 @@ contract USDaiQueuedDepositor is
         return _getQueueStateStorage().queues[queueType][depositToken].queue[index];
     }
 
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function depositCap() external view returns (uint256, uint256) {
+        return (_getDepositCapStorage().cap, _getDepositCapStorage().total);
+    }
+
     /*------------------------------------------------------------------------*/
     /* Public API  */
     /*------------------------------------------------------------------------*/
@@ -687,6 +725,15 @@ contract USDaiQueuedDepositor is
         /* Validate recipient */
         if (recipient == address(0)) revert InvalidRecipient();
 
+        /* Scale the amount */
+        uint256 scaledAmount = _scaleFactor(depositToken) * amount;
+
+        /* Get deposit cap */
+        DepositCap memory depositCap_ = _getDepositCapStorage();
+
+        /* Validate deposit is within deposit cap */
+        if (depositCap_.cap != 0 && depositCap_.cap < depositCap_.total + scaledAmount) revert InvalidAmount();
+
         /* Transfer the deposit token to the queue depositor */
         IERC20(depositToken).transferFrom(msg.sender, address(this), amount);
 
@@ -704,8 +751,8 @@ contract USDaiQueuedDepositor is
         /* Update queue pending */
         queue.pending += amount;
 
-        /* Scale the amount */
-        uint256 scaledAmount = _scaleFactor(depositToken) * amount;
+        /* Update deposit cap */
+        _getDepositCapStorage().total += scaledAmount;
 
         /* Mint receipt token */
         if (queueType == QueueType.Deposit) {
@@ -791,5 +838,28 @@ contract USDaiQueuedDepositor is
 
         /* Emit whitelisted tokens removed event */
         emit WhitelistedTokensRemoved(tokens);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function setDepositCap(
+        uint256 cap
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        /* Set deposit cap */
+        _getDepositCapStorage().cap = cap;
+
+        /* Emit deposit cap set event */
+        emit DepositCapSet(cap);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function resetDepositTotal() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _getDepositCapStorage().total = 0;
+
+        /* Emit deposit total reset event */
+        emit DepositTotalReset();
     }
 }

@@ -129,6 +129,17 @@ interface IUSDaiQueuedDepositor {
     event WhitelistedTokensRemoved(address[] tokens);
 
     /**
+     * @notice Deposit cap set
+     * @param cap Deposit cap
+     */
+    event DepositCapSet(uint256 cap);
+
+    /**
+     * @notice Deposit total reset
+     */
+    event DepositTotalReset();
+
+    /**
      * @notice Action failed
      * @param action Action
      * @param reason Reason
@@ -237,6 +248,13 @@ interface IUSDaiQueuedDepositor {
         uint256 index
     ) external view returns (QueueItem memory);
 
+    /**
+     * @notice Deposit cap
+     * @return Deposit cap
+     * @return Total
+     */
+    function depositCap() external view returns (uint256, uint256);
+
     /*------------------------------------------------------------------------*/
     /* Public API */
     /*------------------------------------------------------------------------*/
@@ -298,4 +316,17 @@ interface IUSDaiQueuedDepositor {
     function removeWhitelistedTokens(
         address[] calldata tokens
     ) external;
+
+    /**
+     * @notice Set deposit cap
+     * @param cap Deposit cap
+     */
+    function setDepositCap(
+        uint256 cap
+    ) external;
+
+    /**
+     * @notice Reset deposit total
+     */
+    function resetDepositTotal() external;
 }

@@ -62,7 +62,7 @@ usage() {
     echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
     echo "  deploy-omnichain-environment <deployer> <lz endpoint> <multisig>"
     echo "  deploy-ousdai-utility <deployer> <lz endpoint> <o adapters> <multisig>"
-    echo "  deploy-usdai-queued-depositor <deployer> <multisig> <whitelisted tokens> <min amounts>"
+    echo "  deploy-usdai-queued-depositor <deployer> <multisig> <deposit cap> <whitelisted tokens> <min amounts>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -146,12 +146,12 @@ case $1 in
         ;;
 
    "deploy-usdai-queued-depositor")
-        if [ "$#" -ne 5 ]; then
+        if [ "$#" -ne 6 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,address[],uint256[])" $2 $3 "$4" "$5"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,uint256,address[],uint256[])" $2 $3 $4 "$5" "$6"
         ;;
 
    "upgrade-usdai")

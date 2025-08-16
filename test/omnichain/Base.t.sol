@@ -265,7 +265,7 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
             usdaiQueuedDepositorImpl,
             address(this),
             abi.encodeWithSignature(
-                "initialize(address,address[],uint256[])", address(this), whitelistedTokens, minAmounts
+                "initialize(address,uint256,address[],uint256[])", address(this), 0, whitelistedTokens, minAmounts
             )
         );
         usdaiQueuedDepositor = USDaiQueuedDepositor(address(usdaiQueuedDepositorProxy));
