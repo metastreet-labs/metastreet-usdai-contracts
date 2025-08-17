@@ -56,6 +56,7 @@ usage() {
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-add-price-feeds <tokens> <price feeds>"
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
+    echo "  usdaiqueueddepositor-update-deposit-cap <deposit cap> <reset counter>"
     echo "  grant-role <target> <role> <account>"
     echo "  transfer-ownership <proxy> <account>"
     echo ""
@@ -214,6 +215,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/OAdapterSetRateLimits.s.sol:OAdapterSetRateLimits" --sig "run(address,uint32[],uint256,uint256)" $2 "$3" $4 $5
+        ;;
+
+    "usdaiqueueddepositor-update-deposit-cap")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositCap.s.sol:USDaiQueuedDepositorUpdateDepositCap" --sig "run(uint256,bool)" $2 $3
         ;;
 
    "grant-role")
