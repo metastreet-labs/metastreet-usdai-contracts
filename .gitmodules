@@ -31,3 +31,14 @@
 [submodule "lib/solidity-bytes-utils"]
 	path = lib/solidity-bytes-utils
 	url = https://github.com/GNSPS/solidity-bytes-utils.git
+[submodule "lib/Pendle-SY-Public"]
+	path = lib/Pendle-SY-Public
+	url = https://github.com/metastreet-labs/Pendle-SY-Public.git
+[submodule "lib/openzeppelin-contracts-v4.9"]
+	path = lib/openzeppelin-contracts-v4.9
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts.git
+	branch = release-v4.9
+[submodule "lib/openzeppelin-contracts-upgradeable-v4.9"]
+	path = lib/openzeppelin-contracts-upgradeable-v4.9
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git
+	branch = release-v4.9
