@@ -85,6 +85,11 @@ contract USDaiQueuedDepositor is
     uint256 internal constant FIXED_POINT_SCALE = 1e18;
 
     /**
+     * @notice Basis points scale
+     */
+    uint256 internal constant BASIS_POINTS_SCALE = 10_000;
+
+    /**
      * @notice Whitelisted tokens storage location
      * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.whitelistedTokens")) - 1)) &
      * ~bytes32(uint256(0xff));
@@ -445,14 +450,14 @@ contract USDaiQueuedDepositor is
     /**
      * @notice Deposit USDai
      * @param depositToken Deposit token
-     * @param serviceAmount Service amount
+     * @param totalServiceAmount Total service amount
      * @param usdaiAmountMinimum USDai amount minimum
      * @param path Path
      * @return USDai amount
      */
     function _depositUsdai(
         address depositToken,
-        uint256 serviceAmount,
+        uint256 totalServiceAmount,
         uint256 usdaiAmountMinimum,
         bytes memory path
     ) internal returns (uint256) {
@@ -460,46 +465,99 @@ contract USDaiQueuedDepositor is
         if (!_getWhitelistedTokensStorage().whitelistedTokens.contains(depositToken)) revert InvalidToken();
 
         /* Validate service amount and usdai amount minimum */
-        if (serviceAmount == 0 || usdaiAmountMinimum == 0) revert InvalidAmount();
+        if (totalServiceAmount == 0 || usdaiAmountMinimum == 0) revert InvalidAmount();
 
         /* Approve the USDai contract to spend the deposit token */
-        IERC20(depositToken).forceApprove(address(_usdai), serviceAmount);
+        IERC20(depositToken).forceApprove(address(_usdai), totalServiceAmount);
 
         /* Deposit the deposit token */
-        return _usdai.deposit(depositToken, serviceAmount, usdaiAmountMinimum, address(this), path);
+        return _usdai.deposit(depositToken, totalServiceAmount, usdaiAmountMinimum, address(this), path);
+    }
+
+    /**
+     * @notice Preprocess queue to get service amount and minimum USDai amount
+     * @param queueType Queue type
+     * @param depositToken Deposit token
+     * @param count Count
+     * @param maxServiceAmount Max service amount
+     * @param usdaiSlippageRate USDai slippage rate
+     * @return Total service amount, USDai amount min
+     */
+    function _preprocessQueue(
+        QueueType queueType,
+        address depositToken,
+        uint256 count,
+        uint256 maxServiceAmount,
+        uint256 usdaiSlippageRate
+    ) internal view returns (uint256, uint256) {
+        /* Validate count */
+        if (count == 0) revert InvalidParameters();
+
+        /* Get queue state */
+        Queue storage queue = _getQueueStateStorage().queues[queueType][depositToken];
+
+        /* Get service amount */
+        uint256 totalServiceAmount;
+        uint256 end = Math.min(queue.head + count, queue.queue.length);
+        for (uint256 head = queue.head; head < end; head++) {
+            /* Increment service amount */
+            totalServiceAmount += queue.queue[head].pendingDeposit;
+        }
+
+        /* Validate service amount */
+        if (totalServiceAmount == 0) revert InvalidQueueState();
+
+        /* Clamp on service amount */
+        if (maxServiceAmount != 0) totalServiceAmount = Math.min(maxServiceAmount, totalServiceAmount);
+
+        /* Calculate slippage */
+        uint256 slippage = totalServiceAmount * usdaiSlippageRate / BASIS_POINTS_SCALE;
+
+        /* Return service amount, minimum USDai amount */
+        return (totalServiceAmount, _scaleFactor(depositToken) * (totalServiceAmount - slippage));
     }
 
     /**
      * @notice Process queue
      * @param queueType Queue type
      * @param depositToken Deposit token
-     * @param serviceAmount Service amount
-     * @param amount Amount
+     * @param totalServiceAmount Total service amount
+     * @param totalConvertedAmount Total converted amount
      */
-    function _processQueue(QueueType queueType, address depositToken, uint256 serviceAmount, uint256 amount) internal {
+    function _processQueue(
+        QueueType queueType,
+        address depositToken,
+        uint256 totalServiceAmount,
+        uint256 totalConvertedAmount
+    ) internal {
         /* Get queue state */
         Queue storage queue = _getQueueStateStorage().queues[queueType][depositToken];
 
         /* Get scale factor */
         uint256 scaleFactor = _scaleFactor(depositToken);
 
+        /* Process queue */
         uint256 head = queue.head;
-        uint256 remainingServiceAmount = serviceAmount;
-        while (remainingServiceAmount > 0 && head < queue.queue.length) {
+        uint256 remainingServiceAmount = totalServiceAmount;
+        while (remainingServiceAmount > 0) {
             QueueItem storage item = queue.queue[head];
 
-            /* Calculate serviced deposit and transfer amount */
-            uint256 servicedDeposit = Math.min(item.pendingDeposit, remainingServiceAmount);
-            uint256 transferAmount = Math.mulDiv(amount, servicedDeposit, serviceAmount);
+            /* Calculate serviced amount */
+            uint256 servicedAmount = Math.min(item.pendingDeposit, remainingServiceAmount);
+
+            /* Calculate transfer amount */
+            uint256 transferAmount = Math.mulDiv(servicedAmount, totalConvertedAmount, totalServiceAmount);
 
             /* Burn receipt token. Note: unable to cache outside while loop due to stack too deep error */
             queueType == QueueType.Deposit
-                ? _getReceiptTokensStorage().queuedUSDaiToken.burn(item.recipient, scaleFactor * servicedDeposit)
-                : _getReceiptTokensStorage().queuedStakedUSDaiToken.burn(item.recipient, scaleFactor * servicedDeposit);
+                ? _getReceiptTokensStorage().queuedUSDaiToken.burn(item.recipient, scaleFactor * servicedAmount)
+                : _getReceiptTokensStorage().queuedStakedUSDaiToken.burn(item.recipient, scaleFactor * servicedAmount);
+
+            /* Update pending deposit */
+            item.pendingDeposit -= servicedAmount;
 
             /* Update remaining service amount */
-            remainingServiceAmount -= servicedDeposit;
-            item.pendingDeposit -= servicedDeposit;
+            remainingServiceAmount -= servicedAmount;
 
             /* Transfer the USDai or sUSDai to the recipient */
             _transfer(queueType, item, transferAmount);
@@ -510,22 +568,19 @@ contract USDaiQueuedDepositor is
                 depositToken,
                 head,
                 item.depositor,
-                servicedDeposit,
+                servicedAmount,
                 transferAmount,
                 item.recipient,
                 item.dstEid
             );
 
-            /* Update head */
+            /* Increment head */
             if (item.pendingDeposit == 0) head++;
         }
 
-        /* Validate remaining service amount */
-        if (remainingServiceAmount != 0) revert InvalidQueueState();
-
         /* Update queue state */
         queue.head = head;
-        queue.pending -= serviceAmount;
+        queue.pending -= totalServiceAmount;
     }
 
     /**
@@ -536,19 +591,18 @@ contract USDaiQueuedDepositor is
         bytes memory data
     ) internal {
         /* Decode the message */
-        (address depositToken, uint256 serviceAmount, uint256 usdaiAmountMinimum, bytes memory path) =
-            abi.decode(data, (address, uint256, uint256, bytes));
+        (address depositToken, uint256 count, uint256 maxServiceAmount, uint256 usdaiSlippageRate, bytes memory path) =
+            abi.decode(data, (address, uint256, uint256, uint256, bytes));
 
-        /* Validate scaled service amount is more than or equal to the pending deposit */
-        if (_getQueueStateStorage().queues[QueueType.Deposit][depositToken].pending < serviceAmount) {
-            revert InvalidAmount();
-        }
+        /* Preprocess queue */
+        (uint256 totalServiceAmount, uint256 usdaiAmountMinimum) =
+            _preprocessQueue(QueueType.Deposit, depositToken, count, maxServiceAmount, usdaiSlippageRate);
 
         /* Deposit USDai */
-        uint256 usdaiAmount = _depositUsdai(depositToken, serviceAmount, usdaiAmountMinimum, path);
+        uint256 usdaiAmount = _depositUsdai(depositToken, totalServiceAmount, usdaiAmountMinimum, path);
 
         /* Process queue */
-        _processQueue(QueueType.Deposit, depositToken, serviceAmount, usdaiAmount);
+        _processQueue(QueueType.Deposit, depositToken, totalServiceAmount, usdaiAmount);
     }
 
     /**
@@ -559,26 +613,33 @@ contract USDaiQueuedDepositor is
         bytes memory data
     ) internal {
         /* Decode the message */
-        (address depositToken, uint256 serviceAmount, uint256 usdaiAmountMinimum, bytes memory path, uint256 minShares)
-        = abi.decode(data, (address, uint256, uint256, bytes, uint256));
+        (
+            address depositToken,
+            uint256 count,
+            uint256 maxServiceAmount,
+            uint256 usdaiSlippageRate,
+            bytes memory path,
+            uint256 maxDepositSharePrice
+        ) = abi.decode(data, (address, uint256, uint256, uint256, bytes, uint256));
 
-        /* Validate service amount is more than or equal to the pending deposit and min shares is not 0 */
-        if (
-            _getQueueStateStorage().queues[QueueType.DepositAndStake][depositToken].pending < serviceAmount
-                || minShares == 0
-        ) revert InvalidAmount();
+        /* Preprocess queue */
+        (uint256 totalServiceAmount, uint256 usdaiAmountMinimum) =
+            _preprocessQueue(QueueType.DepositAndStake, depositToken, count, maxServiceAmount, usdaiSlippageRate);
 
         /* Deposit USDai */
-        uint256 usdaiAmount = _depositUsdai(depositToken, serviceAmount, usdaiAmountMinimum, path);
+        uint256 usdaiAmount = _depositUsdai(depositToken, totalServiceAmount, usdaiAmountMinimum, path);
 
         /* Approve the staked USDai contract to spend the USDai */
         _usdai.approve(address(_stakedUsdai), usdaiAmount);
 
         /* Stake the USDai */
-        uint256 susdaiAmount = _stakedUsdai.deposit(usdaiAmount, address(this), minShares);
+        uint256 susdaiAmount = _stakedUsdai.deposit(usdaiAmount, address(this), 0);
+
+        /* Validate deposit share price */
+        if (((usdaiAmount * FIXED_POINT_SCALE) / susdaiAmount) > maxDepositSharePrice) revert InvalidSharePrice();
 
         /* Process queue */
-        _processQueue(QueueType.DepositAndStake, depositToken, serviceAmount, susdaiAmount);
+        _processQueue(QueueType.DepositAndStake, depositToken, totalServiceAmount, susdaiAmount);
     }
 
     /*------------------------------------------------------------------------*/
