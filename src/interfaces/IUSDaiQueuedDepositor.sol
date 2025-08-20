@@ -52,6 +52,11 @@ interface IUSDaiQueuedDepositor {
     error InvalidAmount();
 
     /**
+     * @notice Invalid share price
+     */
+    error InvalidSharePrice();
+
+    /**
      * @notice Insufficient balance
      */
     error InsufficientBalance();

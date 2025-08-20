@@ -144,7 +144,14 @@ contract MockUSDai is
         uint256 usdaiAmountMinimum,
         address recipient,
         bytes calldata
-    ) internal nonZeroUint(depositAmount) nonZeroUint(usdaiAmountMinimum) nonZeroAddress(recipient) returns (uint256) {
+    )
+        internal
+        virtual
+        nonZeroUint(depositAmount)
+        nonZeroUint(usdaiAmountMinimum)
+        nonZeroAddress(recipient)
+        returns (uint256)
+    {
         /* Transfer token in from sender to this contract */
         IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
 
