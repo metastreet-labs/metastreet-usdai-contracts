@@ -1,3 +1,6 @@
+* USDaiQueuedDepositor v1.1 - 08/21/2025
+    * Migrate to servicing queue count instead of amount in `service()`.
+
 * USDaiQueuedDepositor v1.1 - 08/16/2025
     * Add support for deposit cap.
 
