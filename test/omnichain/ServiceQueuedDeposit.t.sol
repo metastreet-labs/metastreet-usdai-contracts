@@ -19,9 +19,12 @@ import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 
 import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
+import {IUSDai} from "src/USDai.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+
+import {MockUSDaiSlippage} from "../mocks/MockUSDaiSlippage.sol";
 
 contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
     using OptionsBuilder for bytes;
@@ -597,6 +600,35 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
             abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice - 1)
+        );
+    }
+
+    function test__USDaiServiceQueuedOmnichainDepositAndStake_RevertWhen_InvalidSlippage() public {
+        uint256 amount = 1_000_000 ether;
+
+        // User approves USDai to spend their USD
+        vm.startPrank(user);
+        usdtHomeToken.approve(address(usdaiQueuedDepositor), amount);
+
+        // User deposits into USDai queued depositor
+        usdaiQueuedDepositor.deposit(
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), amount, user, 0
+        );
+
+        vm.stopPrank();
+
+        uint256 slippageRate = 15e13;
+
+        // Deploy mock USDai with custom slippage behavior
+        MockUSDaiSlippage mockUSDaiSlippage = new MockUSDaiSlippage(slippageRate);
+        
+        // Etch the mock implementation over the existing USDai contract
+        vm.etch(address(usdai), address(mockUSDaiSlippage).code);
+
+        vm.expectRevert(IUSDai.InvalidAmount.selector);
+        usdaiQueuedDepositor.service(
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake,
+            abi.encode(address(usdtHomeToken), 1, 0, slippageRate, "", 0)
         );
     }
 }

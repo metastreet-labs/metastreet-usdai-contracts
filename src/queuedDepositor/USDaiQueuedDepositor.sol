@@ -85,11 +85,6 @@ contract USDaiQueuedDepositor is
     uint256 internal constant FIXED_POINT_SCALE = 1e18;
 
     /**
-     * @notice Basis points scale
-     */
-    uint256 internal constant BASIS_POINTS_SCALE = 10_000;
-
-    /**
      * @notice Whitelisted tokens storage location
      * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.whitelistedTokens")) - 1)) &
      * ~bytes32(uint256(0xff));
@@ -480,7 +475,7 @@ contract USDaiQueuedDepositor is
      * @param depositToken Deposit token
      * @param count Count
      * @param maxServiceAmount Max service amount
-     * @param usdaiSlippageRate USDai slippage rate
+     * @param usdaiSlippageRate USDai slippage rate (18 decimal)
      * @return Total service amount, USDai amount min
      */
     function _preprocessQueue(
@@ -511,7 +506,7 @@ contract USDaiQueuedDepositor is
         if (maxServiceAmount != 0) totalServiceAmount = Math.min(maxServiceAmount, totalServiceAmount);
 
         /* Calculate slippage */
-        uint256 slippage = totalServiceAmount * usdaiSlippageRate / BASIS_POINTS_SCALE;
+        uint256 slippage = totalServiceAmount * usdaiSlippageRate / FIXED_POINT_SCALE;
 
         /* Return service amount, minimum USDai amount */
         return (totalServiceAmount, _scaleFactor(depositToken) * (totalServiceAmount - slippage));
