@@ -53,6 +53,7 @@ usage() {
     echo "  upgrade-ousdai-utility <lz endpoint>"
     echo "  upgrade-usdai-queued-depositor"
     echo ""
+    echo "  staked-usdai-service-redemptions <shares>"
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-add-price-feeds <tokens> <price feeds>"
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
@@ -188,6 +189,15 @@ case $1 in
 
    "upgrade-usdai-queued-depositor")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDaiQueuedDepositor.s.sol:UpgradeUSDaiQueuedDepositor" --sig "run()"
+        ;;
+
+   "staked-usdai-service-redemptions")
+        if [ "$#" -ne 2 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/StakedUSDaiServiceRedemptions.s.sol:StakedUSDaiServiceRedemptions" --sig "run(uint256)" $2
         ;;
 
    "swap-adapter-set-token-whitelist")
