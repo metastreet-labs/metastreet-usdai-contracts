@@ -51,7 +51,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem1 =
@@ -79,7 +80,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem2 =
@@ -97,7 +99,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         vm.expectRevert(IUSDaiQueuedDepositor.InvalidQueueState.selector);
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         assertEq(usdai.balanceOf(user), amount * 2);
@@ -117,7 +120,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 3, 0, 10, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 3, 0, 10, ""))
         );
 
         assertEq(usdai.balanceOf(user), 4_000_000 ether);
@@ -139,7 +143,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 500_000 ether, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 500_000 ether, 0, "")
+            )
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem1 =
@@ -167,7 +174,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 500_000 ether, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 500_000 ether, 0, "")
+            )
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem2 =
@@ -184,7 +194,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItems2.length, 2);
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 200_000 ether, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 200_000 ether, 0, "")
+            )
         );
 
         queueItem2 =
@@ -216,7 +229,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken6Decimals), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken6Decimals), 1, 0, 0, ""))
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
@@ -245,7 +259,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken6Decimals), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken6Decimals), 1, 0, 0, ""))
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
@@ -264,7 +279,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         vm.expectRevert(IUSDaiQueuedDepositor.InvalidQueueState.selector);
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken6Decimals), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken6Decimals), 1, 0, 0, ""))
         );
 
         assertEq(usdai.balanceOf(user), 2_000_000 ether);
@@ -284,7 +300,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken6Decimals), 3, 0, 10, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken6Decimals), 3, 0, 10, "")
+            )
         );
 
         assertEq(usdai.balanceOf(user), 4_000_000 ether);
@@ -309,7 +328,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.stopPrank();
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         assertEq(usdai.balanceOf(user), 1_000_000 ether);
@@ -334,7 +354,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice1)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice1)
+            )
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
@@ -367,7 +390,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice2)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice2)
+            )
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
@@ -388,7 +414,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.expectRevert(IUSDaiQueuedDepositor.InvalidQueueState.selector);
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 3, 0, 0, "", depositSharePrice3)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 3, 0, 0, "", depositSharePrice3)
+            )
         );
 
         (uint256 head3, uint256 pending3, IUSDaiQueuedDepositor.QueueItem[] memory queueItems3) = usdaiQueuedDepositor
@@ -424,7 +453,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice4)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice4)
+            )
         );
 
         assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), 0);
@@ -448,7 +480,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.deal(address(usdaiQueuedDepositor), 100 ether);
 
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         // Verify that the packets were correctly sent to the destination chain.
@@ -480,7 +513,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice)
+            )
         );
 
         // Verify that the packets were correctly sent to the destination chain.
@@ -514,7 +550,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         // Service the deposit
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         // Assert that the USDAI home token was minted to the user
@@ -545,7 +582,8 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
 
         // Service the deposit
         usdaiQueuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(address(usdtHomeToken), 1, 0, 0, "")
+            IUSDaiQueuedDepositor.QueueType.Deposit,
+            abi.encode(IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, 0, ""))
         );
 
         // Verify that the packets were correctly sent to the destination chain
@@ -576,7 +614,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.expectRevert(IUSDaiQueuedDepositor.InsufficientBalance.selector);
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice)
+            )
         );
     }
 
@@ -599,7 +640,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.expectRevert(IUSDaiQueuedDepositor.InvalidSharePrice.selector);
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice - 1)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default,
+                abi.encode(address(usdtHomeToken), 1, 0, 0, "", depositSharePrice - 1)
+            )
         );
     }
 
@@ -628,7 +672,9 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         vm.expectRevert(IUSDai.InvalidAmount.selector);
         usdaiQueuedDepositor.service(
             IUSDaiQueuedDepositor.QueueType.DepositAndStake,
-            abi.encode(address(usdtHomeToken), 1, 0, slippageRate, "", 0)
+            abi.encode(
+                IUSDaiQueuedDepositor.SwapType.Default, abi.encode(address(usdtHomeToken), 1, 0, slippageRate, "", 0)
+            )
         );
     }
 }

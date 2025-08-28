@@ -32,6 +32,14 @@ interface IUSDaiQueuedDepositor {
         address recipient;
     }
 
+    /**
+     * @notice Swap type
+     */
+    enum SwapType {
+        Default,
+        Aggregator
+    }
+
     /*------------------------------------------------------------------------*/
     /* Errors */
     /*------------------------------------------------------------------------*/
@@ -75,6 +83,21 @@ interface IUSDaiQueuedDepositor {
      * @notice Invalid queue type
      */
     error InvalidQueueType();
+
+    /**
+     * @notice Invalid swap type
+     */
+    error InvalidSwapType();
+
+    /**
+     * @notice Invalid slippage
+     */
+    error InvalidSlippage();
+
+    /**
+     * @notice Invalid aggregator swap
+     */
+    error InvalidAggregatorSwap(bytes reason);
 
     /*------------------------------------------------------------------------*/
     /* Events */
