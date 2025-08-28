@@ -18,6 +18,8 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {IOFT as IOFT_, SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
+import "./KyberSwapLib.sol";
+
 import "./ReceiptTokenProxy.sol";
 
 import "src/interfaces/IUSDai.sol";
@@ -44,6 +46,7 @@ interface IStakedUSDai is IStakedUSDai_ {
 /**
  * @title USDai Queued Depositor
  * @author MetaStreet Foundation
+ * @notice Accepts only USD-denominated stables
  */
 contract USDaiQueuedDepositor is
     MulticallUpgradeable,
@@ -55,6 +58,9 @@ contract USDaiQueuedDepositor is
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.AddressSet;
+
+    using BytesLib for bytes;
+    using KyberSwapLib for bytes;
 
     /*------------------------------------------------------------------------*/
     /* Roles */
@@ -128,6 +134,11 @@ contract USDaiQueuedDepositor is
      * @notice Staked USDai token
      */
     IStakedUSDai internal immutable _stakedUsdai;
+
+    /**
+     * @notice Base token
+     */
+    address internal immutable _baseToken;
 
     /**
      * @notice USDai OAdapter
@@ -222,6 +233,7 @@ contract USDaiQueuedDepositor is
     ) {
         _usdai = IUSDai(usdai_);
         _stakedUsdai = IStakedUSDai(stakedUsdai_);
+        _baseToken = _usdai.baseToken();
 
         _usdaiOAdapter = IOFT(usdaiOAdapter_);
         _stakedUsdaiOAdapter = IOFT(stakedUsdaiOAdapter_);
@@ -443,30 +455,113 @@ contract USDaiQueuedDepositor is
     }
 
     /**
+     * @notice Handle aggregator swap
+     * @param queueType Queue type
+     * @param swapType Swap type
+     * @param data Data
+     * @return Deposit token, total service amount, base token amount, max deposit share price
+     */
+    function _handleAggregatorSwap(
+        QueueType queueType,
+        SwapType swapType,
+        bytes memory data
+    ) internal returns (address, uint256, uint256, uint256) {
+        /* Decode the message */
+        (
+            address depositToken,
+            address target,
+            bytes memory executionData,
+            uint256 baseTokenSlippageRate,
+            uint256 maxDepositSharePrice
+        ) = abi.decode(data, (address, address, bytes, uint256, uint256));
+
+        /* Validate aggregator type */
+        address srcToken;
+        address dstToken;
+        address dstReceiver;
+        uint256 totalServiceAmount;
+        if (swapType == SwapType.KyberSwap) {
+            (srcToken, dstToken, dstReceiver, totalServiceAmount) =
+                KyberSwapLib.decodeMessage(BytesLib.slice(executionData, 4, executionData.length - 4));
+        } else {
+            revert InvalidSwapType();
+        }
+
+        /* Validate token contract */
+        if (srcToken != depositToken) revert InvalidToken();
+
+        /* Validate destination token */
+        if (dstToken != _baseToken) revert InvalidToken();
+
+        /* Validate destination receiver */
+        if (dstReceiver != address(this)) revert InvalidRecipient();
+
+        /* Validate amount */
+        if (totalServiceAmount > _getQueueStateStorage().queues[queueType][depositToken].pending) {
+            revert InvalidAmount();
+        }
+
+        /* Calculate slippage */
+        uint256 slippage = totalServiceAmount * baseTokenSlippageRate / FIXED_POINT_SCALE;
+
+        /* Balance before */
+        uint256 srcTokenBalanceBefore = IERC20(srcToken).balanceOf(address(this));
+        uint256 dstTokenBalanceBefore = IERC20(dstToken).balanceOf(address(this));
+
+        /* Approve the source token */
+        IERC20(srcToken).forceApprove(target, totalServiceAmount);
+
+        /* Call the target */
+        (bool success, bytes memory reason) = target.call(executionData);
+
+        /* If the call is not successful, revert */
+        if (!success) revert InvalidAggregatorSwap(reason);
+
+        /* Balance after */
+        uint256 srcTokenBalanceAfter = IERC20(srcToken).balanceOf(address(this));
+        uint256 dstTokenBalanceAfter = IERC20(dstToken).balanceOf(address(this));
+
+        /* Amounts */
+        uint256 usedAmount = srcTokenBalanceBefore - srcTokenBalanceAfter;
+        uint256 baseTokenAmount = dstTokenBalanceAfter - dstTokenBalanceBefore;
+
+        /* Validate amounts */
+        if (usedAmount > totalServiceAmount) revert InvalidAmount();
+        if (_scaleFactor(_baseToken) * baseTokenAmount < _scaleFactor(depositToken) * (totalServiceAmount - slippage)) {
+            revert InvalidSlippage();
+        }
+
+        /* Return deposit token, total service amount, base token amount, max deposit share price */
+        return (depositToken, totalServiceAmount, baseTokenAmount, maxDepositSharePrice);
+    }
+
+    /**
      * @notice Deposit USDai
      * @param depositToken Deposit token
-     * @param totalServiceAmount Total service amount
+     * @param depositAmount Deposit amount
      * @param usdaiAmountMinimum USDai amount minimum
      * @param path Path
      * @return USDai amount
      */
     function _depositUsdai(
         address depositToken,
-        uint256 totalServiceAmount,
+        uint256 depositAmount,
         uint256 usdaiAmountMinimum,
         bytes memory path
     ) internal returns (uint256) {
         /* Validate deposit token */
-        if (!_getWhitelistedTokensStorage().whitelistedTokens.contains(depositToken)) revert InvalidToken();
+        if (depositToken != _baseToken && !_getWhitelistedTokensStorage().whitelistedTokens.contains(depositToken)) {
+            revert InvalidToken();
+        }
 
         /* Validate service amount and usdai amount minimum */
-        if (totalServiceAmount == 0 || usdaiAmountMinimum == 0) revert InvalidAmount();
+        if (depositAmount == 0 || usdaiAmountMinimum == 0) revert InvalidAmount();
 
         /* Approve the USDai contract to spend the deposit token */
-        IERC20(depositToken).forceApprove(address(_usdai), totalServiceAmount);
+        IERC20(depositToken).forceApprove(address(_usdai), depositAmount);
 
         /* Deposit the deposit token */
-        return _usdai.deposit(depositToken, totalServiceAmount, usdaiAmountMinimum, address(this), path);
+        return _usdai.deposit(depositToken, depositAmount, usdaiAmountMinimum, address(this), path);
     }
 
     /**
@@ -586,15 +681,39 @@ contract USDaiQueuedDepositor is
         bytes memory data
     ) internal {
         /* Decode the message */
-        (address depositToken, uint256 count, uint256 maxServiceAmount, uint256 usdaiSlippageRate, bytes memory path) =
-            abi.decode(data, (address, uint256, uint256, uint256, bytes));
+        (SwapType swapType, bytes memory swapData) = abi.decode(data, (SwapType, bytes));
 
-        /* Preprocess queue */
-        (uint256 totalServiceAmount, uint256 usdaiAmountMinimum) =
-            _preprocessQueue(QueueType.Deposit, depositToken, count, maxServiceAmount, usdaiSlippageRate);
+        /* Deposit token based on swap type */
+        address depositToken;
+        uint256 totalServiceAmount;
+        uint256 usdaiAmount;
+        if (swapType == SwapType.Default) {
+            uint256 count;
+            uint256 maxServiceAmount;
+            uint256 usdaiSlippageRate;
+            uint256 usdaiAmountMinimum;
+            bytes memory path;
 
-        /* Deposit USDai */
-        uint256 usdaiAmount = _depositUsdai(depositToken, totalServiceAmount, usdaiAmountMinimum, path);
+            /* Decode the message */
+            (depositToken, count, maxServiceAmount, usdaiSlippageRate, path) =
+                abi.decode(swapData, (address, uint256, uint256, uint256, bytes));
+
+            /* Preprocess queue */
+            (totalServiceAmount, usdaiAmountMinimum) =
+                _preprocessQueue(QueueType.Deposit, depositToken, count, maxServiceAmount, usdaiSlippageRate);
+
+            /* Deposit USDai */
+            usdaiAmount = _depositUsdai(depositToken, totalServiceAmount, usdaiAmountMinimum, path);
+        } else {
+            uint256 baseTokenAmount;
+
+            /* Handle aggregator swap */
+            (depositToken, totalServiceAmount, baseTokenAmount,) =
+                _handleAggregatorSwap(QueueType.Deposit, swapType, swapData);
+
+            /* Deposit USDai */
+            usdaiAmount = _depositUsdai(_baseToken, baseTokenAmount, type(uint256).max, "");
+        }
 
         /* Process queue */
         _processQueue(QueueType.Deposit, depositToken, totalServiceAmount, usdaiAmount);
@@ -608,21 +727,40 @@ contract USDaiQueuedDepositor is
         bytes memory data
     ) internal {
         /* Decode the message */
-        (
-            address depositToken,
-            uint256 count,
-            uint256 maxServiceAmount,
-            uint256 usdaiSlippageRate,
-            bytes memory path,
-            uint256 maxDepositSharePrice
-        ) = abi.decode(data, (address, uint256, uint256, uint256, bytes, uint256));
+        (SwapType swapType, bytes memory swapData) = abi.decode(data, (SwapType, bytes));
 
-        /* Preprocess queue */
-        (uint256 totalServiceAmount, uint256 usdaiAmountMinimum) =
-            _preprocessQueue(QueueType.DepositAndStake, depositToken, count, maxServiceAmount, usdaiSlippageRate);
+        /*  Default swap uses deposit token, aggregators swap to base token */
+        address depositToken;
+        uint256 totalServiceAmount;
+        uint256 usdaiAmount;
+        uint256 maxDepositSharePrice;
+        if (swapType == SwapType.Default) {
+            uint256 count;
+            uint256 maxServiceAmount;
+            uint256 usdaiSlippageRate;
+            uint256 usdaiAmountMinimum;
+            bytes memory path;
 
-        /* Deposit USDai */
-        uint256 usdaiAmount = _depositUsdai(depositToken, totalServiceAmount, usdaiAmountMinimum, path);
+            /* Decode the message */
+            (depositToken, count, maxServiceAmount, usdaiSlippageRate, path, maxDepositSharePrice) =
+                abi.decode(swapData, (address, uint256, uint256, uint256, bytes, uint256));
+
+            /* Preprocess queue */
+            (totalServiceAmount, usdaiAmountMinimum) =
+                _preprocessQueue(QueueType.DepositAndStake, depositToken, count, maxServiceAmount, usdaiSlippageRate);
+
+            /* Deposit USDai */
+            usdaiAmount = _depositUsdai(depositToken, totalServiceAmount, usdaiAmountMinimum, path);
+        } else {
+            uint256 baseTokenAmount;
+
+            /* Handle aggregator swap */
+            (depositToken, totalServiceAmount, baseTokenAmount, maxDepositSharePrice) =
+                _handleAggregatorSwap(QueueType.DepositAndStake, swapType, swapData);
+
+            /* Deposit USDai */
+            usdaiAmount = _depositUsdai(_baseToken, baseTokenAmount, type(uint256).max, "");
+        }
 
         /* Approve the staked USDai contract to spend the USDai */
         _usdai.approve(address(_stakedUsdai), usdaiAmount);
