@@ -37,6 +37,13 @@ contract MockUSDai is
      */
     bytes32 internal constant BRIDGE_ADMIN_ROLE = keccak256("BRIDGE_ADMIN_ROLE");
 
+    /**
+     * @notice Supply cap
+     * @dev keccak256(abi.encode(uint256(keccak256("USDai.supply")) - 1)) & ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant SUPPLY_STORAGE_LOCATION =
+        0x5fc387bd350b82c09f22bee4c04d61669980ce519c352560e36bc6144f9cf800;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -126,9 +133,34 @@ contract MockUSDai is
         return address(0);
     }
 
+    /**
+     * @inheritdoc IUSDai
+     */
+    function bridgedSupply() public view returns (uint256) {
+        return _getSupplyStorage().bridged;
+    }
+
+    /**
+     * @inheritdoc IUSDai
+     */
+    function supplyCap() public view returns (uint256) {
+        return _getSupplyStorage().cap;
+    }
+
     /*------------------------------------------------------------------------*/
     /* Internal helpers */
     /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Get reference to USDai supply storage
+     *
+     * @return $ Reference to supply storage
+     */
+    function _getSupplyStorage() internal pure returns (Supply storage $) {
+        assembly {
+            $.slot := SUPPLY_STORAGE_LOCATION
+        }
+    }
 
     /**
      * @notice Deposit
@@ -265,6 +297,9 @@ contract MockUSDai is
      */
     function mint(address to, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
         _mint(to, amount);
+
+        /* Update bridged supply */
+        _getSupplyStorage().bridged -= amount;
     }
 
     /**
@@ -272,6 +307,26 @@ contract MockUSDai is
      */
     function burn(address from, uint256 amount) external onlyRole(BRIDGE_ADMIN_ROLE) {
         _burn(from, amount);
+
+        /* Update bridged supply */
+        _getSupplyStorage().bridged += amount;
+    }
+
+    /*------------------------------------------------------------------------*/
+    /* Permissioned API */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Set supply cap
+     * @param cap Supply cap
+     */
+    function setSupplyCap(
+        uint256 cap
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _getSupplyStorage().cap = cap;
+
+        /* Emit supply cap set event */
+        emit SupplyCapSet(cap);
     }
 
     /*------------------------------------------------------------------------*/

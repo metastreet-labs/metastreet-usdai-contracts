@@ -27,4 +27,65 @@ contract USDaiDepositTest is BaseTest {
 
         vm.stopPrank();
     }
+
+    function testFuzz__USDaiDepositExceedsSupplyCap(
+        uint256 amount
+    ) public {
+        vm.assume(amount > 1000 ether);
+        vm.assume(amount <= 10_000_000 ether);
+
+        /* Set supply cap */
+        vm.startPrank(users.deployer);
+        usdai.setSupplyCap(1000 ether);
+        vm.stopPrank();
+
+        // User approves USDai to spend their USD
+        vm.startPrank(users.normalUser1);
+        usd.approve(address(usdai), amount);
+
+        /* User deposits 1000 USD into USDai */
+        vm.expectRevert(IUSDai.SupplyCapExceeded.selector);
+        usdai.deposit(address(usd), amount, 0, users.normalUser1);
+
+        vm.stopPrank();
+    }
+
+    function testFuzz__USDaiDepositExceedsSupplyCap_WithMigration(
+        uint256 amount
+    ) public {
+        vm.assume(amount > 500 ether);
+        vm.assume(amount <= 10_000_000 ether);
+
+        uint256 initialBridgedSupply = usdai.bridgedSupply();
+        assertEq(initialBridgedSupply, 0);
+
+        /* Set bridged supply */
+        vm.startPrank(users.deployer);
+        USDai(address(usdai)).migrate("Set bridged supply", abi.encode(500 ether));
+
+        vm.expectRevert();
+        USDai(address(usdai)).migrate("Set bridged supply", abi.encode(1000 ether));
+
+        usdai.setSupplyCap(1000 ether);
+        vm.stopPrank();
+
+        uint256 bridgedSupply = usdai.bridgedSupply();
+        assertEq(bridgedSupply, 500 ether);
+
+        /* Assert total supply is 0 */
+        assertEq(usdai.totalSupply(), 0);
+
+        // User approves USDai to spend their USD
+        vm.startPrank(users.normalUser1);
+        usd.approve(address(usdai), amount + 500 ether);
+
+        /* User deposits 500 USD into USDai */
+        usdai.deposit(address(usd), 500 * 1e6, 0, users.normalUser1);
+
+        /* User deposits 1000 USD into USDai */
+        vm.expectRevert(IUSDai.SupplyCapExceeded.selector);
+        usdai.deposit(address(usd), 1 * 1e6, 0, users.normalUser1);
+
+        vm.stopPrank();
+    }
 }

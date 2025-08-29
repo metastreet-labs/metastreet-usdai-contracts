@@ -22,9 +22,33 @@ interface IUSDai is IERC20 {
      */
     error InvalidAmount();
 
+    /**
+     * @notice Exceeded supply cap
+     */
+    error SupplyCapExceeded();
+
+    /*------------------------------------------------------------------------*/
+    /* Structures */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @custom:storage-location erc7201:USDai.supply
+     */
+    struct Supply {
+        uint256 bridged;
+        uint256 cap;
+    }
+
     /*------------------------------------------------------------------------*/
     /* Events */
     /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Migrated event
+     * @param description Description
+     * @param data Data
+     */
+    event Migrated(string description, bytes data);
 
     /**
      * @notice Deposited event
@@ -58,6 +82,12 @@ interface IUSDai is IERC20 {
         uint256 withdrawAmount
     );
 
+    /**
+     * @notice Supply cap set
+     * @param supplyCap Supply cap
+     */
+    event SupplyCapSet(uint256 supplyCap);
+
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
@@ -73,6 +103,19 @@ interface IUSDai is IERC20 {
      * @return Base token
      */
     function baseToken() external view returns (address);
+
+    /**
+     * @notice Get bridged supply
+     * @return Bridged supply
+     */
+    function bridgedSupply() external view returns (uint256);
+
+    /**
+     * /**
+     * @notice Get supply cap
+     * @return Supply cap
+     */
+    function supplyCap() external view returns (uint256);
 
     /*------------------------------------------------------------------------*/
     /* Public API */
@@ -141,4 +184,16 @@ interface IUSDai is IERC20 {
         address recipient,
         bytes calldata data
     ) external returns (uint256);
+
+    /*------------------------------------------------------------------------*/
+    /* Permissioned API */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Set supply cap
+     * @param cap Supply cap
+     */
+    function setSupplyCap(
+        uint256 cap
+    ) external;
 }
