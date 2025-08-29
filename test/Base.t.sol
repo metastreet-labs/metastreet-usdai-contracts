@@ -268,6 +268,9 @@ abstract contract BaseTest is Test {
 
         /* Deploy usdai */
         usdai = IUSDai(address(usdaiProxy));
+
+        /* Set supply cap */
+        usdai.setSupplyCap(type(uint256).max);
         vm.stopPrank();
 
         /* Grant USDai role to Uniswap V3 swap adapter */
