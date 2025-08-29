@@ -1,3 +1,6 @@
+* USDai v1.1 - 08/29/2025
+    * Add support for supply cap.
+
 * USDaiQueuedDepositor v1.1 - 08/21/2025
     * Migrate to servicing queue count instead of amount in `service()`.
 
