@@ -228,7 +228,14 @@ contract StakedUSDai is
      * @inheritdoc IStakedUSDai
      */
     function totalShares() public view returns (uint256) {
-        return totalSupply() + _getBridgedSupplyStorage().bridgedSupply + _getRedemptionStateStorage().pending;
+        return totalSupply() + bridgedSupply() + _getRedemptionStateStorage().pending;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function bridgedSupply() public view returns (uint256) {
+        return _getBridgedSupplyStorage().bridgedSupply;
     }
 
     /*------------------------------------------------------------------------*/
