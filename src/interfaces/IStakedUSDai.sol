@@ -168,6 +168,12 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
      */
     function redemptionSharePrice() external view returns (uint256);
 
+    /**
+     * @notice Get bridged supply
+     * @return Bridged supply
+     */
+    function bridgedSupply() external view returns (uint256);
+
     /*------------------------------------------------------------------------*/
     /* API */
     /*------------------------------------------------------------------------*/
