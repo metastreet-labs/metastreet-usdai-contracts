@@ -111,7 +111,6 @@ interface IUSDai is IERC20 {
     function bridgedSupply() external view returns (uint256);
 
     /**
-     * /**
      * @notice Get supply cap
      * @return Supply cap
      */
