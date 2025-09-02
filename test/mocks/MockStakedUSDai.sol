@@ -227,6 +227,13 @@ contract MockStakedUSDai is
         return totalSupply() + _getBridgedSupplyStorage().bridgedSupply + _getRedemptionStateStorage().pending;
     }
 
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function bridgedSupply() public view returns (uint256) {
+        return _getBridgedSupplyStorage().bridgedSupply;
+    }
+
     /*------------------------------------------------------------------------*/
     /* Internal helpers  */
     /*------------------------------------------------------------------------*/
