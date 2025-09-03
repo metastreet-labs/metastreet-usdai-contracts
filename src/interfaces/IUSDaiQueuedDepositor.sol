@@ -37,8 +37,7 @@ interface IUSDaiQueuedDepositor {
      */
     enum SwapType {
         Default,
-        KyberSwap,
-        OneInchSwap
+        Aggregator
     }
 
     /*------------------------------------------------------------------------*/

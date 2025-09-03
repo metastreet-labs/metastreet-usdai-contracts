@@ -77,11 +77,11 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
 
         vm.stopPrank();
 
-        bytes memory data = abi.encode(address(usdt), kyberTarget, kyberExecutionData, 0, 0);
+        bytes memory data = abi.encode(address(usdt), 4_000_000 * 1e6, kyberTarget, kyberExecutionData, 0, 0);
 
         vm.startPrank(0xe7E53F940F8242fec57CBE88054463d4944B3670);
         queuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(IUSDaiQueuedDepositor.SwapType.KyberSwap, data)
+            IUSDaiQueuedDepositor.QueueType.Deposit, abi.encode(IUSDaiQueuedDepositor.SwapType.Aggregator, data)
         );
         vm.stopPrank();
 
@@ -109,11 +109,12 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
 
         uint256 depositSharePrice = stakedUsdai.depositSharePrice() + 1;
 
-        bytes memory data = abi.encode(address(usdt), kyberTarget, kyberExecutionData, 0, depositSharePrice);
+        bytes memory data =
+            abi.encode(address(usdt), 4_000_000 * 1e6, kyberTarget, kyberExecutionData, 0, depositSharePrice);
 
         vm.startPrank(0xe7E53F940F8242fec57CBE88054463d4944B3670);
         queuedDepositor.service(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, abi.encode(IUSDaiQueuedDepositor.SwapType.KyberSwap, data)
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, abi.encode(IUSDaiQueuedDepositor.SwapType.Aggregator, data)
         );
         vm.stopPrank();
 
