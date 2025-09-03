@@ -19,6 +19,7 @@ import "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {IOFT as IOFT_, SendParam, MessagingFee} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 
 import "./KyberSwapLib.sol";
+import "./OneInchLib.sol";
 
 import "./ReceiptTokenProxy.sol";
 
@@ -61,6 +62,7 @@ contract USDaiQueuedDepositor is
 
     using BytesLib for bytes;
     using KyberSwapLib for bytes;
+    using OneInchLib for bytes;
 
     /*------------------------------------------------------------------------*/
     /* Roles */
@@ -483,6 +485,9 @@ contract USDaiQueuedDepositor is
         if (swapType == SwapType.KyberSwap) {
             (srcToken, dstToken, dstReceiver, totalServiceAmount) =
                 KyberSwapLib.decodeMessage(BytesLib.slice(executionData, 4, executionData.length - 4));
+        } else if (swapType == SwapType.OneInchSwap) {
+            (srcToken, dstToken, dstReceiver, totalServiceAmount) =
+                OneInchLib.decodeMessage(BytesLib.slice(executionData, 4, executionData.length - 4));
         } else {
             revert InvalidSwapType();
         }
