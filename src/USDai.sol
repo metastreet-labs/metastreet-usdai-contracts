@@ -42,9 +42,14 @@ contract USDai is
     string public constant IMPLEMENTATION_VERSION = "1.1";
 
     /**
-     * @notice Minter role
+     * @notice Bridge admin role
      */
     bytes32 internal constant BRIDGE_ADMIN_ROLE = keccak256("BRIDGE_ADMIN_ROLE");
+
+    /**
+     * @notice Deposit admin role
+     */
+    bytes32 internal constant DEPOSIT_ADMIN_ROLE = keccak256("DEPOSIT_ADMIN_ROLE");
 
     /**
      * @notice Supply storage location
@@ -268,7 +273,9 @@ contract USDai is
         }
 
         /* Check if the supply cap is exceeded */
-        if (usdaiAmount + totalSupply() + bridgedSupply() > supplyCap()) revert SupplyCapExceeded();
+        if (!hasRole(DEPOSIT_ADMIN_ROLE, msg.sender) && usdaiAmount + totalSupply() + bridgedSupply() > supplyCap()) {
+            revert SupplyCapExceeded();
+        }
 
         /* Mint to the recipient */
         _mint(recipient, usdaiAmount);
