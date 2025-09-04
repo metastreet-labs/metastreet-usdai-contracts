@@ -47,6 +47,11 @@ contract USDai is
     bytes32 internal constant BRIDGE_ADMIN_ROLE = keccak256("BRIDGE_ADMIN_ROLE");
 
     /**
+     * @notice Depositor admin role
+     */
+    bytes32 internal constant DEPOSITOR_ADMIN_ROLE = keccak256("DEPOSITOR_ADMIN_ROLE");
+
+    /**
      * @notice Supply storage location
      * @dev keccak256(abi.encode(uint256(keccak256("USDai.supply")) - 1)) & ~bytes32(uint256(0xff));
      */
@@ -268,7 +273,9 @@ contract USDai is
         }
 
         /* Check if the supply cap is exceeded */
-        if (usdaiAmount + totalSupply() + bridgedSupply() > supplyCap()) revert SupplyCapExceeded();
+        if (!hasRole(DEPOSITOR_ADMIN_ROLE, msg.sender) && usdaiAmount + totalSupply() + bridgedSupply() > supplyCap()) {
+            revert SupplyCapExceeded();
+        }
 
         /* Mint to the recipient */
         _mint(recipient, usdaiAmount);
