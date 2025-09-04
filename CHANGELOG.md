@@ -1,10 +1,14 @@
+* USDaiQueuedDepositor v1.3 - TBD
+    * Add deposit eid whitelist.
+    * Add support for swap aggregators to `service()`.
+
 * USDai v1.2 - 09/04/2025
     * Add support for deposit admin role that can bypass supply cap.
 
 * USDai v1.1 - 08/29/2025
     * Add support for supply cap.
 
-* USDaiQueuedDepositor v1.1 - 08/21/2025
+* USDaiQueuedDepositor v1.2 - 08/21/2025
     * Migrate to servicing queue count instead of amount in `service()`.
 
 * USDaiQueuedDepositor v1.1 - 08/16/2025
