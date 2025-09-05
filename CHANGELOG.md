@@ -1,3 +1,6 @@
+* USDai v1.2 - 09/04/2025
+    * Add support for deposit admin role that can bypass supply cap.
+
 * USDai v1.1 - 08/29/2025
     * Add support for supply cap.
 
