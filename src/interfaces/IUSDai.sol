@@ -71,14 +71,14 @@ interface IUSDai is IERC20 {
      * @param caller Caller
      * @param recipient Recipient
      * @param withdrawToken Withdraw token
-     * @param baseTokenAmount Base token amount
+     * @param usdaiAmount USDai amount
      * @param withdrawAmount Withdraw amount
      */
     event Withdrawn(
         address indexed caller,
         address indexed recipient,
         address withdrawToken,
-        uint256 baseTokenAmount,
+        uint256 usdaiAmount,
         uint256 withdrawAmount
     );
 
