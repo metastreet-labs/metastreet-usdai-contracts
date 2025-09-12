@@ -26,6 +26,8 @@ import {
     ITransparentUpgradeableProxy
 } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 // DevTools imports
 import {TestHelperOz5} from "@layerzerolabs/test-devtools-evm-foundry/contracts/TestHelperOz5.sol";
@@ -250,7 +252,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
                 address(stakedUsdai),
                 address(usdaiHomeOAdapter),
                 address(stakedUsdaiHomeOAdapter),
-                address(receiptTokenImpl)
+                address(receiptTokenImpl),
+                address(oUsdaiUtility)
             )
         );
 
@@ -265,13 +268,15 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
             usdaiQueuedDepositorImpl,
             address(this),
             abi.encodeWithSignature(
-                "initialize(address,uint256,address[],uint256[])", address(this), 0, whitelistedTokens, minAmounts
+                "initialize(address,address[],uint256[])", address(this), whitelistedTokens, minAmounts
             )
         );
         usdaiQueuedDepositor = USDaiQueuedDepositor(address(usdaiQueuedDepositorProxy));
         AccessControl(address(usdaiQueuedDepositor)).grantRole(keccak256("CONTROLLER_ADMIN_ROLE"), address(this));
         queuedUSDaiToken = address(usdaiQueuedDepositor.queuedUSDaiToken());
         queuedStakedUSDaiToken = address(usdaiQueuedDepositor.queuedStakedUSDaiToken());
+        usdaiQueuedDepositor.updateDepositCap(0, type(uint256).max, true);
+        usdaiQueuedDepositor.updateDepositCap(usdtAwayEid, type(uint256).max, true);
 
         // Configure and wire the USDT OAdapters together
         address[] memory oAdapters = new address[](6);
@@ -300,6 +305,23 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
             abi.encodeWithSignature("initialize(address,address[])", address(this), oAdaptersUtility)
         );
         oUsdaiUtility = OUSDaiUtility(payable(address(oUsdaiUtilityProxy)));
+
+        // Redeploy USDaiQueuedDepositor now with correct oUsdaiUtility address
+        USDaiQueuedDepositor newImpl = new USDaiQueuedDepositor(
+            address(usdai),
+            address(stakedUsdai),
+            address(usdaiHomeOAdapter),
+            address(stakedUsdaiHomeOAdapter),
+            address(receiptTokenImpl),
+            address(oUsdaiUtility)
+        );
+        address proxyAdmin =
+            address(uint160(uint256(vm.load(address(usdaiQueuedDepositorProxy), ERC1967Utils.ADMIN_SLOT))));
+        ProxyAdmin(proxyAdmin).upgradeAndCall(
+            ITransparentUpgradeableProxy(address(usdaiQueuedDepositorProxy)),
+            address(newImpl),
+            "" // No additional initialization data
+        );
 
         // Grant minter roles
         AccessControl(address(usdtHomeToken)).grantRole(usdtHomeToken.BRIDGE_ADMIN_ROLE(), address(usdtHomeOAdapter));

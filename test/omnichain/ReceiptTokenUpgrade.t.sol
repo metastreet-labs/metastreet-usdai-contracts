@@ -13,6 +13,7 @@ import {USDaiQueuedDepositor} from "src/queuedDepositor/USDaiQueuedDepositor.sol
 import {ReceiptToken} from "src/queuedDepositor/ReceiptToken.sol";
 import {ReceiptToken} from "src/queuedDepositor/ReceiptToken.sol";
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
+import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 
 /**
  * @title Enhanced Receipt Token Implementation for Testing
@@ -47,23 +48,32 @@ contract ReceiptTokenUpgradeTest is OmnichainBaseTest {
 
         // Mint some tokens to users for testing
         vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), type(uint256).max);
-        usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 5_000_000 * 1e18, user, 0
+        usdtHomeToken.approve(address(oUsdaiUtility), type(uint256).max);
+
+        // Data for queued deposit on home chain
+        bytes memory data1 = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+        bytes memory data2 = abi.encode(IUSDaiQueuedDepositor.QueueType.DepositAndStake, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), 5_000_000 * 1e18, data1
+        );
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), 3_000_000 * 1e18, data2
         );
 
-        usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 3_000_000 * 1e18, user, 0
-        );
         vm.stopPrank();
 
         // Mint some tokens to another user
         usdtHomeToken.mint(anotherUser, initialBalance);
         vm.startPrank(anotherUser);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), type(uint256).max);
-        usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 2_000_000 * 1e18, anotherUser, 0
+        usdtHomeToken.approve(address(oUsdaiUtility), type(uint256).max);
+
+        bytes memory data3 = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, anotherUser, 0);
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), 2_000_000 * 1e18, data3
         );
+
         vm.stopPrank();
     }
 
@@ -276,7 +286,8 @@ contract ReceiptTokenUpgradeTest is OmnichainBaseTest {
             address(stakedUsdai),
             address(usdaiHomeOAdapter),
             address(stakedUsdaiHomeOAdapter),
-            address(newReceiptTokenImpl)
+            address(newReceiptTokenImpl),
+            address(oUsdaiUtility)
         );
 
         // Perform the upgrade
