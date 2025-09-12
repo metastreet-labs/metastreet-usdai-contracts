@@ -58,13 +58,14 @@ usage() {
     echo "  price-oracle-add-price-feeds <tokens> <price feeds>"
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
     echo "  usdaiqueueddepositor-update-deposit-cap <deposit cap> <reset counter>"
+    echo "  usdaiqueueddepositor-update-deposit-eid-whitelist <src eid> <dst eid> <whitelisted>"
     echo "  grant-role <target> <role> <account>"
     echo "  transfer-ownership <proxy> <account>"
     echo ""
     echo "  deploy-production-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <multisig>"
     echo "  deploy-omnichain-environment <deployer> <lz endpoint> <multisig>"
     echo "  deploy-ousdai-utility <deployer> <lz endpoint> <o adapters> <multisig>"
-    echo "  deploy-usdai-queued-depositor <deployer> <multisig> <deposit cap> <whitelisted tokens> <min amounts>"
+    echo "  deploy-usdai-queued-depositor <deployer> <multisig> <whitelisted tokens> <min amounts>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -148,12 +149,12 @@ case $1 in
         ;;
 
    "deploy-usdai-queued-depositor")
-        if [ "$#" -ne 6 ]; then
+        if [ "$#" -ne 5 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,uint256,address[],uint256[])" $2 $3 $4 "$5" "$6"
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,address[],uint256[])" $2 $3 "$4" "$5"
         ;;
 
    "upgrade-usdai")
@@ -234,6 +235,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositCap.s.sol:USDaiQueuedDepositorUpdateDepositCap" --sig "run(uint256,bool)" $2 $3
+        ;;
+
+    "usdaiqueueddepositor-update-deposit-eid-whitelist")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositEidWhitelist.s.sol:USDaiQueuedDepositorUpdateDepositEidWhitelist" --sig "run(uint32,uint32,bool)" $2 $3 $4
         ;;
 
    "grant-role")

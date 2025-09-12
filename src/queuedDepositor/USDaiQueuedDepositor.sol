@@ -116,6 +116,14 @@ contract USDaiQueuedDepositor is
     bytes32 private constant DEPOSIT_CAP_STORAGE_LOCATION =
         0x5f4558a12a832f571ea97f326448c96240f9dce8a5a766ecf3dfe3896a796c00;
 
+    /**
+     * @notice Deposit EID whitelist storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositEidWhitelist")) - 1)) &
+     * ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant DEPOSIT_EID_WHITELIST_STORAGE_LOCATION =
+        0x667ec5ad59a1853007558bc5f697b91437adde35a1587bb9c67fa05989f32600;
+
     /*------------------------------------------------------------------------*/
     /* Immutable state */
     /*------------------------------------------------------------------------*/
@@ -144,6 +152,11 @@ contract USDaiQueuedDepositor is
      * @notice Staked USDai OAdapter
      */
     IOFT internal immutable _stakedUsdaiOAdapter;
+
+    /**
+     * @notice OUSDai Utility
+     */
+    address internal immutable _ousdaiUtility;
 
     /**
      * @notice USDai OAdapter decimal conversion rate
@@ -177,6 +190,14 @@ contract USDaiQueuedDepositor is
     }
 
     /**
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCap
+     */
+    struct DepositCap {
+        uint256 cap;
+        uint256 counter;
+    }
+
+    /**
      * @custom:storage-location erc7201:usdaiQueuedDepositor.queueState
      */
     struct QueueState {
@@ -200,11 +221,10 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCap
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositEidWhitelist
      */
-    struct DepositCap {
-        uint256 cap;
-        uint256 counter;
+    struct DepositEidWhitelist {
+        mapping(uint32 => mapping(uint32 => bool)) whitelist;
     }
 
     /*------------------------------------------------------------------------*/
@@ -218,13 +238,15 @@ contract USDaiQueuedDepositor is
      * @param usdaiOAdapter_ USDai OAdapter
      * @param stakedUsdaiOAdapter_ Staked USDai OAdapter
      * @param receiptTokenImplementation_ Receipt token implementation
+     * @param ousdaiUtility_ USDai Utility
      */
     constructor(
         address usdai_,
         address stakedUsdai_,
         address usdaiOAdapter_,
         address stakedUsdaiOAdapter_,
-        address receiptTokenImplementation_
+        address receiptTokenImplementation_,
+        address ousdaiUtility_
     ) {
         _usdai = IUSDai(usdai_);
         _stakedUsdai = IStakedUSDai(stakedUsdai_);
@@ -238,6 +260,8 @@ contract USDaiQueuedDepositor is
 
         _receiptTokenImplementation = receiptTokenImplementation_;
 
+        _ousdaiUtility = ousdaiUtility_;
+
         _disableInitializers();
     }
 
@@ -248,13 +272,11 @@ contract USDaiQueuedDepositor is
     /**
      * @notice Initialize the contract
      * @param admin Default admin address
-     * @param depositCap Deposit cap
      * @param whitelistedTokens_ Whitelisted tokens
      * @param minAmounts Minimum amounts
      */
     function initialize(
         address admin,
-        uint256 depositCap,
         address[] memory whitelistedTokens_,
         uint256[] memory minAmounts
     ) external initializer {
@@ -272,9 +294,6 @@ contract USDaiQueuedDepositor is
             _getWhitelistedTokensStorage().whitelistedTokens.add(whitelistedTokens_[i]);
             _getWhitelistedTokensStorage().minAmounts[whitelistedTokens_[i]] = minAmounts[i];
         }
-
-        /* Set deposit cap */
-        _getDepositCapStorage().cap = depositCap;
 
         /* Get receipt tokens storage */
         ReceiptTokens storage receiptTokens = _getReceiptTokensStorage();
@@ -334,6 +353,17 @@ contract USDaiQueuedDepositor is
     function _getDepositCapStorage() internal pure returns (DepositCap storage $) {
         assembly {
             $.slot := DEPOSIT_CAP_STORAGE_LOCATION
+        }
+    }
+
+    /**
+     * @notice Get reference to ERC-7201 deposit EID whitelist storage
+     *
+     * @return $ Reference to deposit EID whitelist storage
+     */
+    function _getDepositEidWhitelistStorage() internal pure returns (DepositEidWhitelist storage $) {
+        assembly {
+            $.slot := DEPOSIT_EID_WHITELIST_STORAGE_LOCATION
         }
     }
 
@@ -876,6 +906,13 @@ contract USDaiQueuedDepositor is
         return (_getDepositCapStorage().cap, _getDepositCapStorage().counter);
     }
 
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function depositEidWhitelist(uint32 srcEid, uint32 dstEid) external view returns (bool) {
+        return _getDepositEidWhitelistStorage().whitelist[srcEid][dstEid];
+    }
+
     /*------------------------------------------------------------------------*/
     /* Public API  */
     /*------------------------------------------------------------------------*/
@@ -889,13 +926,20 @@ contract USDaiQueuedDepositor is
         address depositToken,
         uint256 amount,
         address recipient,
+        uint32 srcEid,
         uint32 dstEid
     ) external nonReentrant returns (uint256) {
+        /* Validate caller */
+        if (msg.sender != _ousdaiUtility) revert InvalidCaller();
+
         /* Validate deposit token */
         if (!_getWhitelistedTokensStorage().whitelistedTokens.contains(depositToken)) revert InvalidToken();
 
         /* Validate deposit amount */
         if (amount == 0 || _getWhitelistedTokensStorage().minAmounts[depositToken] > amount) revert InvalidAmount();
+
+        /* Validate deposit EID whitelist */
+        if (!_getDepositEidWhitelistStorage().whitelist[srcEid][dstEid]) revert InvalidEids(srcEid, dstEid);
 
         /* Validate recipient */
         if (recipient == address(0)) revert InvalidRecipient();
@@ -907,7 +951,7 @@ contract USDaiQueuedDepositor is
         DepositCap storage depositCap = _getDepositCapStorage();
 
         /* Validate deposit is within deposit cap */
-        if (depositCap.cap != 0 && depositCap.counter + scaledAmount > depositCap.cap) revert InvalidAmount();
+        if (depositCap.counter + scaledAmount > depositCap.cap) revert InvalidAmount();
 
         /* Transfer the deposit token to the queue depositor */
         IERC20(depositToken).transferFrom(msg.sender, address(this), amount);
@@ -1027,5 +1071,20 @@ contract USDaiQueuedDepositor is
 
         /* Emit deposit cap updated event */
         emit DepositCapUpdated(depositCap);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function updateDepositEidWhitelist(
+        uint32 srcEid,
+        uint32 dstEid,
+        bool whitelisted
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        /* Update deposit EID whitelist */
+        _getDepositEidWhitelistStorage().whitelist[srcEid][dstEid] = whitelisted;
+
+        /* Emit deposit EID whitelist updated event */
+        emit DepositEidWhitelistUpdated(srcEid, dstEid, whitelisted);
     }
 }

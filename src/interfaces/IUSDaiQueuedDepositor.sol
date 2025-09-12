@@ -50,6 +50,11 @@ interface IUSDaiQueuedDepositor {
     error InvalidParameters();
 
     /**
+     * @notice Invalid caller
+     */
+    error InvalidCaller();
+
+    /**
      * @notice Invalid token
      */
     error InvalidToken();
@@ -58,6 +63,11 @@ interface IUSDaiQueuedDepositor {
      * @notice Invalid amount
      */
     error InvalidAmount();
+
+    /**
+     * @notice Invalid EIDs
+     */
+    error InvalidEids(uint32 srcEid, uint32 dstEid);
 
     /**
      * @notice Invalid share price
@@ -161,6 +171,14 @@ interface IUSDaiQueuedDepositor {
      * @param cap Deposit cap
      */
     event DepositCapUpdated(uint256 cap);
+
+    /**
+     * @notice Deposit EID whitelist updated
+     * @param srcEid Source EID
+     * @param dstEid Destination EID
+     * @param whitelisted Whitelisted
+     */
+    event DepositEidWhitelistUpdated(uint32 indexed srcEid, uint32 indexed dstEid, bool whitelisted);
 
     /**
      * @notice Action failed
@@ -278,6 +296,14 @@ interface IUSDaiQueuedDepositor {
      */
     function depositCapInfo() external view returns (uint256, uint256);
 
+    /**
+     * @notice Deposit EID whitelist
+     * @param srcEid Source EID
+     * @param dstEid Destination EID
+     * @return Whitelisted
+     */
+    function depositEidWhitelist(uint32 srcEid, uint32 dstEid) external view returns (bool);
+
     /*------------------------------------------------------------------------*/
     /* Public API */
     /*------------------------------------------------------------------------*/
@@ -288,6 +314,7 @@ interface IUSDaiQueuedDepositor {
      * @param depositToken Deposit token
      * @param amount Amount
      * @param recipient Recipient
+     * @param srcEid Source EID
      * @param dstEid Destination EID
      * @return Queue index
      */
@@ -296,6 +323,7 @@ interface IUSDaiQueuedDepositor {
         address depositToken,
         uint256 amount,
         address recipient,
+        uint32 srcEid,
         uint32 dstEid
     ) external returns (uint256);
 
@@ -346,4 +374,12 @@ interface IUSDaiQueuedDepositor {
      * @param resetCounter Reset counter
      */
     function updateDepositCap(uint256 depositCap, bool resetCounter) external;
+
+    /**
+     * @notice Update deposit cap and reset deposit counter
+     * @param srcEid Source EID
+     * @param dstEid Destination EID
+     * @param whitelisted Whitelisted
+     */
+    function updateDepositEidWhitelist(uint32 srcEid, uint32 dstEid, bool whitelisted) external;
 }

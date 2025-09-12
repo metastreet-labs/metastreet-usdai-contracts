@@ -294,9 +294,15 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
      * @param depositToken Deposit token
      * @param depositAmount Deposit token amount
      * @param data Additional compose data
+     * @param srcEid Source EID
      * @return success True if the queued deposit was successful, false otherwise
      */
-    function _queuedDeposit(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
+    function _queuedDeposit(
+        address depositToken,
+        uint256 depositAmount,
+        bytes memory data,
+        uint32 srcEid
+    ) internal returns (bool) {
         /* Decode the message */
         (IUSDaiQueuedDepositor.QueueType queueType, address recipient, uint32 dstEid) =
             abi.decode(data, (IUSDaiQueuedDepositor.QueueType, address, uint32));
@@ -305,7 +311,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         IERC20(depositToken).forceApprove(address(_usdaiQueuedDepositor), depositAmount);
 
         /* Deposit the deposit token into queued depositor */
-        try _usdaiQueuedDepositor.deposit(queueType, depositToken, depositAmount, recipient, dstEid) {
+        try _usdaiQueuedDepositor.deposit(queueType, depositToken, depositAmount, recipient, srcEid, dstEid) {
             /* Emit the queued deposit event */
             emit ComposerQueuedDeposit(queueType, depositToken, recipient, depositAmount);
         } catch (bytes memory reason) {
@@ -356,7 +362,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         } else if (actionType == ActionType.DepositAndStake) {
             _depositAndStake(depositToken, amountLD, data);
         } else if (actionType == ActionType.QueuedDeposit) {
-            _queuedDeposit(depositToken, amountLD, data);
+            _queuedDeposit(depositToken, amountLD, data, OFTComposeMsgCodec.srcEid(message));
         } else {
             revert UnknownAction();
         }
@@ -379,7 +385,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         } else if (actionType == ActionType.DepositAndStake) {
             if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
         } else if (actionType == ActionType.QueuedDeposit) {
-            if (!_queuedDeposit(depositToken, depositAmount, data)) revert QueuedDepositFailed();
+            if (!_queuedDeposit(depositToken, depositAmount, data, 0)) revert QueuedDepositFailed();
         } else {
             revert UnknownAction();
         }

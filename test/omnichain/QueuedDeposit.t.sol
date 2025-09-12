@@ -41,18 +41,19 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // User approves USDai to spend their USD
         vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), amount * 2);
+        usdtHomeToken.approve(address(oUsdaiUtility), amount * 2);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), amount, user, 0
-        );
+        // Data for queued deposit on home chain
+        bytes memory data1 = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), amount, data1);
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem1 =
-            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), queueIndex1);
+            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 0);
         assertEq(queueItem1.pendingDeposit, amount);
         assertEq(queueItem1.dstEid, 0);
-        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.depositor, address(oUsdaiUtility));
         assertEq(queueItem1.recipient, user);
 
         (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) =
@@ -61,16 +62,21 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending1, amount);
         assertEq(queueItems1.length, 1);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), amount, user, 0
-        );
+        (uint256 depositCap1, uint256 counter1) = usdaiQueuedDepositor.depositCapInfo();
+        assertEq(depositCap1, type(uint256).max);
+        assertEq(counter1, amount);
+
+        // Data for queued deposit on home chain
+        bytes memory data2 = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), amount, data2);
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem2 =
-            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), queueIndex2);
+            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 1);
         assertEq(queueItem2.pendingDeposit, amount);
         assertEq(queueItem2.dstEid, 0);
-        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.depositor, address(oUsdaiUtility));
         assertEq(queueItem2.recipient, user);
 
         (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) =
@@ -78,6 +84,10 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(head2, 0);
         assertEq(pending2, amount * 2);
         assertEq(queueItems2.length, 2);
+
+        (uint256 depositCap, uint256 counter) = usdaiQueuedDepositor.depositCapInfo();
+        assertEq(depositCap, type(uint256).max);
+        assertEq(counter, amount * 2);
 
         // Verify that the queued USDai was minted to the user
         assertEq(IERC20(queuedUSDaiToken).balanceOf(user), amount * 2);
@@ -93,19 +103,21 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // User approves USDai to spend their USD
         vm.startPrank(user);
-        usdtHomeToken6Decimals.approve(address(usdaiQueuedDepositor), amount * 2);
+        usdtHomeToken6Decimals.approve(address(oUsdaiUtility), amount * 2);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), amount, user, 0
+        // Data for queued deposit on home chain
+        bytes memory data1 = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken6Decimals), amount, data1
         );
 
-        IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex1
-        );
+        IUSDaiQueuedDepositor.QueueItem memory queueItem1 =
+            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 0);
         assertEq(queueItem1.pendingDeposit, amount);
         assertEq(queueItem1.dstEid, 0);
-        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.depositor, address(oUsdaiUtility));
         assertEq(queueItem1.recipient, user);
 
         (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
@@ -114,17 +126,19 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending1, amount);
         assertEq(queueItems1.length, 1);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), amount, user, 0
+        // Data for queued deposit on home chain
+        bytes memory data2 = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken6Decimals), amount, data2
         );
 
-        IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), queueIndex2
-        );
+        IUSDaiQueuedDepositor.QueueItem memory queueItem2 =
+            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken6Decimals), 1);
         assertEq(queueItem2.pendingDeposit, amount);
         assertEq(queueItem2.dstEid, 0);
-        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.depositor, address(oUsdaiUtility));
         assertEq(queueItem2.recipient, user);
 
         (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
@@ -147,19 +161,19 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // User approves USDai to spend their USD
         vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), amount * 2);
+        usdtHomeToken.approve(address(oUsdaiUtility), amount * 2);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), amount, user, 0
-        );
+        // Data for queued deposit on home chain
+        bytes memory data1 = abi.encode(IUSDaiQueuedDepositor.QueueType.DepositAndStake, user, 0);
 
-        IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), queueIndex1
-        );
+        // Deposit the USD
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), amount, data1);
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem1 =
+            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 0);
         assertEq(queueItem1.pendingDeposit, amount);
         assertEq(queueItem1.dstEid, 0);
-        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.depositor, address(oUsdaiUtility));
         assertEq(queueItem1.recipient, user);
 
         (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
@@ -168,17 +182,17 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending1, amount);
         assertEq(queueItems1.length, 1);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), amount, user, 0
-        );
+        // Data for queued deposit on home chain
+        bytes memory data2 = abi.encode(IUSDaiQueuedDepositor.QueueType.DepositAndStake, user, 0);
 
-        IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), queueIndex2
-        );
+        // Deposit the USD
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), amount, data2);
+
+        IUSDaiQueuedDepositor.QueueItem memory queueItem2 =
+            usdaiQueuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken), 1);
         assertEq(queueItem2.pendingDeposit, amount);
         assertEq(queueItem2.dstEid, 0);
-        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.depositor, address(oUsdaiUtility));
         assertEq(queueItem2.recipient, user);
 
         (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
@@ -201,19 +215,22 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // User approves USDai to spend their USD
         vm.startPrank(user);
-        usdtHomeToken6Decimals.approve(address(usdaiQueuedDepositor), amount * 2);
+        usdtHomeToken6Decimals.approve(address(oUsdaiUtility), amount * 2);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex1 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), amount, user, 0
+        // Data for queued deposit on home chain
+        bytes memory data1 = abi.encode(IUSDaiQueuedDepositor.QueueType.DepositAndStake, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken6Decimals), amount, data1
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem1 = usdaiQueuedDepositor.queueItem(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), queueIndex1
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), 0
         );
         assertEq(queueItem1.pendingDeposit, amount);
         assertEq(queueItem1.dstEid, 0);
-        assertEq(queueItem1.depositor, user);
+        assertEq(queueItem1.depositor, address(oUsdaiUtility));
         assertEq(queueItem1.recipient, user);
 
         (uint256 head1, uint256 pending1, IUSDaiQueuedDepositor.QueueItem[] memory queueItems1) = usdaiQueuedDepositor
@@ -222,17 +239,20 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending1, amount);
         assertEq(queueItems1.length, 1);
 
-        // User deposits into USDai queued depositor
-        uint256 queueIndex2 = usdaiQueuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), amount, user, 0
+        // Data for queued deposit on home chain
+        bytes memory data2 = abi.encode(IUSDaiQueuedDepositor.QueueType.DepositAndStake, user, 0);
+
+        // Deposit the USD
+        oUsdaiUtility.localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken6Decimals), amount, data2
         );
 
         IUSDaiQueuedDepositor.QueueItem memory queueItem2 = usdaiQueuedDepositor.queueItem(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), queueIndex2
+            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdtHomeToken6Decimals), 1
         );
         assertEq(queueItem2.pendingDeposit, amount);
         assertEq(queueItem2.dstEid, 0);
-        assertEq(queueItem2.depositor, user);
+        assertEq(queueItem2.depositor, address(oUsdaiUtility));
         assertEq(queueItem2.recipient, user);
 
         (uint256 head2, uint256 pending2, IUSDaiQueuedDepositor.QueueItem[] memory queueItems2) = usdaiQueuedDepositor
@@ -323,16 +343,34 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
     function test__USDaiQueuedDeposit_RevertWhen_InvalidAmount() public {
         // Local
         vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), 100);
-        vm.expectRevert(IUSDaiQueuedDepositor.InvalidAmount.selector);
-        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), 100, user, 0);
+        usdtHomeToken.approve(address(oUsdaiUtility), 100);
+
+        // Data for queued deposit on home chain
+        bytes memory data = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Deposit the USD
+        vm.expectRevert(IOUSDaiUtility.QueuedDepositFailed.selector);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), 100, data);
+
         vm.stopPrank();
     }
 
     function test__USDaiQueuedDeposit_RevertWhen_InvalidDepositToken() public {
+        // Remove the whitelisted token
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(usdtHomeToken);
+        usdaiQueuedDepositor.removeWhitelistedTokens(tokens);
+
         vm.startPrank(user);
-        vm.expectRevert(IUSDaiQueuedDepositor.InvalidToken.selector);
-        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdai), 100, user, 0);
+
+        usdtHomeToken.approve(address(oUsdaiUtility), 100);
+
+        // Data for queued deposit on home chain
+        bytes memory data = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Data for queued deposit on home chain
+        vm.expectRevert(IOUSDaiUtility.QueuedDepositFailed.selector);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), 100, data);
         vm.stopPrank();
     }
 
@@ -341,10 +379,11 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
 
         // User approves USDai to spend their USD
         vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), amount);
+        usdtHomeToken.approve(address(oUsdaiUtility), amount);
 
-        // User deposits into USDai queued depositor
-        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), amount, user, 0);
+        // Data for queued deposit on home chain
+        bytes memory data = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), amount, data);
 
         vm.expectRevert();
         IERC20(queuedUSDaiToken).transfer(address(usdaiQueuedDepositor), amount);
@@ -361,15 +400,20 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(counter, 0);
 
         vm.startPrank(user);
-        usdtHomeToken.approve(address(usdaiQueuedDepositor), cap + 1);
-        vm.expectRevert(IUSDaiQueuedDepositor.InvalidAmount.selector);
-        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), cap + 1, user, 0);
+        usdtHomeToken.approve(address(oUsdaiUtility), cap + 1);
+
+        // Data for queued deposit on home chain
+        bytes memory data = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, user, 0);
+
+        // Deposit the USD
+        vm.expectRevert(IOUSDaiUtility.QueuedDepositFailed.selector);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), cap + 1, data);
         vm.stopPrank();
 
         usdaiQueuedDepositor.updateDepositCap(cap + 1, false);
 
         vm.startPrank(user);
-        usdaiQueuedDepositor.deposit(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdtHomeToken), cap + 1, user, 0);
+        oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), cap + 1, data);
         vm.stopPrank();
 
         (, counter) = usdaiQueuedDepositor.depositCapInfo();
