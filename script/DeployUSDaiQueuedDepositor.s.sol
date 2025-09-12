@@ -14,7 +14,6 @@ contract DeployUSDaiQueuedDepositor is Deployer {
     function run(
         address deployer,
         address multisig,
-        uint256 depositCap,
         address[] memory whitelistedTokens,
         uint256[] memory minAmounts
     ) public broadcast useDeployment returns (address) {
@@ -28,7 +27,8 @@ contract DeployUSDaiQueuedDepositor is Deployer {
             _deployment.stakedUSDai,
             _deployment.oAdapterUSDai,
             _deployment.oAdapterStakedUSDai,
-            address(receiptTokenImpl)
+            address(receiptTokenImpl),
+            _deployment.oUSDaiUtility
         );
         console.log("USDaiQueuedDepositor implementation", address(usdaiQueuedDepostiorImpl));
 
@@ -36,9 +36,7 @@ contract DeployUSDaiQueuedDepositor is Deployer {
         TransparentUpgradeableProxy usdaiQueuedDepositor = new TransparentUpgradeableProxy(
             address(usdaiQueuedDepostiorImpl),
             deployer,
-            abi.encodeWithSelector(
-                USDaiQueuedDepositor.initialize.selector, multisig, depositCap, whitelistedTokens, minAmounts
-            )
+            abi.encodeWithSelector(USDaiQueuedDepositor.initialize.selector, multisig, whitelistedTokens, minAmounts)
         );
         console.log("USDaiQueuedDepositor proxy", address(usdaiQueuedDepositor));
 

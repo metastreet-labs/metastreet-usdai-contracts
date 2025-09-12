@@ -23,7 +23,8 @@ contract UpgradeUSDaiQueuedDepositor is Deployer {
             _deployment.stakedUSDai,
             _deployment.oAdapterUSDai,
             _deployment.oAdapterStakedUSDai,
-            address(receiptTokenImpl)
+            address(receiptTokenImpl),
+            _deployment.oUSDaiUtility
         );
         console.log("USDaiQueuedDepositor implementation", address(usdaiQueuedDepositorImpl));
 
