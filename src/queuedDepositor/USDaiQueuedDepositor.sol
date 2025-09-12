@@ -109,12 +109,12 @@ contract USDaiQueuedDepositor is
         0x0b1935fa33a5b9486fb92ab02635f3c9d624ac3df1e1ee01c88d6052bb824d00;
 
     /**
-     * @notice Deposit cap storage location
-     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositCap")) - 1)) &
+     * @notice Deposit caps storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositCaps")) - 1)) &
      * ~bytes32(uint256(0xff));
      */
-    bytes32 private constant DEPOSIT_CAP_STORAGE_LOCATION =
-        0x5f4558a12a832f571ea97f326448c96240f9dce8a5a766ecf3dfe3896a796c00;
+    bytes32 private constant DEPOSIT_CAPS_STORAGE_LOCATION =
+        0xbd72dd575024c2daddac3ad0ced335a130e9d24b450ebebd4323b895f9994200;
 
     /*------------------------------------------------------------------------*/
     /* Immutable state */
@@ -144,6 +144,11 @@ contract USDaiQueuedDepositor is
      * @notice Staked USDai OAdapter
      */
     IOFT internal immutable _stakedUsdaiOAdapter;
+
+    /**
+     * @notice OUSDai Utility
+     */
+    address internal immutable _ousdaiUtility;
 
     /**
      * @notice USDai OAdapter decimal conversion rate
@@ -177,6 +182,16 @@ contract USDaiQueuedDepositor is
     }
 
     /**
+     * @notice Deposit cap
+     * @dev cap Deposit cap
+     * @dev counter Deposit counter
+     */
+    struct DepositCap {
+        uint256 cap;
+        uint256 counter;
+    }
+
+    /**
      * @custom:storage-location erc7201:usdaiQueuedDepositor.queueState
      */
     struct QueueState {
@@ -200,11 +215,10 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCap
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCaps
      */
-    struct DepositCap {
-        uint256 cap;
-        uint256 counter;
+    struct DepositCaps {
+        mapping(uint32 => DepositCap) caps;
     }
 
     /*------------------------------------------------------------------------*/
@@ -218,13 +232,15 @@ contract USDaiQueuedDepositor is
      * @param usdaiOAdapter_ USDai OAdapter
      * @param stakedUsdaiOAdapter_ Staked USDai OAdapter
      * @param receiptTokenImplementation_ Receipt token implementation
+     * @param ousdaiUtility_ USDai Utility
      */
     constructor(
         address usdai_,
         address stakedUsdai_,
         address usdaiOAdapter_,
         address stakedUsdaiOAdapter_,
-        address receiptTokenImplementation_
+        address receiptTokenImplementation_,
+        address ousdaiUtility_
     ) {
         _usdai = IUSDai(usdai_);
         _stakedUsdai = IStakedUSDai(stakedUsdai_);
@@ -238,6 +254,8 @@ contract USDaiQueuedDepositor is
 
         _receiptTokenImplementation = receiptTokenImplementation_;
 
+        _ousdaiUtility = ousdaiUtility_;
+
         _disableInitializers();
     }
 
@@ -248,13 +266,11 @@ contract USDaiQueuedDepositor is
     /**
      * @notice Initialize the contract
      * @param admin Default admin address
-     * @param depositCap Deposit cap
      * @param whitelistedTokens_ Whitelisted tokens
      * @param minAmounts Minimum amounts
      */
     function initialize(
         address admin,
-        uint256 depositCap,
         address[] memory whitelistedTokens_,
         uint256[] memory minAmounts
     ) external initializer {
@@ -272,9 +288,6 @@ contract USDaiQueuedDepositor is
             _getWhitelistedTokensStorage().whitelistedTokens.add(whitelistedTokens_[i]);
             _getWhitelistedTokensStorage().minAmounts[whitelistedTokens_[i]] = minAmounts[i];
         }
-
-        /* Set deposit cap */
-        _getDepositCapStorage().cap = depositCap;
 
         /* Get receipt tokens storage */
         ReceiptTokens storage receiptTokens = _getReceiptTokensStorage();
@@ -327,13 +340,13 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @notice Get reference to ERC-7201 deposit cap storage
+     * @notice Get reference to ERC-7201 deposit caps storage
      *
-     * @return $ Reference to deposit cap storage
+     * @return $ Reference to deposit caps storage
      */
-    function _getDepositCapStorage() internal pure returns (DepositCap storage $) {
+    function _getDepositCapsStorage() internal pure returns (DepositCaps storage $) {
         assembly {
-            $.slot := DEPOSIT_CAP_STORAGE_LOCATION
+            $.slot := DEPOSIT_CAPS_STORAGE_LOCATION
         }
     }
 
@@ -871,8 +884,12 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
-    function depositCapInfo() external view returns (uint256, uint256) {
-        return (_getDepositCapStorage().cap, _getDepositCapStorage().counter);
+    function depositCapInfo(
+        uint32 srcEid
+    ) external view returns (uint256, uint256) {
+        DepositCap storage depositCap = _getDepositCapsStorage().caps[srcEid];
+
+        return (depositCap.cap, depositCap.counter);
     }
 
     /*------------------------------------------------------------------------*/
@@ -888,8 +905,12 @@ contract USDaiQueuedDepositor is
         address depositToken,
         uint256 amount,
         address recipient,
+        uint32 srcEid,
         uint32 dstEid
     ) external nonReentrant returns (uint256) {
+        /* Validate caller */
+        if (msg.sender != _ousdaiUtility) revert InvalidCaller();
+
         /* Validate deposit token */
         if (!_getWhitelistedTokensStorage().whitelistedTokens.contains(depositToken)) revert InvalidToken();
 
@@ -903,10 +924,10 @@ contract USDaiQueuedDepositor is
         uint256 scaledAmount = _scaleFactor(depositToken) * amount;
 
         /* Get deposit cap */
-        DepositCap storage depositCap = _getDepositCapStorage();
+        DepositCap storage depositCap = _getDepositCapsStorage().caps[srcEid];
 
         /* Validate deposit is within deposit cap */
-        if (depositCap.cap != 0 && depositCap.counter + scaledAmount > depositCap.cap) revert InvalidAmount();
+        if (depositCap.counter + scaledAmount > depositCap.cap) revert InvalidAmount();
 
         /* Transfer the deposit token to the queue depositor */
         IERC20(depositToken).transferFrom(msg.sender, address(this), amount);
@@ -1017,14 +1038,18 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
-    function updateDepositCap(uint256 depositCap, bool resetCounter) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateDepositCap(
+        uint32 srcEid,
+        uint256 depositCap,
+        bool resetCounter
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Update deposit cap and reset counter */
-        _getDepositCapStorage().cap = depositCap;
+        _getDepositCapsStorage().caps[srcEid].cap = depositCap;
         if (resetCounter) {
-            _getDepositCapStorage().counter = 0;
+            _getDepositCapsStorage().caps[srcEid].counter = 0;
         }
 
         /* Emit deposit cap updated event */
-        emit DepositCapUpdated(depositCap);
+        emit DepositCapUpdated(srcEid, depositCap);
     }
 }

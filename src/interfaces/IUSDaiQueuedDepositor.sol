@@ -50,6 +50,11 @@ interface IUSDaiQueuedDepositor {
     error InvalidParameters();
 
     /**
+     * @notice Invalid caller
+     */
+    error InvalidCaller();
+
+    /**
      * @notice Invalid token
      */
     error InvalidToken();
@@ -158,9 +163,10 @@ interface IUSDaiQueuedDepositor {
 
     /**
      * @notice Deposit cap updated
+     * @param srcEid Source EID
      * @param cap Deposit cap
      */
-    event DepositCapUpdated(uint256 cap);
+    event DepositCapUpdated(uint32 srcEid, uint256 cap);
 
     /**
      * @notice Action failed
@@ -273,10 +279,13 @@ interface IUSDaiQueuedDepositor {
 
     /**
      * @notice Deposit cap info
+     * @param srcEid Source EID
      * @return Deposit cap
      * @return Deposit counter
      */
-    function depositCapInfo() external view returns (uint256, uint256);
+    function depositCapInfo(
+        uint32 srcEid
+    ) external view returns (uint256, uint256);
 
     /*------------------------------------------------------------------------*/
     /* Public API */
@@ -288,6 +297,7 @@ interface IUSDaiQueuedDepositor {
      * @param depositToken Deposit token
      * @param amount Amount
      * @param recipient Recipient
+     * @param srcEid Source EID
      * @param dstEid Destination EID
      * @return Queue index
      */
@@ -296,6 +306,7 @@ interface IUSDaiQueuedDepositor {
         address depositToken,
         uint256 amount,
         address recipient,
+        uint32 srcEid,
         uint32 dstEid
     ) external returns (uint256);
 
@@ -342,8 +353,9 @@ interface IUSDaiQueuedDepositor {
 
     /**
      * @notice Update deposit cap and reset deposit counter
+     * @param srcEid Source EID
      * @param depositCap Deposit cap
      * @param resetCounter Reset counter
      */
-    function updateDepositCap(uint256 depositCap, bool resetCounter) external;
+    function updateDepositCap(uint32 srcEid, uint256 depositCap, bool resetCounter) external;
 }

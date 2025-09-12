@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
+import {Vm} from "forge-std/Vm.sol";
+
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 import {console} from "forge-std/console.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 import {BaseTest} from "../Base.t.sol";
 import {USDai} from "src/USDai.sol";
@@ -15,10 +18,14 @@ import {USDaiQueuedDepositor} from "src/queuedDepositor/USDaiQueuedDepositor.sol
 import {ReceiptToken} from "src/queuedDepositor/ReceiptToken.sol";
 
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
+import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
+import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 
 contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
     IERC20 internal usdt = IERC20(0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9);
     USDaiQueuedDepositor internal queuedDepositor = USDaiQueuedDepositor(0x81cc0DEE5e599784CBB4862c605c7003B0aC5A53);
+    address internal oUsdaiUtility = 0x24a92E28a8C5D8812DcfAf44bCb20CC0BaBd1392;
+    address internal endpoint = 0x1a44076050125825900e736c501f859c50fE728c;
 
     address internal kyberTarget = 0x6131B5fae19EA4f9D964eAc0408E4408b66337b5;
     /* KyberSwap execution data */
@@ -41,25 +48,38 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
         address receiptTokenImpl = address(new ReceiptToken());
 
         /* Lookup proxy admin */
-        address proxyAdmin = address(uint160(uint256(vm.load(address(queuedDepositor), ERC1967Utils.ADMIN_SLOT))));
+        address proxyAdmin1 = address(uint160(uint256(vm.load(address(queuedDepositor), ERC1967Utils.ADMIN_SLOT))));
 
         vm.startPrank(0x783B08aA21DE056717173f72E04Be0E91328A07b);
 
         // Deploy USDai implemetation
         USDaiQueuedDepositor queuedDepositorImpl = new USDaiQueuedDepositor(
-            address(usdai), address(stakedUsdai), oAdapterUSDai, oAdapterStakedUSDai, receiptTokenImpl
+            address(usdai), address(stakedUsdai), oAdapterUSDai, oAdapterStakedUSDai, receiptTokenImpl, oUsdaiUtility
         );
 
         /* Upgrade Proxy */
-        ProxyAdmin(proxyAdmin).upgradeAndCall(
+        ProxyAdmin(proxyAdmin1).upgradeAndCall(
             ITransparentUpgradeableProxy(address(queuedDepositor)), address(queuedDepositorImpl), ""
+        );
+
+        /* Lookup proxy admin */
+        address proxyAdmin2 = address(uint160(uint256(vm.load(oUsdaiUtility, ERC1967Utils.ADMIN_SLOT))));
+
+        // Deploy OUSDaiUtility implemetation
+        OUSDaiUtility oUSDaiUtilityImpl = new OUSDaiUtility(
+            endpoint, address(usdai), address(stakedUsdai), oAdapterUSDai, oAdapterStakedUSDai, address(queuedDepositor)
+        );
+
+        /* Upgrade Proxy */
+        ProxyAdmin(proxyAdmin2).upgradeAndCall(
+            ITransparentUpgradeableProxy(oUsdaiUtility), address(oUSDaiUtilityImpl), ""
         );
         vm.stopPrank();
 
         /* Update deposit cap and supply cap */
         vm.startPrank(0x5F0BC72FB5952b2f3F2E11404398eD507B25841F);
 
-        queuedDepositor.updateDepositCap(type(uint256).max, true);
+        queuedDepositor.updateDepositCap(0, type(uint256).max, true);
         usdai.setSupplyCap(type(uint256).max);
 
         vm.stopPrank();
@@ -69,11 +89,31 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
         address usdtHolder = 0x7c490d17af51292b513C338Ebe1323B7e3BA56fA;
 
         vm.startPrank(usdtHolder);
-        usdt.approve(address(queuedDepositor), 4_000_000 * 1e6);
+        usdt.approve(oUsdaiUtility, 4_000_000 * 1e6);
 
-        uint256 queueIndex = queuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.Deposit, address(usdt), 4_000_000 * 1e6, usdtHolder, 0
+        // Data for queued deposit
+        bytes memory queuedDepositData = abi.encode(IUSDaiQueuedDepositor.QueueType.Deposit, usdtHolder, 0);
+
+        // Record logs to capture the Deposit event
+        vm.recordLogs();
+
+        // Deposit the USD
+        IOUSDaiUtility(oUsdaiUtility).localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdt), 4_000_000 * 1e6, queuedDepositData
         );
+
+        // Get logs and extract queueIndex from Deposit event
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 queueIndex;
+
+        // Find the Deposit event log
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == keccak256("Deposit(uint8,address,uint256,address,uint256,address)")) {
+                // Extract queueIndex from the third topic (indexed parameter)
+                queueIndex = uint256(logs[i].topics[3]);
+                break;
+            }
+        }
 
         vm.stopPrank();
 
@@ -91,7 +131,7 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
             queuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.Deposit, address(usdt), queueIndex);
         assertEq(queueItem.pendingDeposit, 0);
         assertEq(queueItem.dstEid, 0);
-        assertEq(queueItem.depositor, usdtHolder);
+        assertEq(queueItem.depositor, oUsdaiUtility);
         assertEq(queueItem.recipient, usdtHolder);
     }
 
@@ -99,11 +139,31 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
         address usdtHolder = 0x7c490d17af51292b513C338Ebe1323B7e3BA56fA;
 
         vm.startPrank(usdtHolder);
-        usdt.approve(address(queuedDepositor), 4_000_000 * 1e6);
+        usdt.approve(oUsdaiUtility, 4_000_000 * 1e6);
 
-        uint256 queueIndex = queuedDepositor.deposit(
-            IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdt), 4_000_000 * 1e6, usdtHolder, 0
+        // Data for queued deposit
+        bytes memory queuedDepositData = abi.encode(IUSDaiQueuedDepositor.QueueType.DepositAndStake, usdtHolder, 0);
+
+        // Record logs to capture the Deposit event
+        vm.recordLogs();
+
+        // Deposit the USD
+        IOUSDaiUtility(oUsdaiUtility).localCompose(
+            IOUSDaiUtility.ActionType.QueuedDeposit, address(usdt), 4_000_000 * 1e6, queuedDepositData
         );
+
+        // Get logs and extract queueIndex from Deposit event
+        Vm.Log[] memory logs = vm.getRecordedLogs();
+        uint256 queueIndex;
+
+        // Find the Deposit event log
+        for (uint256 i = 0; i < logs.length; i++) {
+            if (logs[i].topics[0] == keccak256("Deposit(uint8,address,uint256,address,uint256,address)")) {
+                // Extract queueIndex from the third topic (indexed parameter)
+                queueIndex = uint256(logs[i].topics[3]);
+                break;
+            }
+        }
 
         vm.stopPrank();
 
@@ -124,7 +184,7 @@ contract USDaiServiceQueuedDepositWithKyberTest is BaseTest {
             queuedDepositor.queueItem(IUSDaiQueuedDepositor.QueueType.DepositAndStake, address(usdt), queueIndex);
         assertEq(queueItem.pendingDeposit, 0);
         assertEq(queueItem.dstEid, 0);
-        assertEq(queueItem.depositor, usdtHolder);
+        assertEq(queueItem.depositor, oUsdaiUtility);
         assertEq(queueItem.recipient, usdtHolder);
     }
 }
