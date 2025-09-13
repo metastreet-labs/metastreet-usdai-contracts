@@ -14,7 +14,7 @@ run() {
             forge script "$contract" --fork-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vvvv "${@:4}"
             ;;
 
-        "goerli"|"sepolia"|"mainnet"|"blast"|"base"|"arbitrum_sepolia"|"arbitrum")
+        "goerli"|"sepolia"|"mainnet"|"blast"|"base"|"arbitrum_sepolia"|"arbitrum"|"plasma")
             local rpc_url="${!rpc_url_var}"
             if [[ -z $rpc_url ]]; then
                 echo "$rpc_url_var is not set"
