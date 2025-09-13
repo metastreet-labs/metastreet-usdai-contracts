@@ -117,25 +117,6 @@ contract USDai is
     }
 
     /*------------------------------------------------------------------------*/
-    /* Migration  */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Migrate
-     * @param data Data
-     */
-    function migrate(
-        string memory description,
-        bytes calldata data
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) reinitializer(2) {
-        /* Update bridged supply */
-        _getSupplyStorage().bridged = abi.decode(data, (uint256));
-
-        /* Emit bridged supply migrated event */
-        emit Migrated(description, data);
-    }
-
-    /*------------------------------------------------------------------------*/
     /* Modifiers  */
     /*------------------------------------------------------------------------*/
 
