@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
+import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract StakedUSDaiRedeemTest is BaseTest {
     uint256 internal requestedShares;
@@ -78,6 +80,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
     function test__ServiceRedemptions_When_RedemptionAmountIsZero() public {
         // Simulate extreme asset reduction
         vm.startPrank(address(stakedUsdai));
+        /// forge-lint: disable-next-line
         usdai.transfer(RANDOM_ADDRESS, initialBalance - 1);
         vm.stopPrank();
 

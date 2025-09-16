@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
-import "../../src/oracles/ChainlinkPriceOracle.sol";
+import {BaseTest} from "../Base.t.sol";
+import {ChainlinkPriceOracle} from "../../src/oracles/ChainlinkPriceOracle.sol";
+import {AggregatorV3Interface} from "../../src/interfaces/external/IAggregatorV3Interface.sol";
+import {IPriceOracle} from "../../src/interfaces/IPriceOracle.sol";
 
 contract ChainlinkPriceOracleTest is BaseTest {
     // Mainnet addresses

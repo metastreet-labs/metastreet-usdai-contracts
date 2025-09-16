@@ -1,22 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "forge-std/console.sol";
-
 import {Vm} from "forge-std/Vm.sol";
 
 import {Test} from "forge-std/Test.sol";
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {
-    TransparentUpgradeableProxy,
-    ITransparentUpgradeableProxy
-} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
-
-import {ISwapRouter02} from "src/interfaces/external/ISwapRouter02.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {TestERC721} from "./tokens/TestERC721.sol";
 import {TestERC20} from "./tokens/TestERC20.sol";
@@ -28,11 +18,7 @@ import {USDai} from "src/USDai.sol";
 import {StakedUSDai} from "src/StakedUSDai.sol";
 import {ChainlinkPriceOracle} from "src/oracles/ChainlinkPriceOracle.sol";
 import {UniswapV3SwapAdapter} from "src/swapAdapters/UniswapV3SwapAdapter.sol";
-import {PositionManager} from "src/positionManagers/PositionManager.sol";
-import {StakedUSDaiStorage} from "src/StakedUSDaiStorage.sol";
-
 import {IWrappedMToken} from "src/interfaces/external/IWrappedMToken.sol";
-import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
 import {IUSDai} from "src/interfaces/IUSDai.sol";
 import {IPool} from "src/interfaces/external/IPool.sol";
 
@@ -70,13 +56,13 @@ abstract contract BaseTest is Test {
     address internal constant M_NAV_PRICE_FEED = 0xC28198Df9aee1c4990994B35ff51eFA4C769e534;
 
     /* MetaStreet Pool durations, rates, tick */
-    uint64[] internal DURATIONS = [30 days, 14 days, 7 days];
-    uint64[] internal RATES = [
+    uint64[] internal durations = [30 days, 14 days, 7 days];
+    uint64[] internal rates = [
         MetastreetPoolHelpers.normalizeRate(0.1 * 1e18),
         MetastreetPoolHelpers.normalizeRate(0.3 * 1e18),
         MetastreetPoolHelpers.normalizeRate(0.5 * 1e18)
     ];
-    uint128 internal TICK = MetastreetPoolHelpers.encodeTick(1_000_000 ether, 0, 0, 0);
+    uint128 internal tick = MetastreetPoolHelpers.encodeTick(1_000_000 ether, 0, 0, 0);
 
     /* Fixed point scale */
     uint256 internal constant FIXED_POINT_SCALE = 1e18;
@@ -117,7 +103,7 @@ abstract contract BaseTest is Test {
     StakedUSDai internal stakedUsdai;
     IPool internal metastreetPool1;
     IPool internal metastreetPool2;
-    TestMNAVPriceFeed internal testMNAVPriceFeed;
+    TestMNAVPriceFeed internal testMnavPriceFeed;
 
     function setUp() public virtual {
         vm.createSelectFork(vm.envString("ARBITRUM_RPC_URL"));
@@ -139,7 +125,7 @@ abstract contract BaseTest is Test {
         deployUsdPool();
 
         deployUniswapV3SwapAdapter();
-        deployTestMNAVPriceFeed();
+        deployTestMnavPriceFeed();
         deployPriceOracle();
         deployUsdai();
         deployStakedUsdai();
@@ -195,11 +181,11 @@ abstract contract BaseTest is Test {
         vm.stopPrank();
     }
 
-    function deployTestMNAVPriceFeed() internal {
+    function deployTestMnavPriceFeed() internal {
         vm.startPrank(users.deployer);
 
         /* Deploy mock m chainlink oracle */
-        testMNAVPriceFeed = new TestMNAVPriceFeed();
+        testMnavPriceFeed = new TestMNAVPriceFeed();
 
         vm.stopPrank();
     }
@@ -224,18 +210,26 @@ abstract contract BaseTest is Test {
         usd = new TestERC20("USD", "USD", 6, 300_000_000 ether);
 
         /* Mint USD to users */
+        /// forge-lint: disable-next-line
         usd.transfer(address(users.normalUser1), 40_000_000 ether);
+        /// forge-lint: disable-next-line
         usd.transfer(address(users.normalUser2), 40_000_000 ether);
+        /// forge-lint: disable-next-line
         usd.transfer(address(users.admin), 50_000_000 ether);
+        /// forge-lint: disable-next-line
         usd.transfer(address(users.manager), 40_000_000 ether);
 
         /* Deploy USD2 ERC20 */
         usd2 = new TestERC20("USD", "USD", 6, 300_000_000 ether);
 
         /* Mint USD2 to users */
+        /// forge-lint: disable-next-line
         usd2.transfer(address(users.normalUser1), 40_000_000 ether);
+        /// forge-lint: disable-next-line
         usd2.transfer(address(users.normalUser2), 40_000_000 ether);
+        /// forge-lint: disable-next-line
         usd2.transfer(address(users.admin), 50_000_000 ether);
+        /// forge-lint: disable-next-line
         usd2.transfer(address(users.manager), 40_000_000 ether);
 
         vm.stopPrank();
@@ -290,7 +284,7 @@ abstract contract BaseTest is Test {
         address[] memory priceFeeds = new address[](2);
         priceFeeds[0] = address(WETH_PRICE_FEED);
         priceFeeds[1] = address(USDT_PRICE_FEED);
-        priceOracle = new ChainlinkPriceOracle(address(testMNAVPriceFeed), tokens, priceFeeds);
+        priceOracle = new ChainlinkPriceOracle(address(testMnavPriceFeed), tokens, priceFeeds);
 
         vm.stopPrank();
     }
@@ -355,13 +349,17 @@ abstract contract BaseTest is Test {
         vm.startPrank(0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8);
         IERC20(WETH).balanceOf(0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8);
 
+        /// forge-lint: disable-next-line
         IERC20(WETH).transfer(address(users.admin), 10_000 ether);
+        /// forge-lint: disable-next-line
         IERC20(WETH).transfer(address(users.normalUser1), 2_000 ether);
+        /// forge-lint: disable-next-line
         IERC20(WETH).transfer(address(users.normalUser2), 2_000 ether);
         vm.stopPrank();
 
         /* Get tokens from USDT holder */
         vm.startPrank(0xB38e8c17e38363aF6EbdCb3dAE12e0243582891D);
+        /// forge-lint: disable-next-line
         IERC20(USDT).transfer(address(users.admin), 10_000_000 * 1e6);
         vm.stopPrank();
     }
@@ -373,7 +371,7 @@ abstract contract BaseTest is Test {
         collateralTokens[0] = nft_;
 
         /* Set pool parameters */
-        bytes memory poolParams = abi.encode(collateralTokens, tok, address(0), DURATIONS, RATES);
+        bytes memory poolParams = abi.encode(collateralTokens, tok, address(0), durations, rates);
 
         if (address(metastreetPool1) == address(0)) {
             /* Deploy pool proxy */
@@ -398,7 +396,7 @@ abstract contract BaseTest is Test {
 
     function createLoan(IPool pool, address user, uint256 principal) internal returns (bytes memory loanReceipt) {
         uint128[] memory ticks = new uint128[](1);
-        ticks[0] = TICK;
+        ticks[0] = tick;
 
         vm.startPrank(user);
         vm.recordLogs();
@@ -460,6 +458,7 @@ abstract contract BaseTest is Test {
         usdai.deposit(address(usd), amount * 2, amount, address(users.manager));
 
         /* Deposit into staked usdai */
+        /// forge-lint: disable-next-line
         usdai.transfer(address(stakedUsdai), amount);
 
         vm.stopPrank();

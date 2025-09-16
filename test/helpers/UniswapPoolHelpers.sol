@@ -8,8 +8,6 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
 
 import {ISwapRouter02} from "../../src/interfaces/external/ISwapRouter02.sol";
 
-import {console} from "forge-std/console.sol";
-
 interface INonfungiblePositionManager {
     struct MintParams {
         address token0;

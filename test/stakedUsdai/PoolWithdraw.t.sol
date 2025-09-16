@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
 
 import {IPoolPositionManager} from "src/interfaces/IPoolPositionManager.sol";
 
@@ -38,7 +38,7 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
 
         // Deposit
         initialShares = IPoolPositionManager(stakedUsdai).poolDeposit(
-            address(metastreetPool1), TICK, 100_000 * 1e18, 54 ether, 0, path
+            address(metastreetPool1), tick, 100_000 * 1e18, 54 ether, 0, path
         );
 
         vm.stopPrank();
@@ -61,7 +61,7 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
 
         // Redeem
         uint128 redemptionId =
-            IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), TICK, initialShares);
+            IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), tick, initialShares);
 
         // Encode path for WETH -> usd -> USDT -> wrapped M
         bytes memory path = abi.encodePacked(
@@ -76,7 +76,7 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
 
         // Withdraw
         uint256 usdaiAmount = IPoolPositionManager(stakedUsdai).poolWithdraw(
-            address(metastreetPool1), TICK, redemptionId, type(uint256).max, 0, path
+            address(metastreetPool1), tick, redemptionId, type(uint256).max, 0, path
         );
 
         // USDai amount should be greater than 0
@@ -85,7 +85,7 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
         // Validate pool ticks
         uint256[] memory ticks = IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1));
         assertEq(ticks.length, 1);
-        assertEq(ticks[0], TICK);
+        assertEq(ticks[0], tick);
 
         vm.stopPrank();
 
@@ -96,7 +96,7 @@ contract StakedUSDaiPoolWithdrawTest is BaseTest {
 
         // Withdraw
         IPoolPositionManager(stakedUsdai).poolWithdraw(
-            address(metastreetPool1), TICK, redemptionId, type(uint256).max, 0, path
+            address(metastreetPool1), tick, redemptionId, type(uint256).max, 0, path
         );
 
         // Validate pool positions

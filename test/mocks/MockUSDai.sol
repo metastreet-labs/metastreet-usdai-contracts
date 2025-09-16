@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC20PermitUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import {MulticallUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
 
-import "src/interfaces/IUSDai.sol";
-import "src/interfaces/IMintableBurnable.sol";
+import {IUSDai} from "src/interfaces/IUSDai.sol";
+import {IMintableBurnable} from "src/interfaces/IMintableBurnable.sol";
 
 /**
  * @title Mock USDai ERC20
@@ -107,7 +108,7 @@ contract MockUSDai is
      * @notice Get implementation name
      * @return Implementation name
      */
-    function IMPLEMENTATION_NAME() external pure returns (string memory) {
+    function implementationName() external pure returns (string memory) {
         return "Mock USDai";
     }
 
@@ -115,7 +116,7 @@ contract MockUSDai is
      * @notice Get implementation version
      * @return Implementation version
      */
-    function IMPLEMENTATION_VERSION() external pure returns (string memory) {
+    function implementationVersion() external pure returns (string memory) {
         return "1.0";
     }
 
@@ -334,7 +335,7 @@ contract MockUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc IERC165
+     * @inheritdoc ERC165Upgradeable
      */
     function supportsInterface(
         bytes4 interfaceId

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
+import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
 
 contract StakedUSDaiServiceRedemptionsTest is BaseTest {
     uint256 internal initialBalance;
@@ -101,6 +102,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         // Simulate asset reduction by transferring out USDai
         reductionAmount = bound(reductionAmount, 0, initialBalance - totalRedemptions);
         vm.startPrank(address(stakedUsdai));
+        /// forge-lint: disable-next-line
         usdai.transfer(RANDOM_ADDRESS, reductionAmount);
         vm.stopPrank();
 

@@ -1,21 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {console} from "forge-std/console.sol";
-
 import {OmnichainBaseTest} from "./Base.t.sol";
 
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
-import {
-    IOFT,
-    SendParam,
-    MessagingFee,
-    OFTReceipt,
-    MessagingReceipt
-} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
-import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
-
-import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 
 import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
@@ -25,8 +13,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {MockUSDaiSlippage} from "../mocks/MockUSDaiSlippage.sol";
-
-import {console} from "forge-std/console.sol";
 
 contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
     using OptionsBuilder for bytes;
@@ -128,7 +114,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         );
 
         assertEq(usdai.balanceOf(user), 4_000_000 ether);
-        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), 0);
+        assertEq(IERC20(queuedUsdaiToken).balanceOf(user), 0);
     }
 
     function test__USDaiServiceQueuedLocalDeposit_With_MaxServiceAmount() public {
@@ -308,7 +294,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         );
 
         assertEq(usdai.balanceOf(user), 4_000_000 ether);
-        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), 0);
+        assertEq(IERC20(queuedUsdaiToken).balanceOf(user), 0);
     }
 
     function test__USDaiServiceQueuedLocalDeposit_WithBlacklistedAccount() public {
@@ -449,7 +435,7 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
             )
         );
 
-        assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), 0);
+        assertEq(IERC20(queuedStakedUsdaiToken).balanceOf(user), 0);
     }
 
     function test__USDaiServiceQueuedOmnichainDeposit() public {
@@ -648,10 +634,10 @@ contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
         uint256 slippageRate = 15e13;
 
         // Deploy mock USDai with custom slippage behavior
-        MockUSDaiSlippage mockUSDaiSlippage = new MockUSDaiSlippage(slippageRate);
+        MockUSDaiSlippage mockUsdaiSlippage = new MockUSDaiSlippage(slippageRate);
 
         // Etch the mock implementation over the existing USDai contract
-        vm.etch(address(usdai), address(mockUSDaiSlippage).code);
+        vm.etch(address(usdai), address(mockUsdaiSlippage).code);
 
         vm.expectRevert(IUSDai.InvalidAmount.selector);
         usdaiQueuedDepositor.service(
