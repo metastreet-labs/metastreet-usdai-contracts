@@ -3,7 +3,6 @@ pragma solidity 0.8.29;
 
 import {BaseTest} from "../Base.t.sol";
 import {IUSDai} from "src/interfaces/IUSDai.sol";
-import {USDai} from "src/USDai.sol";
 
 contract USDaiDepositTest is BaseTest {
     function testFuzz__USDaiDeposit(
