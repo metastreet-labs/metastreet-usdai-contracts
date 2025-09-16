@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
 
 contract StakedUSDaiHarvestBaseYieldTest is BaseTest {
     function setUp() public override {

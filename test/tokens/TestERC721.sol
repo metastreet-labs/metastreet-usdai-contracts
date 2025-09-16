@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.29;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Test ERC721 Token
@@ -12,7 +12,7 @@ contract TestERC721 is ERC721, Ownable {
     /* Properties                                                               */
     /*--------------------------------------------------------------------------*/
 
-    string private _baseTokenURI;
+    string private baseTokenURI;
 
     /*--------------------------------------------------------------------------*/
     /* Constructor                                                              */
@@ -29,7 +29,7 @@ contract TestERC721 is ERC721, Ownable {
         string memory symbol,
         string memory baseURI
     ) ERC721(name, symbol) Ownable(msg.sender) {
-        _baseTokenURI = baseURI;
+        baseTokenURI = baseURI;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -40,7 +40,7 @@ contract TestERC721 is ERC721, Ownable {
      * @inheritdoc ERC721
      */
     function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
+        return baseTokenURI;
     }
 
     /*--------------------------------------------------------------------------*/
@@ -54,7 +54,7 @@ contract TestERC721 is ERC721, Ownable {
     function setBaseURI(
         string memory baseURI
     ) external onlyOwner {
-        _baseTokenURI = baseURI;
+        baseTokenURI = baseURI;
     }
 
     /**

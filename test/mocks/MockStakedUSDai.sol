@@ -1,31 +1,28 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC4626.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {MulticallUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
+import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {ERC20PermitUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import "src/StakedUSDaiStorage.sol";
-import "src/RedemptionLogic.sol";
+import {StakedUSDaiStorage} from "src/StakedUSDaiStorage.sol";
+import {RedemptionLogic} from "src/RedemptionLogic.sol";
 
-import "src/positionManagers/BasePositionManager.sol";
-import "src/positionManagers/PoolPositionManager.sol";
+import {BasePositionManager} from "src/positionManagers/BasePositionManager.sol";
+import {PoolPositionManager} from "src/positionManagers/PoolPositionManager.sol";
 
-import "src/interfaces/IUSDai.sol";
-import "src/interfaces/IStakedUSDai.sol";
-import "src/interfaces/IERC7540.sol";
-import "src/interfaces/IPoolPositionManager.sol";
-import "src/interfaces/IBasePositionManager.sol";
-import "src/interfaces/IMintableBurnable.sol";
+import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
+import {IERC7540Redeem, IERC7540Operator} from "src/interfaces/IERC7540.sol";
+import {IMintableBurnable} from "src/interfaces/IMintableBurnable.sol";
 
 /**
  * @title Mock Staked USDai ERC20
@@ -148,7 +145,7 @@ contract MockStakedUSDai is
      * @notice Get implementation name
      * @return The implementation name
      */
-    function IMPLEMENTATION_NAME() external pure returns (string memory) {
+    function implementationName() external pure returns (string memory) {
         return "Staked USDai";
     }
 
@@ -156,7 +153,7 @@ contract MockStakedUSDai is
      * @notice Get implementation version
      * @return The implementation version
      */
-    function IMPLEMENTATION_VERSION() external pure returns (string memory) {
+    function implementationVersion() external pure returns (string memory) {
         return "1.0";
     }
 
@@ -242,7 +239,7 @@ contract MockStakedUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc PositionManager
+     * @inheritdoc BasePositionManager
      */
     function _assets(
         ValuationType
@@ -784,7 +781,7 @@ contract MockStakedUSDai is
     /*------------------------------------------------------------------------*/
 
     /**
-     * @inheritdoc IERC165
+     * @inheritdoc ERC165Upgradeable
      */
     function supportsInterface(
         bytes4 interfaceId

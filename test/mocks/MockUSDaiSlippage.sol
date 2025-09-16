@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./MockUSDai.sol";
-
-import {console} from "forge-std/console.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {MockUSDai} from "./MockUSDai.sol";
 
 /**
  * @title Mock USDai with Custom Slippage
  * @author MetaStreet Foundation
  */
 contract MockUSDaiSlippage is MockUSDai {
-    uint256 internal immutable _slippageRate;
+    uint256 internal immutable _SLIPPAGE_RATE;
 
     constructor(
         uint256 slippageRate_
     ) {
-        _slippageRate = slippageRate_;
+        _SLIPPAGE_RATE = slippageRate_;
     }
 
     /**
@@ -45,7 +43,7 @@ contract MockUSDaiSlippage is MockUSDai {
         IERC20(depositToken).transferFrom(msg.sender, address(this), depositAmount);
 
         /* Return specific amount */
-        uint256 slippage = (depositAmount * _slippageRate) / 1e18;
+        uint256 slippage = (depositAmount * _SLIPPAGE_RATE) / 1e18;
         uint256 usdaiAmount = depositAmount - slippage - 1;
 
         /* Check that the USDai amount is greater than the minimum */

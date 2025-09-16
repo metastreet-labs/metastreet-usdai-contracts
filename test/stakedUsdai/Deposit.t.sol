@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
+import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 contract StakedUSDaiDepositTest is BaseTest {
     uint256 internal initialBalance;

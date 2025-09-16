@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
+import {TestERC20} from "../tokens/TestERC20.sol";
+import {UniswapV3SwapAdapter} from "src/swapAdapters/UniswapV3SwapAdapter.sol";
 
 contract SwapAdapterSwapInTest is BaseTest {
     function testFuzz__SwapAdapterSwapIn(
@@ -12,6 +14,7 @@ contract SwapAdapterSwapInTest is BaseTest {
 
         // Transfer some test USD from the deployer to USDai
         vm.prank(users.deployer);
+        /// forge-lint: disable-next-line
         usd.transfer(address(usdai), amount);
 
         // USDai approves the swap adapter to spend its USD
@@ -49,6 +52,7 @@ contract SwapAdapterSwapInTest is BaseTest {
 
         // Transfer some test USD from the deployer to USDai
         vm.prank(users.deployer);
+        /// forge-lint: disable-next-line
         usd.transfer(address(usdai), amount);
 
         // USDai approves the swap adapter to spend its USD
@@ -75,6 +79,7 @@ contract SwapAdapterSwapInTest is BaseTest {
 
         // Transfer some test USD2 from the deployer to USDai
         vm.prank(users.deployer);
+        /// forge-lint: disable-next-line
         usd2.transfer(address(usdai), amount);
 
         // USDai approves the swap adapter to spend its USD2

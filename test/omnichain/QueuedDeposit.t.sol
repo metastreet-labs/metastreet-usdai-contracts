@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {console} from "forge-std/console.sol";
-
 import {OmnichainBaseTest} from "./Base.t.sol";
 
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {
-    IOFT,
     SendParam,
     MessagingFee,
     OFTReceipt,
     MessagingReceipt
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
-
-import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 
 import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
 import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
@@ -90,7 +85,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(counter, amount * 2);
 
         // Verify that the queued USDai was minted to the user
-        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), amount * 2);
+        assertEq(IERC20(queuedUsdaiToken).balanceOf(user), amount * 2);
 
         vm.stopPrank();
     }
@@ -148,7 +143,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItems2.length, 2);
 
         // Verify that the queued USDai was minted to the user
-        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), amount * 2 * 1e12);
+        assertEq(IERC20(queuedUsdaiToken).balanceOf(user), amount * 2 * 1e12);
 
         vm.stopPrank();
     }
@@ -202,7 +197,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItems2.length, 2);
 
         // Verify that the queued USDai was minted to the user
-        assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), amount * 2);
+        assertEq(IERC20(queuedStakedUsdaiToken).balanceOf(user), amount * 2);
 
         vm.stopPrank();
     }
@@ -262,7 +257,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItems2.length, 2);
 
         // Verify that the queued USDai was minted to the user
-        assertEq(IERC20(queuedStakedUSDaiToken).balanceOf(user), amount * 2 * 1e12);
+        assertEq(IERC20(queuedStakedUsdaiToken).balanceOf(user), amount * 2 * 1e12);
 
         vm.stopPrank();
     }
@@ -287,6 +282,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
             dstEid: usdtHomeEid,
             to: addressToBytes32(address(oUsdaiUtility)),
             amountLD: amount,
+            /// forge-lint: disable-next-line
             minAmountLD: (amount / 10 ** 12) * 10 ** 12,
             extraOptions: composerOptions,
             composeMsg: composeMsg,
@@ -335,7 +331,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(queueItem.recipient, user);
 
         // Verify that the queued USDai was minted to the user
-        assertEq(IERC20(queuedUSDaiToken).balanceOf(user), usdtSendParam.minAmountLD);
+        assertEq(IERC20(queuedUsdaiToken).balanceOf(user), usdtSendParam.minAmountLD);
 
         vm.stopPrank();
     }
@@ -386,7 +382,8 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), amount, data);
 
         vm.expectRevert();
-        IERC20(queuedUSDaiToken).transfer(address(usdaiQueuedDepositor), amount);
+        /// forge-lint: disable-next-line
+        IERC20(queuedUsdaiToken).transfer(address(usdaiQueuedDepositor), amount);
 
         vm.stopPrank();
     }

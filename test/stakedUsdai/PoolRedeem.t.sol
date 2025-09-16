@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
 
 import {IPoolPositionManager} from "src/interfaces/IPoolPositionManager.sol";
 
@@ -35,7 +35,7 @@ contract StakedUSDaiPoolRedeemTest is BaseTest {
         );
 
         // Deposit
-        IPoolPositionManager(stakedUsdai).poolDeposit(address(metastreetPool1), TICK, 100_000 * 1e18, 54 ether, 0, path);
+        IPoolPositionManager(stakedUsdai).poolDeposit(address(metastreetPool1), tick, 100_000 * 1e18, 54 ether, 0, path);
 
         vm.stopPrank();
     }
@@ -50,7 +50,7 @@ contract StakedUSDaiPoolRedeemTest is BaseTest {
         vm.startPrank(users.manager);
 
         // Redeem
-        uint128 redemptionId = IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), TICK, 20 ether);
+        uint128 redemptionId = IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), tick, 20 ether);
 
         // Redemption ID should be 0
         assertEq(redemptionId, 0);
@@ -61,7 +61,7 @@ contract StakedUSDaiPoolRedeemTest is BaseTest {
         // Validate pool ticks
         uint256[] memory ticks = IPoolPositionManager(stakedUsdai).poolTicks(address(metastreetPool1));
         assertEq(ticks.length, 1);
-        assertEq(ticks[0], TICK);
+        assertEq(ticks[0], tick);
 
         // Advance time to loan maturity
         vm.warp(block.timestamp + 30 days);
@@ -74,8 +74,8 @@ contract StakedUSDaiPoolRedeemTest is BaseTest {
         vm.startPrank(users.manager);
 
         // Redeem
-        (uint256 shares,) = metastreetPool1.deposits(address(stakedUsdai), TICK);
-        IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), TICK, shares);
+        (uint256 shares,) = metastreetPool1.deposits(address(stakedUsdai), tick);
+        IPoolPositionManager(stakedUsdai).poolRedeem(address(metastreetPool1), tick, shares);
 
         vm.stopPrank();
 
