@@ -1,3 +1,6 @@
+* OUSDaiUtility v1.4 - TBD
+    * Propagate source eid to USDaiQueuedDepositor for queued deposits.
+
 * USDaiQueuedDepositor v1.3 - TBD
     * Add deposit eid whitelist.
     * Add support for swap aggregators to `service()`.
