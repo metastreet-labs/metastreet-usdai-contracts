@@ -1,21 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {console} from "forge-std/console.sol";
-
 import {OmnichainBaseTest} from "./Base.t.sol";
 
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {
-    IOFT,
     SendParam,
     MessagingFee,
     OFTReceipt,
     MessagingReceipt
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
-
-import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
 
 import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
 
@@ -36,6 +31,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             stakedUsdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             ((initialBalance - 1e6) / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",
@@ -99,6 +95,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
         verifyPackets(stakedUsdaiAwayEid, addressToBytes32(address(stakedUsdaiAwayOAdapter)));
 
         // Assert that the USDAI away token was minted to the user
+        /// forge-lint: disable-next-line
         assertEq(stakedUsdaiAwayToken.balanceOf(user), ((initialBalance - 1e6) / 10 ** 12) * 10 ** 12);
 
         vm.stopPrank();
@@ -206,6 +203,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             stakedUsdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             ((initialBalance - 1e6) / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",
@@ -281,6 +279,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             stakedUsdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             ((initialBalance - 1e6) / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",
@@ -356,6 +355,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             stakedUsdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             ((initialBalance - 1e6) / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",

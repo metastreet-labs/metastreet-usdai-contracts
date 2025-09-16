@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import "../../../Base.t.sol";
+import {BaseTest} from "../../../Base.t.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC4626} from "@pendle-sy-public/contracts/interfaces/IERC4626.sol";
@@ -15,13 +15,17 @@ import {PendleUSDaiAdapter} from
 
 import {IStandardizedYield} from "@pendle-sy-public/contracts/interfaces/IStandardizedYield.sol";
 
+import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
+import {IUSDai} from "src/interfaces/IUSDai.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
 contract PendleSyAdapterTest is BaseTest {
-    PendleUSDaiAdapter internal pendleUSDaiAdapter;
+    PendleUSDaiAdapter internal pendleUsdaiAdapter;
 
     PendleERC20WithAdapterSY internal pendleSyAdapter1;
     PendleERC4626NoRedeemWithAdapterSY internal pendleSyAdapter2;
 
-    IStakedUSDai internal stakedUSDai_ = IStakedUSDai(0x0B2b2B2076d95dda7817e785989fE353fe955ef9);
+    IStakedUSDai internal stakedUsdai_ = IStakedUSDai(0x0B2b2B2076d95dda7817e785989fE353fe955ef9);
     IUSDai internal usdai_ = IUSDai(0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF);
 
     function setUp() public override {
@@ -31,26 +35,30 @@ contract PendleSyAdapterTest is BaseTest {
 
         /* Transfer tokens to users */
         vm.startPrank(0xB50A1f651A5ACb2679c8f679D782c728f3702E53);
+        /// forge-lint: disable-next-line
         WRAPPED_M_TOKEN.transfer(address(users.normalUser1), 5000 * 1e6);
+        /// forge-lint: disable-next-line
         WRAPPED_M_TOKEN.transfer(address(users.normalUser2), 5000 * 1e6);
         vm.stopPrank();
 
         vm.startPrank(0xDCCdD480E14f7061D64745CE1F9299bC5bb7eCd8);
+        /// forge-lint: disable-next-line
         usdai_.transfer(address(users.normalUser1), 5000 * 1e18);
+        /// forge-lint: disable-next-line
         usdai_.transfer(address(users.normalUser2), 5000 * 1e18);
         vm.stopPrank();
 
-        pendleUSDaiAdapter = new PendleUSDaiAdapter();
+        pendleUsdaiAdapter = new PendleUSDaiAdapter();
 
         PendleERC20WithAdapterSY pendleSyAdapterImpl1 = new PendleERC20WithAdapterSY(address(usdai_));
         PendleERC4626NoRedeemWithAdapterSY pendleSyAdapterImpl2 =
-            new PendleERC4626NoRedeemWithAdapterSY(address(stakedUSDai_));
+            new PendleERC4626NoRedeemWithAdapterSY(address(stakedUsdai_));
 
         TransparentUpgradeableProxy pendleSyAdapter1Proxy = new TransparentUpgradeableProxy(
             address(pendleSyAdapterImpl1),
             address(users.admin),
             abi.encodeWithSignature(
-                "initialize(string,string,address)", "PendleSyAdapter1", "PendleSyAdapter1", address(pendleUSDaiAdapter)
+                "initialize(string,string,address)", "PendleSyAdapter1", "PendleSyAdapter1", address(pendleUsdaiAdapter)
             )
         );
 
@@ -58,7 +66,7 @@ contract PendleSyAdapterTest is BaseTest {
             address(pendleSyAdapterImpl2),
             address(users.admin),
             abi.encodeWithSignature(
-                "initialize(string,string,address)", "PendleSyAdapter2", "PendleSyAdapter2", address(pendleUSDaiAdapter)
+                "initialize(string,string,address)", "PendleSyAdapter2", "PendleSyAdapter2", address(pendleUsdaiAdapter)
             )
         );
 
@@ -71,7 +79,7 @@ contract PendleSyAdapterTest is BaseTest {
     function test_PendleSyAdapter1_Initialization() public view {
         assertEq(pendleSyAdapter1.name(), "PendleSyAdapter1");
         assertEq(pendleSyAdapter1.symbol(), "PendleSyAdapter1");
-        assertEq(pendleSyAdapter1.adapter(), address(pendleUSDaiAdapter));
+        assertEq(pendleSyAdapter1.adapter(), address(pendleUsdaiAdapter));
         assertEq(pendleSyAdapter1.yieldToken(), address(usdai_));
     }
 
@@ -110,7 +118,7 @@ contract PendleSyAdapterTest is BaseTest {
     function test_PendleSyAdapter1_PreviewDeposit_BaseToken() public view {
         uint256 amount = 1000e6;
         uint256 preview = pendleSyAdapter1.previewDeposit(address(WRAPPED_M_TOKEN), amount);
-        uint256 expected = pendleUSDaiAdapter.previewConvertToDeposit(address(WRAPPED_M_TOKEN), amount);
+        uint256 expected = pendleUsdaiAdapter.previewConvertToDeposit(address(WRAPPED_M_TOKEN), amount);
         assertEq(preview, expected);
     }
 
@@ -123,7 +131,7 @@ contract PendleSyAdapterTest is BaseTest {
     function test_PendleSyAdapter1_PreviewRedeem_BaseToken() public view {
         uint256 amount = 1000e6;
         uint256 preview = pendleSyAdapter1.previewRedeem(address(WRAPPED_M_TOKEN), amount);
-        uint256 expected = pendleUSDaiAdapter.previewConvertToRedeem(address(WRAPPED_M_TOKEN), amount);
+        uint256 expected = pendleUsdaiAdapter.previewConvertToRedeem(address(WRAPPED_M_TOKEN), amount);
         assertEq(preview, expected);
     }
 
@@ -196,8 +204,8 @@ contract PendleSyAdapterTest is BaseTest {
     function test_PendleSyAdapter2_Initialization() public view {
         assertEq(pendleSyAdapter2.name(), "PendleSyAdapter2");
         assertEq(pendleSyAdapter2.symbol(), "PendleSyAdapter2");
-        assertEq(pendleSyAdapter2.adapter(), address(pendleUSDaiAdapter));
-        assertEq(pendleSyAdapter2.yieldToken(), address(stakedUSDai_));
+        assertEq(pendleSyAdapter2.adapter(), address(pendleUsdaiAdapter));
+        assertEq(pendleSyAdapter2.yieldToken(), address(stakedUsdai_));
         assertEq(pendleSyAdapter2.asset(), address(usdai_));
     }
 
@@ -211,13 +219,13 @@ contract PendleSyAdapterTest is BaseTest {
         assertEq(tokensIn.length, 3);
         assertEq(tokensIn[0], address(WRAPPED_M_TOKEN)); // Base token from adapter
         assertEq(tokensIn[1], address(usdai_)); // Yield token
-        assertEq(tokensIn[2], address(stakedUSDai_)); // Yield token
+        assertEq(tokensIn[2], address(stakedUsdai_)); // Yield token
     }
 
     function test_PendleSyAdapter2_GetTokensOut() public view {
         address[] memory tokensOut = pendleSyAdapter2.getTokensOut();
         assertEq(tokensOut.length, 1);
-        assertEq(tokensOut[0], address(stakedUSDai_)); // Only yield token (no redeem)
+        assertEq(tokensOut[0], address(stakedUsdai_)); // Only yield token (no redeem)
     }
 
     function test_PendleSyAdapter2_IsValidTokenIn() public view {
@@ -227,33 +235,33 @@ contract PendleSyAdapterTest is BaseTest {
     function test_PendleSyAdapter2_IsValidTokenOut() public view {
         assertFalse(pendleSyAdapter2.isValidTokenOut(address(WRAPPED_M_TOKEN)));
         assertFalse(pendleSyAdapter2.isValidTokenOut(address(usdai_)));
-        assertTrue(pendleSyAdapter2.isValidTokenOut(address(stakedUSDai_)));
+        assertTrue(pendleSyAdapter2.isValidTokenOut(address(stakedUsdai_)));
     }
 
     function test_PendleSyAdapter2_PreviewDeposit_YieldToken() public view {
         uint256 amount = 1000e18;
-        uint256 preview = pendleSyAdapter2.previewDeposit(address(stakedUSDai_), amount);
+        uint256 preview = pendleSyAdapter2.previewDeposit(address(stakedUsdai_), amount);
         assertEq(preview, amount);
     }
 
     function test_PendleSyAdapter2_PreviewDeposit_Asset() public view {
         uint256 amount = 1000e18;
         uint256 preview = pendleSyAdapter2.previewDeposit(address(usdai_), amount);
-        uint256 expected = IERC4626(address(stakedUSDai_)).previewDeposit(amount);
+        uint256 expected = IERC4626(address(stakedUsdai_)).previewDeposit(amount);
         assertEq(preview, expected);
     }
 
     function test_PendleSyAdapter2_PreviewDeposit_BaseToken() public view {
         uint256 amount = 1000e6;
         uint256 preview = pendleSyAdapter2.previewDeposit(address(WRAPPED_M_TOKEN), amount);
-        uint256 usdaiAmount = pendleUSDaiAdapter.previewConvertToDeposit(address(WRAPPED_M_TOKEN), amount);
-        uint256 expected = IERC4626(address(stakedUSDai_)).previewDeposit(usdaiAmount);
+        uint256 usdaiAmount = pendleUsdaiAdapter.previewConvertToDeposit(address(WRAPPED_M_TOKEN), amount);
+        uint256 expected = IERC4626(address(stakedUsdai_)).previewDeposit(usdaiAmount);
         assertEq(preview, expected);
     }
 
     function test_PendleSyAdapter2_PreviewRedeem() public view {
         uint256 amount = 1000e18;
-        uint256 preview = pendleSyAdapter2.previewRedeem(address(stakedUSDai_), amount);
+        uint256 preview = pendleSyAdapter2.previewRedeem(address(stakedUsdai_), amount);
         assertEq(preview, amount);
     }
 
@@ -261,7 +269,7 @@ contract PendleSyAdapterTest is BaseTest {
         uint256 amount = 1000e18;
         uint256 balanceBefore = IERC20(address(usdai_)).balanceOf(address(users.normalUser1));
 
-        uint256 expected = IERC4626(address(stakedUSDai_)).previewDeposit(amount);
+        uint256 expected = IERC4626(address(stakedUsdai_)).previewDeposit(amount);
 
         vm.startPrank(users.normalUser1);
         usdai_.approve(address(pendleSyAdapter2), amount);
@@ -309,12 +317,12 @@ contract PendleSyAdapterTest is BaseTest {
         uint256 shares = pendleSyAdapter2.deposit(address(users.normalUser1), address(usdai_), depositAmount, 0);
 
         // Then redeem
-        uint256 balanceBefore = IERC20(address(stakedUSDai_)).balanceOf(address(users.normalUser1));
-        uint256 tokenOut = pendleSyAdapter2.redeem(address(users.normalUser1), shares, address(stakedUSDai_), 0, false);
+        uint256 balanceBefore = IERC20(address(stakedUsdai_)).balanceOf(address(users.normalUser1));
+        uint256 tokenOut = pendleSyAdapter2.redeem(address(users.normalUser1), shares, address(stakedUsdai_), 0, false);
         vm.stopPrank();
 
         assertEq(tokenOut, shares);
-        assertEq(IERC20(address(stakedUSDai_)).balanceOf(address(users.normalUser1)), balanceBefore + shares);
+        assertEq(IERC20(address(stakedUsdai_)).balanceOf(address(users.normalUser1)), balanceBefore + shares);
         assertEq(pendleSyAdapter2.balanceOf(address(users.normalUser1)), 0);
     }
 
@@ -369,7 +377,7 @@ contract PendleSyAdapterTest is BaseTest {
         uint256 shares2 =
             pendleSyAdapter2.deposit(address(users.normalUser2), address(WRAPPED_M_TOKEN), depositAmount, 0);
         uint256 redeemed2 =
-            pendleSyAdapter2.redeem(address(users.normalUser2), shares2, address(stakedUSDai_), 0, false);
+            pendleSyAdapter2.redeem(address(users.normalUser2), shares2, address(stakedUsdai_), 0, false);
         vm.stopPrank();
 
         assertGt(shares2, 0);

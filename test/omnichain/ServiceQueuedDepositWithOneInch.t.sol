@@ -5,10 +5,9 @@ import {Vm} from "forge-std/Vm.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
-
-import {console} from "forge-std/console.sol";
 
 import {BaseTest} from "../Base.t.sol";
 import {USDai} from "src/USDai.sol";
@@ -43,8 +42,8 @@ contract USDaiServiceQueuedDepositWithOneInchTest is BaseTest {
 
         usdai = USDai(0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF);
         stakedUsdai = StakedUSDai(0x0B2b2B2076d95dda7817e785989fE353fe955ef9);
-        address oAdapterUSDai = 0xffA10065Ce1d1C42FABc46e06B84Ed8FfEb4baE5;
-        address oAdapterStakedUSDai = 0xffB20098FD7B8E84762eea4609F299D101427f24;
+        address oAdapterUsdai = 0xffA10065Ce1d1C42FABc46e06B84Ed8FfEb4baE5;
+        address oAdapterStakedUsdai = 0xffB20098FD7B8E84762eea4609F299D101427f24;
         address receiptTokenImpl = address(new ReceiptToken());
 
         /* Lookup proxy admin */
@@ -54,7 +53,7 @@ contract USDaiServiceQueuedDepositWithOneInchTest is BaseTest {
 
         // Deploy USDai implemetation
         USDaiQueuedDepositor queuedDepositorImpl = new USDaiQueuedDepositor(
-            address(usdai), address(stakedUsdai), oAdapterUSDai, oAdapterStakedUSDai, receiptTokenImpl, oUsdaiUtility
+            address(usdai), address(stakedUsdai), oAdapterUsdai, oAdapterStakedUsdai, receiptTokenImpl, oUsdaiUtility
         );
 
         /* Upgrade Proxy */
@@ -66,13 +65,13 @@ contract USDaiServiceQueuedDepositWithOneInchTest is BaseTest {
         address proxyAdmin2 = address(uint160(uint256(vm.load(oUsdaiUtility, ERC1967Utils.ADMIN_SLOT))));
 
         // Deploy OUSDaiUtility implemetation
-        OUSDaiUtility oUSDaiUtilityImpl = new OUSDaiUtility(
-            endpoint, address(usdai), address(stakedUsdai), oAdapterUSDai, oAdapterStakedUSDai, address(queuedDepositor)
+        OUSDaiUtility oUsdaiUtilityImpl = new OUSDaiUtility(
+            endpoint, address(usdai), address(stakedUsdai), oAdapterUsdai, oAdapterStakedUsdai, address(queuedDepositor)
         );
 
         /* Upgrade Proxy */
         ProxyAdmin(proxyAdmin2).upgradeAndCall(
-            ITransparentUpgradeableProxy(oUsdaiUtility), address(oUSDaiUtilityImpl), ""
+            ITransparentUpgradeableProxy(oUsdaiUtility), address(oUsdaiUtilityImpl), ""
         );
         vm.stopPrank();
 

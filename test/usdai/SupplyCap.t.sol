@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.29;
 
-import {Deployer} from "../../script/utils/Deployer.s.sol";
-
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {ERC1967Utils} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "../Base.t.sol";
+import {BaseTest} from "../Base.t.sol";
+import {USDai} from "src/USDai.sol";
+import {IUSDai} from "src/interfaces/IUSDai.sol";
+import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract USDaiSupplyCapBypassTest is BaseTest {
-    IERC20 internal USDC = IERC20(0xaf88d065e77c8cC2239327C5EDb3A432268e5831);
+    IERC20 internal usdc = IERC20(0xaf88d065e77c8cC2239327C5EDb3A432268e5831);
 
     function setUp() public override {
         super.setUp();
@@ -25,10 +27,10 @@ contract USDaiSupplyCapBypassTest is BaseTest {
         vm.startPrank(0x783B08aA21DE056717173f72E04Be0E91328A07b);
 
         // Deploy USDai implemetation
-        USDai USDaiImpl = new USDai(0x5F8deFa807F48e5784b98aEf50ADfC52029f3cf9);
+        USDai usdaiImpl = new USDai(0x5F8deFa807F48e5784b98aEf50ADfC52029f3cf9);
 
         /* Upgrade Proxy */
-        ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(address(usdai)), address(USDaiImpl), "");
+        ProxyAdmin(proxyAdmin).upgradeAndCall(ITransparentUpgradeableProxy(address(usdai)), address(usdaiImpl), "");
         vm.stopPrank();
 
         vm.startPrank(0x5F0BC72FB5952b2f3F2E11404398eD507B25841F);
@@ -43,18 +45,18 @@ contract USDaiSupplyCapBypassTest is BaseTest {
     function test__USDaiSupplyCapDepositExceedsSupplyCap() public {
         // User approves USDai to spend their USD
         vm.startPrank(0x0a8494F70031623C9C0043aff4D40f334b458b11);
-        USDC.approve(address(usdai), type(uint256).max);
+        usdc.approve(address(usdai), type(uint256).max);
 
         /* User deposits into USDai fails */
         vm.expectRevert(IUSDai.SupplyCapExceeded.selector);
-        usdai.deposit(address(USDC), 1_000_000 * 1e6, 0, users.normalUser1);
+        usdai.deposit(address(usdc), 1_000_000 * 1e6, 0, users.normalUser1);
 
         vm.stopPrank();
 
         // Queue depositor can deposit
         vm.startPrank(0x81cc0DEE5e599784CBB4862c605c7003B0aC5A53);
-        USDC.approve(address(usdai), 1_000_000 * 1e6);
-        usdai.deposit(address(USDC), 1_000_000 * 1e6, 0, 0x81cc0DEE5e599784CBB4862c605c7003B0aC5A53);
+        usdc.approve(address(usdai), 1_000_000 * 1e6);
+        usdai.deposit(address(usdc), 1_000_000 * 1e6, 0, 0x81cc0DEE5e599784CBB4862c605c7003B0aC5A53);
         vm.stopPrank();
     }
 }

@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.20;
 
-import {console} from "forge-std/console.sol";
-
 import {OmnichainBaseTest} from "./Base.t.sol";
 
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 import {
-    IOFT,
     SendParam,
     MessagingFee,
     OFTReceipt,
@@ -15,10 +12,7 @@ import {
 } from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {OFTComposeMsgCodec} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/libs/OFTComposeMsgCodec.sol";
 
-import {OUSDaiUtility} from "src/omnichain/OUSDaiUtility.sol";
-
 import {IOUSDaiUtility} from "src/interfaces/IOUSDaiUtility.sol";
-import {IUSDaiQueuedDepositor} from "src/interfaces/IUSDaiQueuedDepositor.sol";
 
 contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
     using OptionsBuilder for bytes;
@@ -35,6 +29,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             usdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             (initialBalance / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",
@@ -203,6 +198,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             usdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             (initialBalance / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",
@@ -243,6 +239,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             usdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             (initialBalance / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",
@@ -337,6 +334,7 @@ contract OUSDaiUtilityDepositTest is OmnichainBaseTest {
             usdaiAwayEid,
             addressToBytes32(user),
             initialBalance, // will be set later
+            /// forge-lint: disable-next-line
             (initialBalance / 10 ** 12) * 10 ** 12,
             receiveOptions,
             "",

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.29;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title Test ERC20 Token
@@ -11,7 +11,7 @@ contract TestERC20 is ERC20 {
     /* Properties */
     /*------------------------------------------------------------------------*/
 
-    uint8 private _decimals;
+    uint8 private decimalsValue;
 
     /*------------------------------------------------------------------------*/
     /* Constructor */
@@ -23,8 +23,13 @@ contract TestERC20 is ERC20 {
      * @notice symbol Token symbol
      * @notice initialSupply Initial supply
      */
-    constructor(string memory name, string memory symbol, uint8 decimals_, uint256 initialSupply) ERC20(name, symbol) {
-        _decimals = decimals_;
+    constructor(
+        string memory name,
+        string memory symbol,
+        uint8 decimalsParam,
+        uint256 initialSupply
+    ) ERC20(name, symbol) {
+        decimalsValue = decimalsParam;
 
         _mint(msg.sender, initialSupply);
     }
@@ -34,6 +39,6 @@ contract TestERC20 is ERC20 {
     /*------------------------------------------------------------------------*/
 
     function decimals() public view override returns (uint8) {
-        return _decimals;
+        return decimalsValue;
     }
 }

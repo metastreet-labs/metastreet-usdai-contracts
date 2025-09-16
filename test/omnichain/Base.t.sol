@@ -2,10 +2,8 @@
 pragma solidity ^0.8.20;
 
 // Forge imports
-import "forge-std/console.sol";
 
 // Test imports
-import {IMintableBurnable} from "src/interfaces/IMintableBurnable.sol";
 
 // Implementation imports
 import {OAdapter} from "src/omnichain/OAdapter.sol";
@@ -15,12 +13,9 @@ import {OToken} from "src/omnichain/OToken.sol";
 import {OptionsBuilder} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/libs/OptionsBuilder.sol";
 
 // OFT imports
-import {IOFT, SendParam, OFTReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
-import {MessagingFee, MessagingReceipt} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oft/OFTCore.sol";
 import {RateLimiter} from "@layerzerolabs/lz-evm-oapp-v2/contracts/oapp/utils/RateLimiter.sol";
 
 // OZ imports
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {
     TransparentUpgradeableProxy,
     ITransparentUpgradeableProxy
@@ -93,8 +88,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
     address internal user = address(0x1);
     address internal blacklistedUser = address(0x2);
 
-    address internal queuedUSDaiToken;
-    address internal queuedStakedUSDaiToken;
+    address internal queuedUsdaiToken;
+    address internal queuedStakedUsdaiToken;
 
     function setUp() public virtual override {
         // Call the base setup function from the TestHelperOz5 contract
@@ -273,8 +268,8 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         );
         usdaiQueuedDepositor = USDaiQueuedDepositor(address(usdaiQueuedDepositorProxy));
         AccessControl(address(usdaiQueuedDepositor)).grantRole(keccak256("CONTROLLER_ADMIN_ROLE"), address(this));
-        queuedUSDaiToken = address(usdaiQueuedDepositor.queuedUSDaiToken());
-        queuedStakedUSDaiToken = address(usdaiQueuedDepositor.queuedStakedUSDaiToken());
+        queuedUsdaiToken = address(usdaiQueuedDepositor.queuedUSDaiToken());
+        queuedStakedUsdaiToken = address(usdaiQueuedDepositor.queuedStakedUSDaiToken());
         usdaiQueuedDepositor.updateDepositCap(0, type(uint256).max, true);
         usdaiQueuedDepositor.updateDepositCap(usdtAwayEid, type(uint256).max, true);
 
