@@ -1,3 +1,6 @@
+* OUSDaiUtility v1.4 - TBD
+    * Propagate source EID for to USDaiQueuedDepositor for queued deposits.
+
 * USDaiQueuedDepositor v1.3 - TBD
     * Change deposit cap from global to per `srcEid`.
     * Add support for swap aggregators to `service()`.
