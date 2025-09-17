@@ -2,7 +2,6 @@
 pragma solidity 0.8.29;
 
 import {Script} from "forge-std/Script.sol";
-import {console2 as console} from "forge-std/console2.sol";
 
 /**
  * @notice Base deployment script
