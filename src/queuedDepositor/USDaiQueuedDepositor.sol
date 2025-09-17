@@ -356,6 +356,7 @@ contract USDaiQueuedDepositor is
     function _removeDust(uint256 amountLD, bool isUsdai) internal view virtual returns (uint256) {
         uint256 decimalConversionRate = isUsdai ? _usdaiDecimalConversionRate : _stakedUsdaiDecimalConversionRate;
 
+        /// forge-lint: disable-next-line
         return (amountLD / decimalConversionRate) * decimalConversionRate;
     }
 
