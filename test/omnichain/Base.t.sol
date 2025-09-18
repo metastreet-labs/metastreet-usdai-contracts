@@ -270,8 +270,13 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         AccessControl(address(usdaiQueuedDepositor)).grantRole(keccak256("CONTROLLER_ADMIN_ROLE"), address(this));
         queuedUsdaiToken = address(usdaiQueuedDepositor.queuedUSDaiToken());
         queuedStakedUsdaiToken = address(usdaiQueuedDepositor.queuedStakedUSDaiToken());
-        usdaiQueuedDepositor.updateDepositCap(0, type(uint256).max, true);
-        usdaiQueuedDepositor.updateDepositCap(usdtAwayEid, type(uint256).max, true);
+        usdaiQueuedDepositor.updateDepositCap(type(uint256).max, true);
+        usdaiQueuedDepositor.updateDepositEidWhitelist(0, 0, true);
+        usdaiQueuedDepositor.updateDepositEidWhitelist(0, usdtAwayEid, true);
+        usdaiQueuedDepositor.updateDepositEidWhitelist(0, usdaiAwayEid, true);
+        usdaiQueuedDepositor.updateDepositEidWhitelist(0, stakedUsdaiAwayEid, true);
+        usdaiQueuedDepositor.updateDepositEidWhitelist(usdtAwayEid, usdtHomeEid, true);
+        usdaiQueuedDepositor.updateDepositEidWhitelist(usdtAwayEid, usdtAwayEid, true);
 
         // Configure and wire the USDT OAdapters together
         address[] memory oAdapters = new address[](6);

@@ -109,12 +109,20 @@ contract USDaiQueuedDepositor is
         0x0b1935fa33a5b9486fb92ab02635f3c9d624ac3df1e1ee01c88d6052bb824d00;
 
     /**
-     * @notice Deposit caps storage location
-     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositCaps")) - 1)) &
+     * @notice Deposit cap storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositCap")) - 1)) &
      * ~bytes32(uint256(0xff));
      */
-    bytes32 private constant DEPOSIT_CAPS_STORAGE_LOCATION =
-        0xbd72dd575024c2daddac3ad0ced335a130e9d24b450ebebd4323b895f9994200;
+    bytes32 private constant DEPOSIT_CAP_STORAGE_LOCATION =
+        0x5f4558a12a832f571ea97f326448c96240f9dce8a5a766ecf3dfe3896a796c00;
+
+    /**
+     * @notice Deposit EID whitelist storage location
+     * @dev keccak256(abi.encode(uint256(keccak256("usdaiQueuedDepositor.depositEidWhitelist")) - 1)) &
+     * ~bytes32(uint256(0xff));
+     */
+    bytes32 private constant DEPOSIT_EID_WHITELIST_STORAGE_LOCATION =
+        0x667ec5ad59a1853007558bc5f697b91437adde35a1587bb9c67fa05989f32600;
 
     /*------------------------------------------------------------------------*/
     /* Immutable state */
@@ -182,9 +190,7 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @notice Deposit cap
-     * @dev cap Deposit cap
-     * @dev counter Deposit counter
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCap
      */
     struct DepositCap {
         uint256 cap;
@@ -215,10 +221,10 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositCaps
+     * @custom:storage-location erc7201:usdaiQueuedDepositor.depositEidWhitelist
      */
-    struct DepositCaps {
-        mapping(uint32 => DepositCap) caps;
+    struct DepositEidWhitelist {
+        mapping(uint32 => mapping(uint32 => bool)) whitelist;
     }
 
     /*------------------------------------------------------------------------*/
@@ -340,13 +346,24 @@ contract USDaiQueuedDepositor is
     }
 
     /**
-     * @notice Get reference to ERC-7201 deposit caps storage
+     * @notice Get reference to ERC-7201 deposit cap storage
      *
-     * @return $ Reference to deposit caps storage
+     * @return $ Reference to deposit cap storage
      */
-    function _getDepositCapsStorage() internal pure returns (DepositCaps storage $) {
+    function _getDepositCapStorage() internal pure returns (DepositCap storage $) {
         assembly {
-            $.slot := DEPOSIT_CAPS_STORAGE_LOCATION
+            $.slot := DEPOSIT_CAP_STORAGE_LOCATION
+        }
+    }
+
+    /**
+     * @notice Get reference to ERC-7201 deposit EID whitelist storage
+     *
+     * @return $ Reference to deposit EID whitelist storage
+     */
+    function _getDepositEidWhitelistStorage() internal pure returns (DepositEidWhitelist storage $) {
+        assembly {
+            $.slot := DEPOSIT_EID_WHITELIST_STORAGE_LOCATION
         }
     }
 
@@ -885,12 +902,15 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
-    function depositCapInfo(
-        uint32 srcEid
-    ) external view returns (uint256, uint256) {
-        DepositCap storage depositCap = _getDepositCapsStorage().caps[srcEid];
+    function depositCapInfo() external view returns (uint256, uint256) {
+        return (_getDepositCapStorage().cap, _getDepositCapStorage().counter);
+    }
 
-        return (depositCap.cap, depositCap.counter);
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function depositEidWhitelist(uint32 srcEid, uint32 dstEid) external view returns (bool) {
+        return _getDepositEidWhitelistStorage().whitelist[srcEid][dstEid];
     }
 
     /*------------------------------------------------------------------------*/
@@ -918,6 +938,9 @@ contract USDaiQueuedDepositor is
         /* Validate deposit amount */
         if (amount == 0 || _getWhitelistedTokensStorage().minAmounts[depositToken] > amount) revert InvalidAmount();
 
+        /* Validate deposit EID whitelist */
+        if (!_getDepositEidWhitelistStorage().whitelist[srcEid][dstEid]) revert InvalidEids(srcEid, dstEid);
+
         /* Validate recipient */
         if (recipient == address(0)) revert InvalidRecipient();
 
@@ -925,7 +948,7 @@ contract USDaiQueuedDepositor is
         uint256 scaledAmount = _scaleFactor(depositToken) * amount;
 
         /* Get deposit cap */
-        DepositCap storage depositCap = _getDepositCapsStorage().caps[srcEid];
+        DepositCap storage depositCap = _getDepositCapStorage();
 
         /* Validate deposit is within deposit cap */
         if (depositCap.counter + scaledAmount > depositCap.cap) revert InvalidAmount();
@@ -1039,18 +1062,29 @@ contract USDaiQueuedDepositor is
     /**
      * @inheritdoc IUSDaiQueuedDepositor
      */
-    function updateDepositCap(
-        uint32 srcEid,
-        uint256 depositCap,
-        bool resetCounter
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function updateDepositCap(uint256 depositCap, bool resetCounter) external onlyRole(DEFAULT_ADMIN_ROLE) {
         /* Update deposit cap and reset counter */
-        _getDepositCapsStorage().caps[srcEid].cap = depositCap;
+        _getDepositCapStorage().cap = depositCap;
         if (resetCounter) {
-            _getDepositCapsStorage().caps[srcEid].counter = 0;
+            _getDepositCapStorage().counter = 0;
         }
 
         /* Emit deposit cap updated event */
-        emit DepositCapUpdated(srcEid, depositCap);
+        emit DepositCapUpdated(depositCap);
+    }
+
+    /**
+     * @inheritdoc IUSDaiQueuedDepositor
+     */
+    function updateDepositEidWhitelist(
+        uint32 srcEid,
+        uint32 dstEid,
+        bool whitelisted
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        /* Update deposit EID whitelist */
+        _getDepositEidWhitelistStorage().whitelist[srcEid][dstEid] = whitelisted;
+
+        /* Emit deposit EID whitelist updated event */
+        emit DepositEidWhitelistUpdated(srcEid, dstEid, whitelisted);
     }
 }

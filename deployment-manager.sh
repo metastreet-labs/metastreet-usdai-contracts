@@ -57,7 +57,8 @@ usage() {
     echo "  swap-adapter-set-token-whitelist <tokens>"
     echo "  price-oracle-add-price-feeds <tokens> <price feeds>"
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
-    echo "  usdaiqueueddepositor-update-deposit-cap <src eid> <deposit cap> <reset counter>"
+    echo "  usdaiqueueddepositor-update-deposit-cap <deposit cap> <reset counter>"
+    echo "  usdaiqueueddepositor-update-deposit-eid-whitelist <src eid> <dst eid> <whitelisted>"
     echo "  grant-role <target> <role> <account>"
     echo "  transfer-ownership <proxy> <account>"
     echo ""
@@ -228,12 +229,21 @@ case $1 in
         ;;
 
     "usdaiqueueddepositor-update-deposit-cap")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositCap.s.sol:USDaiQueuedDepositorUpdateDepositCap" --sig "run(uint256,bool)" $2 $3
+        ;;
+
+    "usdaiqueueddepositor-update-deposit-eid-whitelist")
         if [ "$#" -ne 4 ]; then
             echo "Invalid argument count"
             exit 1
         fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositCap.s.sol:USDaiQueuedDepositorUpdateDepositCap" --sig "run(uint32,uint256,bool)" $2 $3 $4
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositEidWhitelist.s.sol:USDaiQueuedDepositorUpdateDepositEidWhitelist" --sig "run(uint32,uint32,bool)" $2 $3 $4
         ;;
 
    "grant-role")

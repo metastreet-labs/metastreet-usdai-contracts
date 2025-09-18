@@ -78,7 +78,8 @@ contract USDaiServiceQueuedDepositWithOneInchTest is BaseTest {
         /* Update deposit cap and supply cap */
         vm.startPrank(0x5F0BC72FB5952b2f3F2E11404398eD507B25841F);
 
-        queuedDepositor.updateDepositCap(0, type(uint256).max, true);
+        queuedDepositor.updateDepositCap(type(uint256).max, true);
+        queuedDepositor.updateDepositEidWhitelist(0, 0, true);
         usdai.setSupplyCap(type(uint256).max);
 
         vm.stopPrank();

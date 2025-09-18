@@ -57,7 +57,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending1, amount);
         assertEq(queueItems1.length, 1);
 
-        (uint256 depositCap1, uint256 counter1) = usdaiQueuedDepositor.depositCapInfo(0);
+        (uint256 depositCap1, uint256 counter1) = usdaiQueuedDepositor.depositCapInfo();
         assertEq(depositCap1, type(uint256).max);
         assertEq(counter1, amount);
 
@@ -80,7 +80,7 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         assertEq(pending2, amount * 2);
         assertEq(queueItems2.length, 2);
 
-        (uint256 depositCap, uint256 counter) = usdaiQueuedDepositor.depositCapInfo(0);
+        (uint256 depositCap, uint256 counter) = usdaiQueuedDepositor.depositCapInfo();
         assertEq(depositCap, type(uint256).max);
         assertEq(counter, amount * 2);
 
@@ -389,9 +389,9 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
     }
 
     function test__USDaiQueuedDeposit_RevertWhen_DepositCapExceeded() public {
-        usdaiQueuedDepositor.updateDepositCap(0, 10_000_000 * 1e18, false);
+        usdaiQueuedDepositor.updateDepositCap(10_000_000 * 1e18, false);
 
-        (uint256 cap, uint256 counter) = usdaiQueuedDepositor.depositCapInfo(0);
+        (uint256 cap, uint256 counter) = usdaiQueuedDepositor.depositCapInfo();
 
         assertEq(cap, 10_000_000 * 1e18);
         assertEq(counter, 0);
@@ -407,13 +407,13 @@ contract USDaiQueuedDepositTest is OmnichainBaseTest {
         oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), cap + 1, data);
         vm.stopPrank();
 
-        usdaiQueuedDepositor.updateDepositCap(0, cap + 1, false);
+        usdaiQueuedDepositor.updateDepositCap(cap + 1, false);
 
         vm.startPrank(user);
         oUsdaiUtility.localCompose(IOUSDaiUtility.ActionType.QueuedDeposit, address(usdtHomeToken), cap + 1, data);
         vm.stopPrank();
 
-        (, counter) = usdaiQueuedDepositor.depositCapInfo(0);
+        (, counter) = usdaiQueuedDepositor.depositCapInfo();
         assertEq(counter, cap + 1);
     }
 }

@@ -14,6 +14,8 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 import {MockUSDaiSlippage} from "../mocks/MockUSDaiSlippage.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract USDaiServiceQueuedDepositTest is OmnichainBaseTest {
     using OptionsBuilder for bytes;
 

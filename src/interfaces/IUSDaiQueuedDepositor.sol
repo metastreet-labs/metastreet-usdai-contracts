@@ -65,6 +65,11 @@ interface IUSDaiQueuedDepositor {
     error InvalidAmount();
 
     /**
+     * @notice Invalid EIDs
+     */
+    error InvalidEids(uint32 srcEid, uint32 dstEid);
+
+    /**
      * @notice Invalid share price
      */
     error InvalidSharePrice();
@@ -163,10 +168,17 @@ interface IUSDaiQueuedDepositor {
 
     /**
      * @notice Deposit cap updated
-     * @param srcEid Source EID
      * @param cap Deposit cap
      */
-    event DepositCapUpdated(uint32 srcEid, uint256 cap);
+    event DepositCapUpdated(uint256 cap);
+
+    /**
+     * @notice Deposit EID whitelist updated
+     * @param srcEid Source EID
+     * @param dstEid Destination EID
+     * @param whitelisted Whitelisted
+     */
+    event DepositEidWhitelistUpdated(uint32 indexed srcEid, uint32 indexed dstEid, bool whitelisted);
 
     /**
      * @notice Action failed
@@ -279,13 +291,18 @@ interface IUSDaiQueuedDepositor {
 
     /**
      * @notice Deposit cap info
-     * @param srcEid Source EID
      * @return Deposit cap
      * @return Deposit counter
      */
-    function depositCapInfo(
-        uint32 srcEid
-    ) external view returns (uint256, uint256);
+    function depositCapInfo() external view returns (uint256, uint256);
+
+    /**
+     * @notice Deposit EID whitelist
+     * @param srcEid Source EID
+     * @param dstEid Destination EID
+     * @return Whitelisted
+     */
+    function depositEidWhitelist(uint32 srcEid, uint32 dstEid) external view returns (bool);
 
     /*------------------------------------------------------------------------*/
     /* Public API */
@@ -353,9 +370,16 @@ interface IUSDaiQueuedDepositor {
 
     /**
      * @notice Update deposit cap and reset deposit counter
-     * @param srcEid Source EID
      * @param depositCap Deposit cap
      * @param resetCounter Reset counter
      */
-    function updateDepositCap(uint32 srcEid, uint256 depositCap, bool resetCounter) external;
+    function updateDepositCap(uint256 depositCap, bool resetCounter) external;
+
+    /**
+     * @notice Update deposit cap and reset deposit counter
+     * @param srcEid Source EID
+     * @param dstEid Destination EID
+     * @param whitelisted Whitelisted
+     */
+    function updateDepositEidWhitelist(uint32 srcEid, uint32 dstEid, bool whitelisted) external;
 }
