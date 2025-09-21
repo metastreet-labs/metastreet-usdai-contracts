@@ -52,6 +52,7 @@ usage() {
     echo "  upgrade-otoken <token>"
     echo "  upgrade-ousdai-utility <lz endpoint>"
     echo "  upgrade-usdai-queued-depositor"
+    echo "  upgrade-deposit-vault <deposit token> <min amount> <dst eid>"
     echo ""
     echo "  staked-usdai-service-redemptions <shares>"
     echo "  swap-adapter-set-token-whitelist <tokens>"
@@ -59,6 +60,7 @@ usage() {
     echo "  oadapter-set-rate-limits <oadapter> <dst eids> <limit> <window>"
     echo "  usdaiqueueddepositor-update-deposit-cap <deposit cap> <reset counter>"
     echo "  usdaiqueueddepositor-update-deposit-eid-whitelist <src eid> <dst eid> <whitelisted>"
+    echo "  depositvault-update-deposit-cap <deposit cap> <reset counter>"
     echo "  grant-role <target> <role> <account>"
     echo "  transfer-ownership <proxy> <account>"
     echo ""
@@ -66,6 +68,7 @@ usage() {
     echo "  deploy-omnichain-environment <deployer> <lz endpoint> <multisig>"
     echo "  deploy-ousdai-utility <deployer> <lz endpoint> <o adapters> <multisig>"
     echo "  deploy-usdai-queued-depositor <deployer> <multisig> <whitelisted tokens> <min amounts>"
+    echo "  deploy-deposit-vault <deployer> <multisig> <deposit token> <min amount> <dst eid>"
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
@@ -157,6 +160,15 @@ case $1 in
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,address[],uint256[])" $2 $3 "$4" "$5"
         ;;
 
+   "deploy-deposit-vault")
+        if [ "$#" -ne 6 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployDepositVault.s.sol:DeployDepositVault" --sig "run(address,address,address,uint256,uint32)" $2 $3 $4 $5 $6
+        ;;
+
    "upgrade-usdai")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run()"
         ;;
@@ -190,6 +202,15 @@ case $1 in
 
    "upgrade-usdai-queued-depositor")
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDaiQueuedDepositor.s.sol:UpgradeUSDaiQueuedDepositor" --sig "run()"
+        ;;
+
+   "upgrade-deposit-vault")
+        if [ "$#" -ne 4 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeDepositVault.s.sol:UpgradeDepositVault" --sig "run(address,uint256,uint32)" $2 $3 $4
         ;;
 
    "staked-usdai-service-redemptions")
@@ -244,6 +265,15 @@ case $1 in
         fi
 
         run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositEidWhitelist.s.sol:USDaiQueuedDepositorUpdateDepositEidWhitelist" --sig "run(uint32,uint32,bool)" $2 $3 $4
+        ;;
+
+    "depositvault-update-deposit-cap")
+        if [ "$#" -ne 3 ]; then
+            echo "Invalid argument count"
+            exit 1
+        fi
+
+        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DepositVaultUpdateDepositCap.s.sol:DepositVaultUpdateDepositCap" --sig "run(uint256,bool)" $2 $3
         ;;
 
    "grant-role")
