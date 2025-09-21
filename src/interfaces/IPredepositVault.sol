@@ -40,16 +40,16 @@ interface IPredepositVault {
      * @notice Deposited event
      * @param depositType Deposit type
      * @param depositToken Deposit token address
-     * @param recipient Recipient address
      * @param depositor Depositor address
+     * @param recipient Recipient address
      * @param amount Deposit amount
      * @param dstEid Destination EID
      */
     event Deposited(
         DepositType indexed depositType,
         address indexed depositToken,
-        address indexed recipient,
         address depositor,
+        address indexed recipient,
         uint256 amount,
         uint32 dstEid
     );

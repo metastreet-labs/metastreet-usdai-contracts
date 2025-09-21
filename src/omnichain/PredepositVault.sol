@@ -204,7 +204,7 @@ contract PredepositVault is ReentrancyGuardUpgradeable, AccessControlUpgradeable
         IERC20(_depositToken).safeTransferFrom(msg.sender, address(this), amount);
 
         /* Emit deposited event */
-        emit Deposited(depositType, _depositToken, recipient, msg.sender, amount, _dstEid);
+        emit Deposited(depositType, _depositToken, msg.sender, recipient, amount, _dstEid);
     }
 
     /*------------------------------------------------------------------------*/
