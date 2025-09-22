@@ -1,3 +1,6 @@
+* StakedUSDai v1.3 - 09/22/2025
+    * Add `bridgedSupply()` getter.
+
 * USDai v1.3 - 09/22/2025
     * Remove completed `migrate()` function.
     * Fix parameter name in `Withdrawn` event.
