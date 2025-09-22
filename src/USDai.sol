@@ -39,7 +39,7 @@ contract USDai is
     /**
      * @notice Implementation version
      */
-    string public constant IMPLEMENTATION_VERSION = "1.2";
+    string public constant IMPLEMENTATION_VERSION = "1.3";
 
     /**
      * @notice Bridge admin role
