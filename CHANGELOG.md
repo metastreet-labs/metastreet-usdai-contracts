@@ -1,3 +1,6 @@
+* PredepositVault v1.0 - 09/22/2025
+    * Initial release.
+
 * StakedUSDai v1.3 - 09/22/2025
     * Add `bridgedSupply()` getter.
 
