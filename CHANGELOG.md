@@ -1,3 +1,7 @@
+* USDai v1.3 - 09/22/2025
+    * Remove completed `migrate()` function.
+    * Fix parameter name in `Withdrawn` event.
+
 * OUSDaiUtility v1.4 - 09/22/2025
     * Propagate source eid to USDaiQueuedDepositor for queued deposits.
 
