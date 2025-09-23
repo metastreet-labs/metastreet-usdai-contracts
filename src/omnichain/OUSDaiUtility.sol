@@ -327,6 +327,84 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
         return true;
     }
 
+    /**
+     * @notice Stake the USDai
+     * @param depositToken Deposit token (USDai)
+     * @param depositAmount USDai amount
+     * @param data Additional compose data
+     * @return success True if the stake was successful, false otherwise
+     */
+    function _stake(address depositToken, uint256 depositAmount, bytes memory data) internal returns (bool) {
+        /* Decode the message */
+        (uint256 minShares, SendParam memory sendParam, uint256 nativeFee) =
+            abi.decode(data, (uint256, SendParam, uint256));
+
+        /* Get the destination address */
+        address to = address(uint160(uint256(sendParam.to)));
+
+        /* Validate the deposit token is USDai */
+        if (depositToken != address(_usdai)) {
+            /* Transfer the deposit token to owner */
+            IERC20(depositToken).transfer(to, depositAmount);
+
+            /* Refund the msg.value */
+            (bool success,) = payable(to).call{value: msg.value}("");
+            success;
+
+            /* Emit the failed action event */
+            emit ActionFailed("Stake", "Invalid deposit token");
+
+            return false;
+        }
+
+        /* Approve the staked USDai contract to spend the USDai */
+        _usdai.approve(address(_stakedUsdai), depositAmount);
+
+        try _stakedUsdai.deposit(depositAmount, address(this), minShares) returns (uint256 susdaiAmount) {
+            /* Transfer the staked USDai to local destination */
+            if (sendParam.dstEid == 0) {
+                /* Transfer the staked USDai to recipient */
+                IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
+
+                /* Emit the deposit and stake event */
+                emit ComposerStaked(sendParam.dstEid, to, depositAmount, susdaiAmount);
+            } else {
+                /* Update the sendParam with the staked USDai amount */
+                sendParam.amountLD = susdaiAmount;
+
+                /* Send the staked USDai back to source chain */
+                try _stakedUsdaiOAdapter.send{value: nativeFee}(
+                    sendParam, MessagingFee({nativeFee: nativeFee, lzTokenFee: 0}), payable(to)
+                ) {
+                    /* Emit the deposit and stake event */
+                    emit ComposerStaked(sendParam.dstEid, to, depositAmount, susdaiAmount);
+                } catch (bytes memory reason) {
+                    /* Transfer the staked USDai to owner */
+                    IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
+
+                    /* Emit the failed action event */
+                    emit ActionFailed("Send", reason);
+
+                    return false;
+                }
+            }
+        } catch (bytes memory reason) {
+            /* Transfer the usdai token to owner */
+            _usdai.transfer(to, depositAmount);
+
+            /* Refund the msg.value */
+            (bool success,) = payable(to).call{value: msg.value}("");
+            success;
+
+            /* Emit the failed action event */
+            emit ActionFailed("Stake", reason);
+
+            return false;
+        }
+
+        return true;
+    }
+
     /*------------------------------------------------------------------------*/
     /* External API */
     /*------------------------------------------------------------------------*/
@@ -363,6 +441,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             _depositAndStake(depositToken, amountLD, data);
         } else if (actionType == ActionType.QueuedDeposit) {
             _queuedDeposit(depositToken, amountLD, data, OFTComposeMsgCodec.srcEid(message));
+        } else if (actionType == ActionType.Stake) {
+            _stake(depositToken, amountLD, data);
         } else {
             revert UnknownAction();
         }
@@ -386,6 +466,8 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             if (!_depositAndStake(depositToken, depositAmount, data)) revert DepositAndStakeFailed();
         } else if (actionType == ActionType.QueuedDeposit) {
             if (!_queuedDeposit(depositToken, depositAmount, data, 0)) revert QueuedDepositFailed();
+        } else if (actionType == ActionType.Stake) {
+            if (!_stake(depositToken, depositAmount, data)) revert StakeFailed();
         } else {
             revert UnknownAction();
         }
