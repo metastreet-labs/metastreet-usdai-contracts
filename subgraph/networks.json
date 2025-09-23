@@ -11,6 +11,10 @@
     "OUSDaiUtility": {
       "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 23427694
+    },
+    "PredepositVault": {
+      "address": "0xF7Dd6107B94af76DeFfD118bFa12A70C1891BCD8",
+      "startBlock": 23426623
     }
   },
   "arbitrum-one": {
@@ -24,6 +28,10 @@
     },
     "OUSDaiUtility": {
       "address": "0x24a92E28a8C5D8812DcfAf44bCb20CC0BaBd1392",
+      "startBlock": 336209932
+    },
+    "PredepositVault": {
+      "address": "0x0000000000000000000000000000000000000000",
       "startBlock": 336209932
     }
   },
@@ -39,6 +47,10 @@
     "OUSDaiUtility": {
       "address": "0x0f0198a70f95A2f91564F3BCb0121a745Bd845F1",
       "startBlock": 8283342
+    },
+    "PredepositVault": {
+      "address": "0x89b2269dd3b6c7fa09f63c327759333bfb99dfdc",
+      "startBlock": 9258680
     }
   }
 }

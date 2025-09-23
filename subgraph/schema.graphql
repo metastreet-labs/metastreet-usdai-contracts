@@ -1,1 +1,11 @@
-
+type Predeposit @entity(immutable: true) {
+  id: Bytes!
+  depositType: Int! # 0 for deposit, 1 for deposit and stake
+  depositToken: Bytes! # address
+  depositor: Bytes! # address
+  recipient: Bytes! # address
+  amount: BigInt! # uint256
+  dstEid: BigInt! # uint32
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}

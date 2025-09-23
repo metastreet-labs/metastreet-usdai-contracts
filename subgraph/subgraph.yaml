@@ -4,3 +4,24 @@ indexerHints:
 schema:
   file: ./schema.graphql
 dataSources:
+  - kind: ethereum
+    name: PredepositVault
+    network: sepolia
+    source:
+      abi: PredepositVault
+      address: "0x89b2269dd3b6c7fa09f63c327759333bfb99dfdc"
+      startBlock: 9258680
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - VaultDeposit
+      abis:
+        - name: PredepositVault
+          file: ../out/PredepositVault.sol/PredepositVault.json
+      eventHandlers:
+        - event: Deposited(indexed uint8,indexed address,address,indexed
+            address,uint256,uint32)
+          handler: handlePredepositVaultDeposit
+      file: ./src/predeposit-vault.ts
