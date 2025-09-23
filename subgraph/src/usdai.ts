@@ -50,7 +50,7 @@ export function handleWithdrawn(event: WithdrawnEvent): void {
   const withdrawnEntity = new Withdrawn(id);
   withdrawnEntity.contract = event.address;
   withdrawnEntity.account = event.params.caller;
-  withdrawnEntity.amount = event.params.baseTokenAmount;
+  withdrawnEntity.amount = event.params.withdrawAmount;
   withdrawnEntity.timestamp = event.block.timestamp;
 
   withdrawnEntity.save();

@@ -68,3 +68,15 @@ type ComposerDepositAndStake @entity(immutable: true) {
   timestamp: BigInt!
   transactionHash: Bytes!
 }
+
+type PreDeposit @entity(immutable: true) {
+  id: Bytes!
+  depositType: Int!
+  depositToken: Bytes! # address (token deposited)
+  depositor: Bytes! # address (depositor)
+  recipient: Bytes! # address (recipient)
+  amount: BigInt! # uint256
+  dstEid: BigInt! # uint32
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
