@@ -18,7 +18,8 @@ interface IOUSDaiUtility {
     enum ActionType {
         Deposit,
         DepositAndStake,
-        QueuedDeposit /* deposit, or deposit and stake */
+        QueuedDeposit, /* deposit, or deposit and stake */
+        Stake
     }
 
     /*------------------------------------------------------------------------*/
@@ -29,6 +30,11 @@ interface IOUSDaiUtility {
      * @notice Invalid address
      */
     error InvalidAddress();
+
+    /**
+     * @notice Invalid deposit token
+     */
+    error InvalidDepositToken();
 
     /**
      * @notice Unknown Action
@@ -49,6 +55,11 @@ interface IOUSDaiUtility {
      * @notice Queued deposit failed
      */
     error QueuedDepositFailed();
+
+    /**
+     * @notice Stake failed
+     */
+    error StakeFailed();
 
     /*------------------------------------------------------------------------*/
     /* Events */
@@ -90,7 +101,7 @@ interface IOUSDaiUtility {
     );
 
     /**
-     * @notice Queued deposit event
+     * @notice Composer queued deposit event
      * @param queueType Queue type
      * @param depositToken Token to deposit
      * @param depositAmount Amount of tokens to deposit
@@ -102,6 +113,15 @@ interface IOUSDaiUtility {
         address indexed recipient,
         uint256 depositAmount
     );
+
+    /**
+     * @notice Composer stake event
+     * @param dstEid Destination chain EID
+     * @param recipient Recipient
+     * @param usdaiAmount Amount of USDai staked
+     * @param susdaiAmount Amount of Staked USDai received
+     */
+    event ComposerStake(uint256 indexed dstEid, address indexed recipient, uint256 usdaiAmount, uint256 susdaiAmount);
 
     /**
      * @notice Action failed event

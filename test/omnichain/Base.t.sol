@@ -289,8 +289,9 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         this.wireOApps(oAdapters);
 
         // Deploy the composer receiver
-        address[] memory oAdaptersUtility = new address[](1);
+        address[] memory oAdaptersUtility = new address[](2);
         oAdaptersUtility[0] = address(usdtHomeOAdapter);
+        oAdaptersUtility[1] = address(usdaiHomeOAdapter);
         OUSDaiUtility oUsdaiUtilityImpl = new OUSDaiUtility(
             address(endpoints[usdtHomeEid]),
             address(usdai),
