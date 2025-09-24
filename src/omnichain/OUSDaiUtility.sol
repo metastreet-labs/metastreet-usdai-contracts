@@ -133,6 +133,17 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Refund ETH
+     * @param to Address to refund ETH to
+     */
+    function _refundETH(
+        address to
+    ) internal {
+        (bool success,) = payable(to).call{value: msg.value}("");
+        success;
+    }
+
+    /**
      * @notice Deposit USDai
      * @dev sendParam.to must be an accessible account to receive tokens in the case of action failure
      * @param depositToken Deposit token
@@ -174,6 +185,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                     /* Transfer the usdai to owner */
                     _usdai.transfer(to, usdaiAmount);
 
+                    /* Refund the msg.value */
+                    _refundETH(to);
+
                     /* Emit the failed action event */
                     emit ActionFailed("Send", reason);
 
@@ -185,8 +199,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             IERC20(depositToken).transfer(to, depositAmount);
 
             /* Refund the msg.value */
-            (bool success,) = payable(to).call{value: msg.value}("");
-            success;
+            _refundETH(to);
 
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
@@ -253,6 +266,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                         /* Transfer the staked USDai to owner */
                         IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
 
+                        /* Refund the msg.value */
+                        _refundETH(to);
+
                         /* Emit the failed action event */
                         emit ActionFailed("Send", reason);
 
@@ -264,8 +280,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                 _usdai.transfer(to, usdaiAmount);
 
                 /* Refund the msg.value */
-                (bool success,) = payable(to).call{value: msg.value}("");
-                success;
+                _refundETH(to);
 
                 /* Emit the failed action event */
                 emit ActionFailed("Stake", reason);
@@ -277,8 +292,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             IERC20(depositToken).transfer(to, depositAmount);
 
             /* Refund the msg.value */
-            (bool success,) = payable(to).call{value: msg.value}("");
-            success;
+            _refundETH(to);
 
             /* Emit the failed action event */
             emit ActionFailed("Deposit", reason);
@@ -348,8 +362,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             IERC20(depositToken).transfer(to, depositAmount);
 
             /* Refund the msg.value */
-            (bool success,) = payable(to).call{value: msg.value}("");
-            success;
+            _refundETH(to);
 
             /* Emit the failed action event */
             emit ActionFailed("Stake", "Invalid deposit token");
@@ -382,6 +395,9 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
                     /* Transfer the staked USDai to owner */
                     IERC20(address(_stakedUsdai)).transfer(to, susdaiAmount);
 
+                    /* Refund the msg.value */
+                    _refundETH(to);
+
                     /* Emit the failed action event */
                     emit ActionFailed("Send", reason);
 
@@ -393,8 +409,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
             _usdai.transfer(to, depositAmount);
 
             /* Refund the msg.value */
-            (bool success,) = payable(to).call{value: msg.value}("");
-            success;
+            _refundETH(to);
 
             /* Emit the failed action event */
             emit ActionFailed("Stake", reason);
