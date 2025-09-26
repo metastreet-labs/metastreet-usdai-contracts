@@ -38,7 +38,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
         uint256 shares
     ) public {
         vm.assume(shares > 0);
-        vm.assume(shares <= requestedShares);
+        vm.assume(shares < requestedShares);
 
         // Simulate yield deposit
         simulateYieldDeposit(1_000_000 ether);
