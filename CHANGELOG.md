@@ -1,3 +1,6 @@
+* OUSDaiUtility v1.5 - 09/26/2025
+    * Add support for stake action.
+
 * PredepositVault v1.0 - 09/22/2025
     * Initial release.
 
