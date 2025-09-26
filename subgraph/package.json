@@ -1,6 +1,7 @@
 {
   "name": "metastreet-usdai-subgraph",
   "scripts": {
+    "format": "prettier --write .",
     "codegen": "graph codegen subgraph.yaml",
     "build:arbitrum": "graph build --network arbitrum-one subgraph.yaml",
     "build:mainnet": "graph build --network mainnet subgraph.yaml",
@@ -8,6 +9,7 @@
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.97.1",
-    "@graphprotocol/graph-ts": "0.37.0"
+    "@graphprotocol/graph-ts": "0.37.0",
+    "prettier": "^3.6.2"
   }
 }

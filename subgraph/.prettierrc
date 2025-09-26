@@ -1,0 +1,16 @@
+{
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "options": {
+        "printWidth": 120
+      }
+    },
+    {
+      "files": ["subgraph.yaml"],
+      "options": {
+        "printWidth": 130
+      }
+    }
+  ]
+}
