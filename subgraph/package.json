@@ -3,6 +3,7 @@
   "scripts": {
     "codegen": "graph codegen subgraph.yaml",
     "build:arbitrum": "graph build --network arbitrum-one subgraph.yaml",
+    "build:mainnet": "graph build --network mainnet subgraph.yaml",
     "build:sepolia": "graph build --network sepolia subgraph.yaml"
   },
   "dependencies": {

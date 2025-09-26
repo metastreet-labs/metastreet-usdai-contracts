@@ -1,4 +1,18 @@
 {
+  "mainnet": {
+    "USDai": {
+      "address": "0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF",
+      "startBlock": 23427694
+    },
+    "sUSDai": {
+      "address": "0x0B2b2B2076d95dda7817e785989fE353fe955ef9",
+      "startBlock": 23427694
+    },
+    "OUSDaiUtility": {
+      "address": "0x0000000000000000000000000000000000000000",
+      "startBlock": 23427694
+    }
+  },
   "arbitrum-one": {
     "USDai": {
       "address": "0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF",
