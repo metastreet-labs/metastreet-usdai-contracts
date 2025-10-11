@@ -2,41 +2,39 @@
 
 set -e
 
-# deploy a contract
-run() {
-    local network="$1"
-    local rpc_url_var="$2"
-    local contract="$3"
-
-    case $network in
-        "local")
-            echo "Running locally"
-            forge script "$contract" --fork-url http://localhost:8545 --private-key $PRIVATE_KEY --broadcast -vvvv "${@:4}"
-            ;;
-
-        "goerli"|"sepolia"|"mainnet"|"blast"|"base"|"arbitrum_sepolia"|"arbitrum"|"plasma")
-            local rpc_url="${!rpc_url_var}"
-            if [[ -z $rpc_url ]]; then
-                echo "$rpc_url_var is not set"
-                exit 1
-            fi
-            echo "Running on $network"
-            if [ ! -z $LEDGER_DERIVATION_PATH ]; then
-                forge script "$contract" --rpc-url "$rpc_url" --ledger --hd-paths $LEDGER_DERIVATION_PATH --sender $LEDGER_ADDRESS --broadcast -vvvv "${@:4}"
-            else
-                forge script "$contract" --rpc-url "$rpc_url" --private-key $PRIVATE_KEY --broadcast -vvvv "${@:4}"
-            fi
-            ;;
-
-        *)
-            echo "Invalid NETWORK value"
-            exit 1
-            ;;
-    esac
-}
+declare -A SCRIPTS=(
+    ["deploy-test-environment"]="script/DeployTestEnvironment.s.sol:DeployTestEnvironment"
+    ["deploy-test-mnav-price-feed"]="script/DeployTestMNAVPriceFeed.s.sol:DeployTestMNAVPriceFeed"
+    ["deploy-swap-adapter"]="script/DeploySwapAdapter.s.sol:DeploySwapAdapter"
+    ["deploy-price-oracle"]="script/DeployPriceOracle.s.sol:DeployPriceOracle"
+    ["deploy-oadapter"]="script/DeployOAdapter.s.sol:DeployOAdapter"
+    ["deploy-otoken"]="script/DeployOToken.s.sol:DeployOToken"
+    ["deploy-ousdai-utility"]="script/DeployOUSDaiUtility.s.sol:DeployOUSDaiUtility"
+    ["deploy-usdai-queued-depositor"]="script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor"
+    ["deploy-predeposit-vault"]="script/DeployPredepositVault.s.sol:DeployPredepositVault"
+    ["upgrade-usdai"]="script/UpgradeUSDai.s.sol:UpgradeUSDai"
+    ["upgrade-staked-usdai"]="script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai"
+    ["upgrade-otoken"]="script/UpgradeOToken.s.sol:UpgradeOToken"
+    ["upgrade-ousdai-utility"]="script/UpgradeOUSDaiUtility.s.sol:UpgradeOUSDaiUtility"
+    ["upgrade-usdai-queued-depositor"]="script/UpgradeUSDaiQueuedDepositor.s.sol:UpgradeUSDaiQueuedDepositor"
+    ["upgrade-predeposit-vault"]="script/UpgradePredepositVault.s.sol:UpgradePredepositVault"
+    ["staked-usdai-service-redemptions"]="script/StakedUSDaiServiceRedemptions.s.sol:StakedUSDaiServiceRedemptions"
+    ["swap-adapter-set-token-whitelist"]="script/SwapAdapterSetTokenWhitelist.s.sol:SwapAdapterSetTokenWhitelist"
+    ["price-oracle-add-price-feeds"]="script/PriceOracleAddPriceFeeds.s.sol:PriceOracleAddPriceFeeds"
+    ["oadapter-set-rate-limits"]="script/OAdapterSetRateLimits.s.sol:OAdapterSetRateLimits"
+    ["usdaiqueueddepositor-update-deposit-cap"]="script/USDaiQueuedDepositorUpdateDepositCap.s.sol:USDaiQueuedDepositorUpdateDepositCap"
+    ["usdaiqueueddepositor-update-deposit-eid-whitelist"]="script/USDaiQueuedDepositorUpdateDepositEidWhitelist.s.sol:USDaiQueuedDepositorUpdateDepositEidWhitelist"
+    ["predepositvault-update-deposit-cap"]="script/PredepositVaultUpdateDepositCap.s.sol:PredepositVaultUpdateDepositCap"
+    ["grant-role"]="script/GrantRole.s.sol:GrantRole"
+    ["transfer-ownership"]="script/TransferOwnership.s.sol:TransferOwnership"
+    ["deploy-production-environment"]="script/DeployProductionEnvironment.s.sol:DeployProductionEnvironment"
+    ["deploy-omnichain-environment"]="script/DeployOmnichainEnvironment.s.sol:DeployOmnichainEnvironment"
+    ["create3-proxy-calldata"]="script/Create3ProxyCalldata.s.sol:Create3ProxyCalldata"
+    ["show"]="script/Show.s.sol:Show"
+)
 
 usage() {
-    echo "Usage: $0 <command> [options]"
+    echo "Usage: $0 <command> [arguments...]"
     echo ""
     echo "Commands:"
     echo "  deploy-test-environment <wrapped M token> <swap router> <mnav price feed> <tokens> <price feeds> <redemption timelock>"
@@ -72,260 +70,47 @@ usage() {
     echo "  create3-proxy-calldata <deployer> <salt> <implementation> <data>"
     echo ""
     echo "  show"
-    echo ""
-    echo "Options:"
-    echo "  NETWORK: Set this environment variable to either 'local' or a network name."
 }
 
-### deployment manager ###
+# Check argument count
+if [ "$#" -lt 1 ]; then
+    usage
+    exit 0
+fi
 
-DEPLOYMENTS_FILE="deployments/${NETWORK}.json"
-
+# Check for NETWORK env var
 if [[ -z "$NETWORK" ]]; then
-    echo "Error: Set NETWORK."
-    echo ""
+    echo -e "Error: NETWORK env var missing.\n"
     usage
     exit 1
 fi
 
-case $1 in
-   "test")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Test.s.sol:Test" --sig "run()"
-        ;;
+# Check for <NETWORK>_RPC_URL env var
+RPC_URL_VAR=${NETWORK^^}_RPC_URL
+RPC_URL=${!RPC_URL_VAR}
+if [[ -z "$RPC_URL" ]]; then
+    echo -e "Error: $RPC_URL env var missing.\n"
+    usage
+    exit 1
+fi
 
-   "deploy-test-environment")
-        if [ "$#" -ne 7 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
+# Look up script
+SCRIPT=${SCRIPTS[$1]}
+if [[ -z "$SCRIPT" ]]; then
+    echo -e "Error: unknown command \"$1\"\n"
+    usage
+    exit 1
+fi
 
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestEnvironment.s.sol:DeployTestEnvironment" --sig "run(address,address,address,address[],address[],uint64)" $2 $3 $4 "$5" "$6" $7
-        ;;
+# Look up script signature
+SIGNATURE=$(forge inspect --no-cache --contracts script "$SCRIPT" mi --json | grep -o "run(.*)")
 
-   "deploy-test-mnav-price-feed")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployTestMNAVPriceFeed.s.sol:DeployTestMNAVPriceFeed" --sig "run()"
-        ;;
+echo -e "Running on $NETWORK\n"
 
-   "deploy-swap-adapter")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeploySwapAdapter.s.sol:DeploySwapAdapter" --sig "run(address,address,address[])" $2 $3 "$4"
-        ;;
-
-   "deploy-price-oracle")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployPriceOracle.s.sol:DeployPriceOracle" --sig "run(address,address[],address[])" $2 "$3" "$4"
-        ;;
-
-   "deploy-oadapter")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOAdapter.s.sol:DeployOAdapter" --sig "run(address,address)" $2 $3
-        ;;
-
-   "deploy-otoken")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOToken.s.sol:DeployOToken" --sig "run(string,string)" "$2" "$3"
-        ;;
-
-   "deploy-ousdai-utility")
-        if [ "$#" -ne 5 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOUSDaiUtility.s.sol:DeployOUSDaiUtility" --sig "run(address,address,address[],address)" $2 $3 "$4" $5
-        ;;
-
-   "deploy-usdai-queued-depositor")
-        if [ "$#" -ne 5 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployUSDaiQueuedDepositor.s.sol:DeployUSDaiQueuedDepositor" --sig "run(address,address,address[],uint256[])" $2 $3 "$4" "$5"
-        ;;
-
-   "deploy-predeposit-vault")
-        if [ "$#" -ne 7 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployPredepositVault.s.sol:DeployPredepositVault" --sig "run(address,address,uint256,string,uint32,address)" $2 $3 $4 "$5" $6 $7
-        ;;
-
-   "upgrade-usdai")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDai.s.sol:UpgradeUSDai" --sig "run()"
-        ;;
-
-   "upgrade-staked-usdai")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeStakedUSDai.s.sol:UpgradeStakedUSDai" --sig "run(uint256,address)" $2 $3
-        ;;
-
-   "upgrade-otoken")
-        if [ "$#" -ne 2 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeOToken.s.sol:UpgradeOToken" --sig "run(address)" $2
-        ;;
-
-   "upgrade-ousdai-utility")
-        if [ "$#" -ne 2 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeOUSDaiUtility.s.sol:UpgradeOUSDaiUtility" --sig "run(address)" $2
-        ;;
-
-   "upgrade-usdai-queued-depositor")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradeUSDaiQueuedDepositor.s.sol:UpgradeUSDaiQueuedDepositor" --sig "run()"
-        ;;
-
-   "upgrade-predeposit-vault")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/UpgradePredepositVault.s.sol:UpgradePredepositVault" --sig "run(address,address,uint256)" $2 $3 $4
-        ;;
-
-   "staked-usdai-service-redemptions")
-        if [ "$#" -ne 2 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/StakedUSDaiServiceRedemptions.s.sol:StakedUSDaiServiceRedemptions" --sig "run(uint256)" $2
-        ;;
-
-   "swap-adapter-set-token-whitelist")
-        if [ "$#" -ne 2 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/SwapAdapterSetTokenWhitelist.s.sol:SwapAdapterSetTokenWhitelist" --sig "run(address[])" "$2"
-        ;;
-
-   "price-oracle-add-price-feeds")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/PriceOracleAddPriceFeeds.s.sol:PriceOracleAddPriceFeeds" --sig "run(address[],address[])" "$2" "$3"
-        ;;
-
-   "oadapter-set-rate-limits")
-        if [ "$#" -ne 5 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/OAdapterSetRateLimits.s.sol:OAdapterSetRateLimits" --sig "run(address,uint32[],uint256,uint256)" $2 "$3" $4 $5
-        ;;
-
-    "usdaiqueueddepositor-update-deposit-cap")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositCap.s.sol:USDaiQueuedDepositorUpdateDepositCap" --sig "run(uint256,bool)" $2 $3
-        ;;
-
-    "usdaiqueueddepositor-update-deposit-eid-whitelist")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/USDaiQueuedDepositorUpdateDepositEidWhitelist.s.sol:USDaiQueuedDepositorUpdateDepositEidWhitelist" --sig "run(uint32,uint32,bool)" $2 $3 $4
-        ;;
-
-    "predepositvault-update-deposit-cap")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/PredepositVaultUpdateDepositCap.s.sol:PredepositVaultUpdateDepositCap" --sig "run(address,uint256,bool)" $2 $3 $4
-        ;;
-
-   "grant-role")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/GrantRole.s.sol:GrantRole" --sig "run(address,string,address)" $2 $3 $4
-        ;;
-
-   "transfer-ownership")
-        if [ "$#" -ne 3 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/TransferOwnership.s.sol:TransferOwnership" --sig "run(address,address)" $2 $3
-        ;;
-
-   "deploy-production-environment")
-        if [ "$#" -ne 7 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployProductionEnvironment.s.sol:DeployProductionEnvironment" --sig "run(address,address,address,address[],address[],address)" $2 $3 $4 "$5" "$6" $7
-        ;;
-
-   "deploy-omnichain-environment")
-        if [ "$#" -ne 4 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/DeployOmnichainEnvironment.s.sol:DeployOmnichainEnvironment" --sig "run(address,address,address)" $2 $3 $4
-        ;;
-
-   "create3-proxy-calldata")
-        if [ "$#" -ne 5 ]; then
-            echo "Invalid argument count"
-            exit 1
-        fi
-
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Create3ProxyCalldata.s.sol:Create3ProxyCalldata" --sig "run(address,bytes32,address,bytes)" $2 $3 $4 $5
-        ;;
-
-    "show")
-        run "$NETWORK" "${NETWORK^^}_RPC_URL" "script/Show.s.sol:Show" --sig "run()"
-        ;;
-    *)
-        usage
-        exit 1
-        ;;
-esac
+if [[ ! -z "$LEDGER_DERIVATION_PATH" ]]; then
+    forge script --rpc-url "$RPC_URL" --ledger --hd-paths "$LEDGER_DERIVATION_PATH" --sender "$LEDGER_ADDRESS" --broadcast -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
+elif [[ ! -z "$PRIVATE_KEY" ]]; then
+    forge script --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --broadcast -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
+else
+    forge script --rpc-url "$RPC_URL" -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
+fi
