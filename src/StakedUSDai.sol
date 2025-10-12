@@ -16,6 +16,7 @@ import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 
 import "./StakedUSDaiStorage.sol";
 import "./RedemptionLogic.sol";
+import "./QEVLogic.sol";
 
 import "./positionManagers/BasePositionManager.sol";
 import "./positionManagers/PoolPositionManager.sol";
@@ -76,6 +77,7 @@ contract StakedUSDai is
     /**
      * @notice sUSDai Constructor
      * @param usdai_ USDai token
+     * @param qevRegistry_ QEV registry
      * @param baseToken_ Base token
      * @param adminFeeRate_ Admin fee rate
      * @param adminFeeRecipient_ Admin fee recipient
@@ -83,12 +85,13 @@ contract StakedUSDai is
      */
     constructor(
         address usdai_,
+        address qevRegistry_,
         address baseToken_,
         uint256 adminFeeRate_,
         address adminFeeRecipient_,
         address priceOracle_
     )
-        StakedUSDaiStorage(usdai_)
+        StakedUSDaiStorage(usdai_, qevRegistry_)
         BasePositionManager(baseToken_, adminFeeRate_, adminFeeRecipient_)
         PoolPositionManager(priceOracle_)
     {
@@ -236,6 +239,13 @@ contract StakedUSDai is
      */
     function bridgedSupply() public view returns (uint256) {
         return _getBridgedSupplyStorage().bridgedSupply;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function qevRegistry() external view returns (address) {
+        return _qevRegistry;
     }
 
     /*------------------------------------------------------------------------*/
@@ -756,6 +766,25 @@ contract StakedUSDai is
         emit RedemptionsServiced(shares, amountProcessed, allRedemptionsServiced);
 
         return amountProcessed;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function reorderRedemptions(
+        uint256 auctionId,
+        uint256 count
+    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonZeroUint(count) returns (uint256, uint256) {
+        (uint256 totalPendingSharesBurnt, uint256 totalAdminFee, address adminFeeRecipient, bool isCompleted) =
+            QEVLogic._reorderRedemptions(_getRedemptionStateStorage(), _qevRegistry, auctionId, count);
+
+        /* Mint shares to admin fee recipient */
+        if (totalAdminFee > 0) _mint(adminFeeRecipient, totalAdminFee);
+
+        /* Emit RedemptionsReordered */
+        emit RedemptionsReordered(auctionId, count, totalPendingSharesBurnt, totalAdminFee, isCompleted);
+
+        return (totalPendingSharesBurnt, totalAdminFee);
     }
 
     /*------------------------------------------------------------------------*/

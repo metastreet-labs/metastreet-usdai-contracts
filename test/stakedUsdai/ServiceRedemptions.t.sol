@@ -25,19 +25,19 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testFuzz__ServiceRedemptions_WithYield(uint256[5] memory redemptionAmounts, uint256 yieldAmount) public {
+    function testFuzz__ServiceRedemptions_WithYield(uint256[5] memory redemptionShares, uint256 yieldAmount) public {
         // Bound redemption amounts to reasonable values
         uint256 totalRedemptions;
-        for (uint256 i = 0; i < redemptionAmounts.length; i++) {
-            redemptionAmounts[i] = bound(redemptionAmounts[i], 1 ether, 1_000_000 ether);
-            totalRedemptions += redemptionAmounts[i];
+        for (uint256 i = 0; i < redemptionShares.length; i++) {
+            redemptionShares[i] = bound(redemptionShares[i], 1 ether, 1_000_000 ether);
+            totalRedemptions += redemptionShares[i];
         }
         vm.assume(totalRedemptions <= initialBalance);
 
         // Request multiple redemptions
         vm.startPrank(users.normalUser1);
-        for (uint256 i = 0; i < redemptionAmounts.length; i++) {
-            stakedUsdai.requestRedeem(redemptionAmounts[i], users.normalUser1, users.normalUser1);
+        for (uint256 i = 0; i < redemptionShares.length; i++) {
+            stakedUsdai.requestRedeem(redemptionShares[i], users.normalUser1, users.normalUser1);
         }
         vm.stopPrank();
 
@@ -62,8 +62,8 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
 
         // Verify all redemptions can be redeemed
         vm.startPrank(users.normalUser1);
-        for (uint256 i = 0; i < redemptionAmounts.length; i++) {
-            uint256 redeemableAmount = stakedUsdai.redeem(redemptionAmounts[i], users.normalUser1, users.normalUser1);
+        for (uint256 i = 0; i < redemptionShares.length; i++) {
+            uint256 redeemableAmount = stakedUsdai.redeem(redemptionShares[i], users.normalUser1, users.normalUser1);
             assertGt(redeemableAmount, 0, "Should receive assets");
         }
         vm.stopPrank();
@@ -81,21 +81,21 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
     }
 
     function testFuzz__ServiceRedemptions_WithAssetReduction(
-        uint256[5] memory redemptionAmounts,
+        uint256[5] memory redemptionShares,
         uint256 reductionAmount
     ) public {
         // Bound redemption amounts to reasonable values
         uint256 totalRedemptions;
-        for (uint256 i = 0; i < redemptionAmounts.length; i++) {
-            redemptionAmounts[i] = bound(redemptionAmounts[i], 1 ether, 1_000_000 ether);
-            totalRedemptions += redemptionAmounts[i];
+        for (uint256 i = 0; i < redemptionShares.length; i++) {
+            redemptionShares[i] = bound(redemptionShares[i], 1 ether, 1_000_000 ether);
+            totalRedemptions += redemptionShares[i];
         }
         vm.assume(totalRedemptions <= initialBalance);
 
         // Request multiple redemptions
         vm.startPrank(users.normalUser1);
-        for (uint256 i = 0; i < redemptionAmounts.length; i++) {
-            stakedUsdai.requestRedeem(redemptionAmounts[i], users.normalUser1, users.normalUser1);
+        for (uint256 i = 0; i < redemptionShares.length; i++) {
+            stakedUsdai.requestRedeem(redemptionShares[i], users.normalUser1, users.normalUser1);
         }
         vm.stopPrank();
 
@@ -123,8 +123,8 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
 
         // Verify all redemptions can be redeemed
         vm.startPrank(users.normalUser1);
-        for (uint256 i = 0; i < redemptionAmounts.length; i++) {
-            uint256 redeemableAmount = stakedUsdai.redeem(redemptionAmounts[i], users.normalUser1, users.normalUser1);
+        for (uint256 i = 0; i < redemptionShares.length; i++) {
+            uint256 redeemableAmount = stakedUsdai.redeem(redemptionShares[i], users.normalUser1, users.normalUser1);
             assertGt(redeemableAmount, 0, "Should receive assets");
         }
         vm.stopPrank();
