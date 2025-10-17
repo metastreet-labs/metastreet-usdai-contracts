@@ -16,7 +16,6 @@ import {PoolPositionManagerLogic} from "./PoolPositionManagerLogic.sol";
 
 import {IPoolPositionManager} from "../interfaces/IPoolPositionManager.sol";
 import {IPool} from "../interfaces/external/IPool.sol";
-import {IPriceOracle} from "../interfaces/IPriceOracle.sol";
 
 /**
  * @title Pool Position Manager
@@ -66,54 +65,13 @@ abstract contract PoolPositionManager is
     }
 
     /*------------------------------------------------------------------------*/
-    /* Immutable state */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Price oracle
-     */
-    IPriceOracle internal immutable _priceOracle;
-
-    /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
 
     /**
      * @notice Constructor
-     * @param priceOracle_ Price oracle
      */
-    constructor(
-        address priceOracle_
-    ) {
-        _priceOracle = IPriceOracle(priceOracle_);
-    }
-
-    /*------------------------------------------------------------------------*/
-    /* Getter */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @inheritdoc IPoolPositionManager
-     */
-    function pools() external view returns (address[] memory) {
-        return _getPoolsStorage().pools.values();
-    }
-
-    /**
-     * @inheritdoc IPoolPositionManager
-     */
-    function poolTicks(
-        address pool
-    ) external view returns (uint256[] memory) {
-        return _getPoolsStorage().position[pool].ticks.values();
-    }
-
-    /**
-     * @inheritdoc IPoolPositionManager
-     */
-    function priceOracle() external view returns (address) {
-        return address(_priceOracle);
-    }
+    constructor() {}
 
     /*------------------------------------------------------------------------*/
     /* Internal helpers */
@@ -142,52 +100,6 @@ abstract contract PoolPositionManager is
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @inheritdoc IPoolPositionManager
-     */
-    function poolDeposit(
-        address pool,
-        uint128 tick,
-        uint256 usdaiAmount,
-        uint256 poolCurrencyAmountMinimum,
-        uint256 minShares,
-        bytes calldata data
-    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant returns (uint256) {
-        /* Get pool currency token */
-        address poolCurrency = IPool(pool).currencyToken();
-
-        /* Validate pool currency token is supported in price oracle */
-        if (!_priceOracle.supportedToken(poolCurrency)) {
-            revert UnsupportedCurrency(poolCurrency);
-        }
-
-        /* Get USDai balance */
-        uint256 usdaiBalance = _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance;
-
-        /* Validate USDai balance */
-        if (usdaiAmount > usdaiBalance) revert InsufficientBalance();
-
-        /* Swap USDai to pool currency token */
-        uint256 poolCurrencyAmount =
-            _usdai.withdraw(poolCurrency, usdaiAmount, poolCurrencyAmountMinimum, address(this), data);
-
-        /* Add pool and tick */
-        Pools storage position = _getPoolsStorage();
-        position.pools.add(pool);
-        position.position[pool].ticks.add(tick);
-
-        /* Approve pool currency token */
-        IERC20(poolCurrency).forceApprove(address(pool), poolCurrencyAmount);
-
-        /* Deposit */
-        uint256 shares = IPool(pool).deposit(tick, poolCurrencyAmount, minShares);
-
-        /* Emit PoolDeposited */
-        emit PoolDeposited(pool, tick, usdaiAmount, poolCurrencyAmount);
-
-        return shares;
-    }
 
     /**
      * @inheritdoc IPoolPositionManager

@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import "./interfaces/IStakedUSDai.sol";
 import "./interfaces/IUSDai.sol";
+import "./interfaces/IPriceOracle.sol";
 
 /**
  * @title Staked USDai Storage
@@ -137,6 +138,16 @@ abstract contract StakedUSDaiStorage {
      */
     IUSDai internal immutable _usdai;
 
+    /**
+     * @notice Price oracle
+     */
+    IPriceOracle internal immutable _priceOracle;
+
+    /**
+     * @notice Admin fee recipient
+     */
+    address internal immutable _adminFeeRecipient;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -144,11 +155,13 @@ abstract contract StakedUSDaiStorage {
     /**
      * @notice Constructor
      * @param usdai USDai
+     * @param priceOracle Price oracle
+     * @param adminFeeRecipient Admin fee recipient
      */
-    constructor(
-        address usdai
-    ) {
+    constructor(address usdai, address priceOracle, address adminFeeRecipient) {
         _usdai = IUSDai(usdai);
+        _priceOracle = IPriceOracle(priceOracle);
+        _adminFeeRecipient = adminFeeRecipient;
     }
 
     /*------------------------------------------------------------------------*/

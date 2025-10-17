@@ -7,6 +7,15 @@ pragma solidity 0.8.29;
  */
 abstract contract PositionManager {
     /*------------------------------------------------------------------------*/
+    /* Constants */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Basis points scale
+     */
+    uint256 internal constant BASIS_POINTS_SCALE = 10_000;
+
+    /*------------------------------------------------------------------------*/
     /* Structures */
     /*------------------------------------------------------------------------*/
 
@@ -26,6 +35,12 @@ abstract contract PositionManager {
      * @notice Insufficient balance
      */
     error InsufficientBalance();
+
+    /**
+     * @notice Unsupported currency
+     * @param currency Currency address
+     */
+    error UnsupportedCurrency(address currency);
 
     /*------------------------------------------------------------------------*/
     /* Internal helpers */

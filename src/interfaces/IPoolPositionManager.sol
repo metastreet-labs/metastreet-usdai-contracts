@@ -11,12 +11,6 @@ interface IPoolPositionManager {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Unsupported currency
-     * @param currency Currency token
-     */
-    error UnsupportedCurrency(address currency);
-
-    /**
      * @notice Invalid pool currency amount
      */
     error InvalidPoolCurrencyAmount();
@@ -62,52 +56,8 @@ interface IPoolPositionManager {
     );
 
     /*------------------------------------------------------------------------*/
-    /* Getter */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Get pools
-     * @return Pools
-     */
-    function pools() external view returns (address[] memory);
-
-    /**
-     * @notice Get pool ticks
-     * @param pool Pool
-     * @return Ticks
-     */
-    function poolTicks(
-        address pool
-    ) external view returns (uint256[] memory);
-
-    /**
-     * @notice Get price oracle
-     * @return Price oracle
-     */
-    function priceOracle() external view returns (address);
-
-    /*------------------------------------------------------------------------*/
     /* Permissioned API */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Deposit assets into a pool
-     * @param pool Address of the pool
-     * @param tick Pool tick
-     * @param usdaiAmount Amount of USDai to deposit
-     * @param poolCurrencyAmountMinimum Minimum amount of pool currency to deposit
-     * @param minShares Minimum shares expected
-     * @param data Data (for swap adapter)
-     * @return shares Amount of shares received
-     */
-    function poolDeposit(
-        address pool,
-        uint128 tick,
-        uint256 usdaiAmount,
-        uint256 poolCurrencyAmountMinimum,
-        uint256 minShares,
-        bytes calldata data
-    ) external returns (uint256 shares);
 
     /**
      * @notice Request redemption from a pool
