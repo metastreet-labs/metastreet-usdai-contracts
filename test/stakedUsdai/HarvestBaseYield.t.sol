@@ -38,7 +38,9 @@ contract StakedUSDaiHarvestBaseYieldTest is BaseTest {
 
         uint256 navBefore = stakedUsdai.nav();
 
-        stakedUsdai.claimBaseYield();
+        WRAPPED_M_TOKEN.claimFor(address(stakedUsdai));
+        WRAPPED_M_TOKEN.claimFor(address(usdai));
+
         (uint256 depositAmount, uint256 adminFee) = stakedUsdai.depositBaseYield(claimableBaseYield);
 
         assertGt(adminFee, 0, "Admin fee should be greater than 0");

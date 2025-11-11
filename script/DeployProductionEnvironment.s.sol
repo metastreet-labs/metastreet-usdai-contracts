@@ -59,7 +59,7 @@ contract DeployProductionEnvironment is Deployer {
         console.log("USDai implementation", address(USDaiImpl));
 
         // Deploy StakedUSDai
-        StakedUSDai stakedUSDaiImpl = new StakedUSDai(USDAI_ADDRESS, wrappedMToken, 100, multisig, address(priceOracle));
+        StakedUSDai stakedUSDaiImpl = new StakedUSDai(USDAI_ADDRESS, wrappedMToken, address(priceOracle), multisig, 100);
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Enable M emissions

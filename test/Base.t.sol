@@ -294,7 +294,7 @@ abstract contract BaseTest is Test {
 
         /* Deploy staked usdai implementation */
         StakedUSDai stakedUsdaiImpl =
-            new StakedUSDai(address(usdai), address(WRAPPED_M_TOKEN), 100, address(users.admin), address(priceOracle));
+            new StakedUSDai(address(usdai), address(WRAPPED_M_TOKEN), address(priceOracle), address(users.admin), 100);
 
         /* Deploy staked usdai proxy */
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(

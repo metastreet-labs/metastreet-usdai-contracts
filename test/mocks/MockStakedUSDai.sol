@@ -69,7 +69,7 @@ contract MockStakedUSDai is
      */
     constructor(
         address usdai_
-    ) StakedUSDaiStorage(usdai_, address(0)) BasePositionManager(address(0), 0, msg.sender) {
+    ) StakedUSDaiStorage(usdai_, address(0), address(0)) BasePositionManager(address(0), 0) {
         _disableInitializers();
     }
 

@@ -46,7 +46,7 @@ usage() {
     echo "  deploy-otoken <name> <symbol>"
     echo ""
     echo "  upgrade-usdai"
-    echo "  upgrade-staked-usdai <admin fee rate> <admin fee recipient>"
+    echo "  upgrade-staked-usdai <admin fee recipient> <admin fee rate>"
     echo "  upgrade-otoken <token>"
     echo "  upgrade-ousdai-utility <lz endpoint>"
     echo "  upgrade-usdai-queued-depositor"

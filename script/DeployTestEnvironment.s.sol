@@ -42,7 +42,7 @@ contract DeployTestEnvironment is Deployer {
 
         // Deploy StakedUSDai
         StakedUSDai stakedUSDaiImpl =
-            new StakedUSDai(address(USDai_), wrappedMToken, 100, msg.sender, address(priceOracle));
+            new StakedUSDai(address(USDai_), wrappedMToken, address(priceOracle), msg.sender, 100);
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Deploy StakedUSDai proxy
