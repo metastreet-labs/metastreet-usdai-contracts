@@ -87,11 +87,7 @@ contract StakedUSDai is
         uint256 adminFeeRate_,
         address adminFeeRecipient_,
         address priceOracle_
-    )
-        StakedUSDaiStorage(usdai_)
-        BasePositionManager(baseToken_, adminFeeRate_, adminFeeRecipient_)
-        PoolPositionManager(priceOracle_)
-    {
+    ) StakedUSDaiStorage(usdai_, priceOracle_) BasePositionManager(baseToken_, adminFeeRate_, adminFeeRecipient_) {
         _disableInitializers();
     }
 
