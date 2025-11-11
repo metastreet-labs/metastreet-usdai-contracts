@@ -143,6 +143,11 @@ abstract contract StakedUSDaiStorage {
      */
     IPriceOracle internal immutable _priceOracle;
 
+    /**
+     * @notice Admin fee recipient
+     */
+    address internal immutable _adminFeeRecipient;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -151,10 +156,12 @@ abstract contract StakedUSDaiStorage {
      * @notice Constructor
      * @param usdai USDai
      * @param priceOracle Price oracle
+     * @param adminFeeRecipient Admin fee recipient
      */
-    constructor(address usdai, address priceOracle) {
+    constructor(address usdai, address priceOracle, address adminFeeRecipient) {
         _usdai = IUSDai(usdai);
         _priceOracle = IPriceOracle(priceOracle);
+        _adminFeeRecipient = adminFeeRecipient;
     }
 
     /*------------------------------------------------------------------------*/

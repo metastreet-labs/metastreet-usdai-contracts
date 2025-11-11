@@ -77,17 +77,20 @@ contract StakedUSDai is
      * @notice sUSDai Constructor
      * @param usdai_ USDai token
      * @param baseToken_ Base token
-     * @param adminFeeRate_ Admin fee rate
+     * @param baseYieldAdminFeeRate_ Base yield admin fee rate
      * @param adminFeeRecipient_ Admin fee recipient
      * @param priceOracle_ Price oracle
      */
     constructor(
         address usdai_,
         address baseToken_,
-        uint256 adminFeeRate_,
+        uint256 baseYieldAdminFeeRate_,
         address adminFeeRecipient_,
         address priceOracle_
-    ) StakedUSDaiStorage(usdai_, priceOracle_) BasePositionManager(baseToken_, adminFeeRate_, adminFeeRecipient_) {
+    )
+        StakedUSDaiStorage(usdai_, priceOracle_, adminFeeRecipient_)
+        BasePositionManager(baseToken_, baseYieldAdminFeeRate_)
+    {
         _disableInitializers();
     }
 

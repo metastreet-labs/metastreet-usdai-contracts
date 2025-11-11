@@ -27,26 +27,9 @@ interface IBasePositionManager {
      */
     function claimableBaseYield() external view returns (uint256);
 
-    /**
-     * @notice Admin fee rate
-     * @return Admin fee rate
-     */
-    function adminFeeRate() external view returns (uint256);
-
-    /**
-     * @notice Admin fee recipient
-     * @return Admin fee recipient
-     */
-    function adminFeeRecipient() external view returns (address);
-
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Claim base yield
-     */
-    function claimBaseYield() external;
 
     /**
      * @notice Deposit base yield
