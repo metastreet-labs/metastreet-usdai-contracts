@@ -24,15 +24,6 @@ abstract contract BasePositionManager is
     IBasePositionManager
 {
     /*------------------------------------------------------------------------*/
-    /* Constants */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Basis points scale
-     */
-    uint256 internal constant BASIS_POINTS_SCALE = 10_000;
-
-    /*------------------------------------------------------------------------*/
     /* Immutable state */
     /*------------------------------------------------------------------------*/
 
@@ -44,12 +35,7 @@ abstract contract BasePositionManager is
     /**
      * @notice Admin fee rate
      */
-    uint256 internal immutable _adminFeeRate;
-
-    /**
-     * @notice Admin fee recipient
-     */
-    address internal immutable _adminFeeRecipient;
+    uint256 internal immutable _baseYieldAdminFeeRate;
 
     /*------------------------------------------------------------------------*/
     /* Constructor */
@@ -58,13 +44,11 @@ abstract contract BasePositionManager is
     /**
      * @notice Constructor
      * @param wrappedMToken_ Wrapped M token
-     * @param adminFeeRate_ Admin fee rate
-     * @param adminFeeRecipient_ Admin fee recipient
+     * @param baseYieldAdminFeeRate_ Base yield admin fee rate
      */
-    constructor(address wrappedMToken_, uint256 adminFeeRate_, address adminFeeRecipient_) {
+    constructor(address wrappedMToken_, uint256 baseYieldAdminFeeRate_) {
         _wrappedMToken = IWrappedMToken(wrappedMToken_);
-        _adminFeeRate = adminFeeRate_;
-        _adminFeeRecipient = adminFeeRecipient_;
+        _baseYieldAdminFeeRate = baseYieldAdminFeeRate_;
     }
 
     /*------------------------------------------------------------------------*/
@@ -81,7 +65,7 @@ abstract contract BasePositionManager is
         uint256 scaledBalance = _scale(_wrappedMToken.balanceOf(address(this)));
 
         /* Calculate admin fee */
-        uint256 adminFee = ((scaledBalance + claimableBaseYield()) * _adminFeeRate) / BASIS_POINTS_SCALE;
+        uint256 adminFee = ((scaledBalance + claimableBaseYield()) * _baseYieldAdminFeeRate) / BASIS_POINTS_SCALE;
 
         return scaledBalance + claimableBaseYield() - adminFee;
     }
@@ -127,32 +111,6 @@ abstract contract BasePositionManager is
         return _scale(_wrappedMToken.accruedYieldOf(address(this)) + _wrappedMToken.accruedYieldOf(address(_usdai)));
     }
 
-    /**
-     * @inheritdoc IBasePositionManager
-     */
-    function adminFeeRate() external view returns (uint256) {
-        return _adminFeeRate;
-    }
-
-    /**
-     * @inheritdoc IBasePositionManager
-     */
-    function adminFeeRecipient() external view returns (address) {
-        return _adminFeeRecipient;
-    }
-
-    /*------------------------------------------------------------------------*/
-    /* API */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @inheritdoc IBasePositionManager
-     */
-    function claimBaseYield() external {
-        _wrappedMToken.claimFor(address(_usdai));
-        _wrappedMToken.claimFor(address(this));
-    }
-
     /*------------------------------------------------------------------------*/
     /* Permissioned API */
     /*------------------------------------------------------------------------*/
@@ -178,7 +136,7 @@ abstract contract BasePositionManager is
         uint256 usdaiAmount_ = _usdai.deposit(address(_wrappedMToken), wrappedMAmount, 0, address(this));
 
         /* Calculate admin fee */
-        uint256 adminFee_ = (usdaiAmount_ * _adminFeeRate) / BASIS_POINTS_SCALE;
+        uint256 adminFee_ = (usdaiAmount_ * _baseYieldAdminFeeRate) / BASIS_POINTS_SCALE;
 
         /* Transfer admin fee to admin fee recipient */
         if (adminFee_ > 0) {
