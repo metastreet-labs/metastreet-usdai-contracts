@@ -79,10 +79,9 @@ contract StakedUSDaiRedeemTest is BaseTest {
 
     function test__ServiceRedemptions_When_RedemptionAmountIsZero() public {
         // Simulate extreme asset reduction
-        vm.startPrank(address(stakedUsdai));
-        /// forge-lint: disable-next-line
-        usdai.transfer(RANDOM_ADDRESS, initialBalance - 1);
-        vm.stopPrank();
+        bytes32 depositsStorageLocation = 0x2c5de62bb029e52f8f5651820547ac44294b098c752111b71e5fee4f80a66900;
+        uint256 currentBalance = uint256(vm.load(address(stakedUsdai), depositsStorageLocation));
+        vm.store(address(stakedUsdai), depositsStorageLocation, bytes32(currentBalance - (initialBalance - 1)));
 
         // Try to service redemption
         vm.startPrank(users.manager);

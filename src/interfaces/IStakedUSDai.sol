@@ -73,6 +73,13 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Migrated event
+     * @param description Description
+     * @param data Data
+     */
+    event Migrated(string description, bytes data);
+
+    /**
      * @notice Blacklisted
      * @param value Address
      * @param isBlacklisted Blacklist status

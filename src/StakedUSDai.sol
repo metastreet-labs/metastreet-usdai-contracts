@@ -118,6 +118,21 @@ contract StakedUSDai is
     }
 
     /*------------------------------------------------------------------------*/
+    /* Migration  */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Migrate contract state
+     */
+    function migrate() external reinitializer(2) {
+        /* Initialize deposit balance */
+        _getDepositsStorage().balance = _usdai.balanceOf(address(this));
+
+        /* Emit migrated event */
+        emit Migrated("Initialize USDai deposit balance", "");
+    }
+
+    /*------------------------------------------------------------------------*/
     /* Modifiers  */
     /*------------------------------------------------------------------------*/
 
@@ -247,15 +262,16 @@ contract StakedUSDai is
     function _assets(
         ValuationType valuationType
     ) internal view override(BasePositionManager, PoolPositionManager) returns (uint256) {
-        return BasePositionManager._assets(valuationType) + PoolPositionManager._assets(valuationType) + _usdaiBalance();
+        return
+            BasePositionManager._assets(valuationType) + PoolPositionManager._assets(valuationType) + _depositBalance();
     }
 
     /**
-     * @notice USDai balance in this contract less serviced redemption
-     * @return USDai balance less serviced redemption
+     * @notice USDai deposit balance in this contract less serviced redemption
+     * @return USDai deposit balance less serviced redemption
      */
-    function _usdaiBalance() internal view returns (uint256) {
-        return _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance;
+    function _depositBalance() internal view returns (uint256) {
+        return _getDepositsStorage().balance - _getRedemptionStateStorage().redemptionBalance;
     }
 
     /**
@@ -293,6 +309,9 @@ contract StakedUSDai is
         /* Mint shares */
         _mint(receiver, shares);
 
+        /* Update deposits balance */
+        _getDepositsStorage().balance += amount;
+
         /* Deposit assets */
         IERC20(asset()).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -318,6 +337,9 @@ contract StakedUSDai is
 
         /* Mint shares */
         _mint(receiver, shares);
+
+        /* Update deposits balance */
+        _getDepositsStorage().balance += amount;
 
         /* Deposit assets */
         IERC20(asset()).safeTransferFrom(msg.sender, address(this), amount);
@@ -514,6 +536,9 @@ contract StakedUSDai is
         /* Withdraw amount */
         uint256 shares = RedemptionLogic._withdraw(_getRedemptionStateStorage(), amount, controller);
 
+        /* Update deposits balance */
+        _getDepositsStorage().balance -= amount;
+
         /* Transfer assets */
         IERC20(asset()).safeTransfer(receiver, amount);
 
@@ -549,6 +574,9 @@ contract StakedUSDai is
 
         /* Redeem shares */
         uint256 amount = RedemptionLogic._redeem(_getRedemptionStateStorage(), shares, controller);
+
+        /* Update deposits balance */
+        _getDepositsStorage().balance -= amount;
 
         /* Transfer assets */
         if (amount > 0) IERC20(asset()).safeTransfer(receiver, amount);
@@ -746,7 +774,7 @@ contract StakedUSDai is
             RedemptionLogic._processRedemptions(_getRedemptionStateStorage(), shares, redemptionSharePrice());
 
         /* Validate amount is available to be serviced */
-        if (amountProcessed > _usdaiBalance()) revert InsufficientBalance();
+        if (amountProcessed > _depositBalance()) revert InsufficientBalance();
 
         /* Update redemption balance */
         _getRedemptionStateStorage().redemptionBalance += amountProcessed;
