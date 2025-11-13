@@ -146,6 +146,9 @@ abstract contract BasePositionManager is
             usdaiAmount_ -= adminFee_;
         }
 
+        /* Update deposits balance */
+        _getDepositsStorage().balance += usdaiAmount_;
+
         /* Emit BaseYieldDeposited */
         emit BaseYieldDeposited(usdaiAmount_, adminFee_);
 

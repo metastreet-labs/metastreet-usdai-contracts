@@ -244,14 +244,14 @@ contract MockStakedUSDai is
     function _assets(
         ValuationType
     ) internal view override(BasePositionManager, PoolPositionManager) returns (uint256) {
-        return _usdaiBalance();
+        return _depositBalance();
     }
 
     /**
-     * @notice USDai balance in this contract less serviced redemption
-     * @return USDai balance less serviced redemption
+     * @notice USDai deposit balance in this contract less serviced redemption
+     * @return USDai deposit balance less serviced redemption
      */
-    function _usdaiBalance() internal view returns (uint256) {
+    function _depositBalance() internal view returns (uint256) {
         return _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance;
     }
 
@@ -739,7 +739,7 @@ contract MockStakedUSDai is
             RedemptionLogic._processRedemptions(_getRedemptionStateStorage(), shares, redemptionSharePrice());
 
         /* Validate amount is available to be serviced */
-        if (amountProcessed > _usdaiBalance()) revert InsufficientBalance();
+        if (amountProcessed > _depositBalance()) revert InsufficientBalance();
 
         /* Update redemption balance */
         _getRedemptionStateStorage().redemptionBalance += amountProcessed;

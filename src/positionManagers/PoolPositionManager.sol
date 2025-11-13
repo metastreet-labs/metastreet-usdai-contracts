@@ -127,6 +127,9 @@ abstract contract PoolPositionManager is
         /* Swap currency token to USDai */
         uint256 usdaiAmount = _usdai.deposit(poolCurrency, poolCurrencyAmount, usdaiAmountMinimum, address(this), data);
 
+        /* Update deposits balance */
+        _getDepositsStorage().balance += usdaiAmount;
+
         /* Emit PoolWithdrawn */
         emit PoolWithdrawn(pool, tick, withdrawnShares, redemptionId, poolCurrencyAmount, usdaiAmount);
 
