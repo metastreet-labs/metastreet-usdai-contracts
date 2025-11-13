@@ -458,10 +458,13 @@ abstract contract BaseTest is Test {
         usdai.deposit(address(usd), amount * 2, amount, address(users.manager));
 
         /* Deposit into staked usdai */
-        /// forge-lint: disable-next-line
         usdai.transfer(address(stakedUsdai), amount);
 
         vm.stopPrank();
+
+        bytes32 depositsStorageLocation = 0x2c5de62bb029e52f8f5651820547ac44294b098c752111b71e5fee4f80a66900;
+        uint256 currentBalance = uint256(vm.load(address(stakedUsdai), depositsStorageLocation));
+        vm.store(address(stakedUsdai), depositsStorageLocation, bytes32(currentBalance + amount));
     }
 
     function serviceRedemptionAndWarp(uint256 requestedShares, bool warp) internal returns (uint256) {
