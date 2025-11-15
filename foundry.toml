@@ -5,10 +5,11 @@ out = "out"
 libs = ["lib"]
 via-ir = true
 optimizer = true
-optimizer_runs = 800
+optimizer_runs = 1
 evm_version = "cancun"
 fs_permissions = [{ access = "read-write", path = "./deployments/"}]
 block_gas_limit = 10000000000
+ignored_warnings_from = ["test"]
 
 [profile.lite.optimizer_details.yulDetails]
 optimizerSteps = ''
@@ -23,4 +24,4 @@ tab_width = 4
 wrap_comments = true
 
 [lint]
-exclude_lints = ["mixed-case-variable", "unaliased-plain-import", "mixed-case-function", "screaming-snake-case-immutable", "erc20-unchecked-transfer"]
+exclude_lints = ["mixed-case-variable", "unaliased-plain-import", "mixed-case-function", "screaming-snake-case-immutable", "erc20-unchecked-transfer", "unwrapped-modifier-logic"]
