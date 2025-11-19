@@ -27,6 +27,10 @@ contract DeployProductionEnvironment is Deployer {
     address internal constant USDAI_ADDRESS = 0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF;
     address internal constant STAKED_USDAI_ADDRESS = 0x0B2b2B2076d95dda7817e785989fE353fe955ef9;
 
+    // Loan router and deposit timelock addresses
+    address internal constant LOAN_ROUTER_ADDRESS = address(0);
+    address internal constant DEPOSIT_TIMELOCK_ADDRESS = address(0);
+
     function run(
         address wrappedMToken,
         address swapRouter,
@@ -59,7 +63,16 @@ contract DeployProductionEnvironment is Deployer {
         console.log("USDai implementation", address(USDaiImpl));
 
         // Deploy StakedUSDai
-        StakedUSDai stakedUSDaiImpl = new StakedUSDai(USDAI_ADDRESS, wrappedMToken, 100, multisig, address(priceOracle));
+        StakedUSDai stakedUSDaiImpl = new StakedUSDai(
+            USDAI_ADDRESS,
+            wrappedMToken,
+            100,
+            multisig,
+            address(priceOracle),
+            LOAN_ROUTER_ADDRESS,
+            DEPOSIT_TIMELOCK_ADDRESS,
+            100
+        );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Enable M emissions

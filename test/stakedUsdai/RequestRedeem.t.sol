@@ -51,7 +51,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption1.redeemableShares, 0);
         assertEq(redemption1.withdrawableAmount, 0);
         assertEq(redemption1.controller, users.normalUser1);
-        assertEq(redemption1.cliff, block.timestamp + stakedUsdai.timelock());
+        assertEq(redemption1.cliff, block.timestamp + TIMELOCK);
 
         assertEq(redemption2.prev, 1);
         assertEq(redemption2.next, 3);
@@ -59,7 +59,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption2.redeemableShares, 0);
         assertEq(redemption2.withdrawableAmount, 0);
         assertEq(redemption2.controller, users.normalUser1);
-        assertEq(redemption2.cliff, block.timestamp + stakedUsdai.timelock());
+        assertEq(redemption2.cliff, block.timestamp + TIMELOCK);
 
         assertEq(redemption3.prev, 2);
         assertEq(redemption3.next, 0);
@@ -67,7 +67,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption3.redeemableShares, 0);
         assertEq(redemption3.withdrawableAmount, 0);
         assertEq(redemption3.controller, users.normalUser1);
-        assertEq(redemption3.cliff, block.timestamp + stakedUsdai.timelock());
+        assertEq(redemption3.cliff, block.timestamp + TIMELOCK);
 
         // Get redemption state info
         (uint256 index1, uint256 head1, uint256 tail1, uint256 pending1, uint256 redemptionBalance1) =
@@ -107,7 +107,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption4.redeemableShares, 0);
         assertEq(redemption4.withdrawableAmount, 0);
         assertEq(redemption4.controller, users.normalUser1);
-        assertEq(redemption4.cliff, block.timestamp + stakedUsdai.timelock());
+        assertEq(redemption4.cliff, block.timestamp + TIMELOCK);
 
         // Get redemption state info
         (uint256 index2, uint256 head2, uint256 tail2, uint256 pending2, uint256 redemptionBalance2) =
@@ -145,7 +145,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption.redeemableShares, 0);
         assertEq(redemption.withdrawableAmount, 0);
         assertEq(redemption.controller, users.normalUser1);
-        assertEq(redemption.cliff, block.timestamp + stakedUsdai.timelock());
+        assertEq(redemption.cliff, block.timestamp + TIMELOCK);
 
         // Get redemption state info
         (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance) =

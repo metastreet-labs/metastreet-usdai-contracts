@@ -18,7 +18,10 @@ contract UpgradeStakedUSDai is Deployer {
             IUSDai(_deployment.USDai).baseToken(),
             adminFeeRate,
             adminFeeRecipient,
-            _deployment.priceOracle
+            _deployment.priceOracle,
+            address(0),
+            address(0),
+            0
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
