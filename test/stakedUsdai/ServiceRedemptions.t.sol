@@ -58,7 +58,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         }
 
         // Warp past timelock
-        vm.warp(block.timestamp + stakedUsdai.timelock() + 1);
+        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Verify all redemptions can be redeemed
         vm.startPrank(users.normalUser1);
@@ -119,7 +119,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         }
 
         // Warp past timelock
-        vm.warp(block.timestamp + stakedUsdai.timelock() + 1);
+        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Verify all redemptions can be redeemed
         vm.startPrank(users.normalUser1);
@@ -233,7 +233,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertGt(redemptionBalance3, redemptionBalance2, "Redemption balance should increase");
 
         // Warp past timelock
-        vm.warp(block.timestamp + stakedUsdai.timelock() + 1);
+        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Verify serviced redemptions can be redeemed
         vm.startPrank(users.normalUser1);

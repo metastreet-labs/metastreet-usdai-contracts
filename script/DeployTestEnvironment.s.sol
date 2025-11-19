@@ -18,6 +18,7 @@ contract DeployTestEnvironment is Deployer {
         address wrappedMToken,
         address swapRouter,
         address mNavPriceFeed,
+        address loanRouter,
         address[] calldata tokens,
         address[] calldata priceFeeds,
         uint64 timelock
@@ -41,8 +42,9 @@ contract DeployTestEnvironment is Deployer {
         console.log("USDai proxy", address(USDai_));
 
         // Deploy StakedUSDai
-        StakedUSDai stakedUSDaiImpl =
-            new StakedUSDai(address(USDai_), wrappedMToken, address(priceOracle), msg.sender, 100);
+        StakedUSDai stakedUSDaiImpl = new StakedUSDai(
+            address(USDai_), wrappedMToken, address(priceOracle), loanRouter, msg.sender, 100, 100
+        );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Deploy StakedUSDai proxy
