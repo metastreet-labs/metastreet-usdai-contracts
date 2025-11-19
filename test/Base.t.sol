@@ -14,6 +14,8 @@ import {TestERC20} from "./tokens/TestERC20.sol";
 import {MetastreetPoolHelpers} from "./helpers/MetastreetPoolHelpers.sol";
 import {UniswapPoolHelpers} from "./helpers/UniswapPoolHelpers.sol";
 
+import {MockLoanRouter} from "./mocks/MockLoanRouter.sol";
+
 import {USDai} from "src/USDai.sol";
 import {StakedUSDai} from "src/StakedUSDai.sol";
 import {ChainlinkPriceOracle} from "src/oracles/ChainlinkPriceOracle.sol";
@@ -98,6 +100,7 @@ abstract contract BaseTest is Test {
     TestERC20 internal usd2;
     TestERC721 internal nft;
     UniswapV3SwapAdapter internal uniswapV3SwapAdapter;
+    MockLoanRouter internal mockLoanRouter;
     ChainlinkPriceOracle internal priceOracle;
     IUSDai internal usdai;
     StakedUSDai internal stakedUsdai;
@@ -123,6 +126,8 @@ abstract contract BaseTest is Test {
         deployNft();
         deployUsd();
         deployUsdPool();
+
+        deployMockLoanRouter();
 
         deployUniswapV3SwapAdapter();
         deployTestMnavPriceFeed();
@@ -249,6 +254,10 @@ abstract contract BaseTest is Test {
         vm.stopPrank();
     }
 
+    function deployMockLoanRouter() internal {
+        mockLoanRouter = new MockLoanRouter();
+    }
+
     function deployUsdai() internal {
         vm.startPrank(users.deployer);
 
@@ -293,8 +302,15 @@ abstract contract BaseTest is Test {
         vm.startPrank(users.deployer);
 
         /* Deploy staked usdai implementation */
-        StakedUSDai stakedUsdaiImpl =
-            new StakedUSDai(address(usdai), address(WRAPPED_M_TOKEN), 100, address(users.admin), address(priceOracle));
+        StakedUSDai stakedUsdaiImpl = new StakedUSDai(
+            address(usdai),
+            address(WRAPPED_M_TOKEN),
+            100,
+            address(users.admin),
+            address(priceOracle),
+            address(0),
+            100
+        );
 
         /* Deploy staked usdai proxy */
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(
@@ -476,7 +492,7 @@ abstract contract BaseTest is Test {
 
         // Warp past timelock
         if (warp) {
-            vm.warp(block.timestamp + stakedUsdai.timelock() + 1);
+            vm.warp(block.timestamp + TIMELOCK + 1);
         }
 
         return amountProcessed;

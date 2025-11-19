@@ -39,3 +39,6 @@
 	path = lib/openzeppelin-contracts-upgradeable-v4.9
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable.git
 	branch = release-v4.9
+[submodule "lib/metastreet-usdai-loan-router"]
+	path = lib/metastreet-usdai-loan-router
+	url = git@github.com:metastreet-labs/metastreet-usdai-loan-router.git
