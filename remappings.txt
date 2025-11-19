@@ -20,3 +20,4 @@ metastreet-contracts-v2/=lib/metastreet-contracts-v2/contracts/
 @layerzerolabs/lz-evm-v1-0.7/=lib/layerzero-v1/
 solidity-bytes-utils/=lib/solidity-bytes-utils
 @pendle-sy-public/=lib/Pendle-SY-Public
+@metastreet-usdai-loan-router/=lib/metastreet-usdai-loan-router/src
