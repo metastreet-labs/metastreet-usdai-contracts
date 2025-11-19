@@ -46,7 +46,7 @@ contract StakedUSDaiWithdrawTest is BaseTest {
         withdrawableAmount = redemption.withdrawableAmount;
 
         // Warp past timelock
-        vm.warp(block.timestamp + stakedUsdai.timelock() + 1);
+        vm.warp(block.timestamp + TIMELOCK + 1);
     }
 
     function testFuzz__StakedUSDaiWithdraw(
@@ -158,7 +158,7 @@ contract StakedUSDaiWithdrawTest is BaseTest {
     }
 
     function test__StakedUSDaiWithdraw_RevertWhen_BeforeTimelock() public {
-        vm.warp(block.timestamp - (stakedUsdai.timelock() / 2));
+        vm.warp(block.timestamp - (TIMELOCK / 2));
 
         // Try to withdraw before timelock expires
         vm.startPrank(users.normalUser1);

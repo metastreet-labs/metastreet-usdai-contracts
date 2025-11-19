@@ -88,7 +88,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
         stakedUsdai.serviceRedemptions(requestedShares);
         vm.stopPrank();
 
-        vm.warp(block.timestamp + stakedUsdai.timelock() + 1);
+        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Try to redeem requested shares
         vm.startPrank(users.normalUser1);
@@ -220,7 +220,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
         // Service redemption as manager
         serviceRedemptionAndWarp(requestedShares, true);
 
-        vm.warp(block.timestamp - (stakedUsdai.timelock() / 2));
+        vm.warp(block.timestamp - (TIMELOCK / 2));
 
         // Try to redeem before timelock expires
         vm.startPrank(users.normalUser1);

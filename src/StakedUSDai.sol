@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/MulticallUpgradeable.sol";
@@ -19,6 +20,7 @@ import "./RedemptionLogic.sol";
 
 import "./positionManagers/BasePositionManager.sol";
 import "./positionManagers/PoolPositionManager.sol";
+import "./positionManagers/LoanRouterPositionManager.sol";
 
 import "./interfaces/IUSDai.sol";
 import "./interfaces/IStakedUSDai.sol";
@@ -41,6 +43,7 @@ contract StakedUSDai is
     StakedUSDaiStorage,
     BasePositionManager,
     PoolPositionManager,
+    LoanRouterPositionManager,
     IStakedUSDai,
     IMintableBurnable,
     IERC4626,
@@ -78,18 +81,23 @@ contract StakedUSDai is
      * @param usdai_ USDai token
      * @param baseToken_ Base token
      * @param priceOracle_ Price oracle
+     * @param loanRouter_ Loan router
      * @param adminFeeRecipient_ Admin fee recipient
      * @param baseYieldAdminFeeRate_ Base yield admin fee rate
+     * @param loanRouterAdminFeeRate_ Loan router admin fee rate
      */
     constructor(
         address usdai_,
         address baseToken_,
         address priceOracle_,
+        address loanRouter_,
         address adminFeeRecipient_,
-        uint256 baseYieldAdminFeeRate_
+        uint256 baseYieldAdminFeeRate_,
+        uint256 loanRouterAdminFeeRate_
     )
         StakedUSDaiStorage(usdai_, priceOracle_, adminFeeRecipient_)
         BasePositionManager(baseToken_, baseYieldAdminFeeRate_)
+        LoanRouterPositionManager(loanRouter_, loanRouterAdminFeeRate_)
     {
         _disableInitializers();
     }
@@ -115,14 +123,6 @@ contract StakedUSDai is
 
         /* Grant roles */
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-    }
-
-    /**
-     * @notice Reinitialize the contract
-     * @dev Initializes USDai deposit balance from contract balance
-     */
-    function reinitialize() external reinitializer(2) {
-        _getDepositsStorage().balance = _usdai.balanceOf(address(this));
     }
 
     /*------------------------------------------------------------------------*/
@@ -254,9 +254,9 @@ contract StakedUSDai is
      */
     function _assets(
         ValuationType valuationType
-    ) internal view override(BasePositionManager, PoolPositionManager) returns (uint256) {
-        return
-            BasePositionManager._assets(valuationType) + PoolPositionManager._assets(valuationType) + _depositBalance();
+    ) internal view override(BasePositionManager, PoolPositionManager, LoanRouterPositionManager) returns (uint256) {
+        return BasePositionManager._assets(valuationType) + PoolPositionManager._assets(valuationType)
+            + LoanRouterPositionManager._assets(valuationType) + _depositBalance();
     }
 
     /**
@@ -817,6 +817,7 @@ contract StakedUSDai is
         return interfaceId == type(IERC20).interfaceId || interfaceId == type(IERC4626).interfaceId
             || interfaceId == type(IERC7540Redeem).interfaceId || interfaceId == type(IERC7540Operator).interfaceId
             || interfaceId == type(IStakedUSDai).interfaceId || interfaceId == type(IMintableBurnable).interfaceId
-            || interfaceId == type(IERC7575).interfaceId || super.supportsInterface(interfaceId);
+            || interfaceId == type(IERC7575).interfaceId || interfaceId == type(ILoanRouterHooks).interfaceId
+            || interfaceId == type(IERC721Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
 }
