@@ -59,6 +59,9 @@ contract StakedUSDaiDepositSharePriceTest is BaseTest {
             "Deposit share price mismatch"
         );
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // User requests redemption of half of shares
         vm.prank(users.normalUser1);
         stakedUsdai.requestRedeem(shares / 2, users.normalUser1, users.normalUser1);
@@ -73,6 +76,9 @@ contract StakedUSDaiDepositSharePriceTest is BaseTest {
             (2_000_000 ether * FIXED_POINT_SCALE) / (shares + LOCKED_SHARES),
             "Deposit share price mismatch"
         );
+
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
 
         // Service redemption
         uint256 amountProcessed = serviceRedemptionAndWarp(shares / 2, false);

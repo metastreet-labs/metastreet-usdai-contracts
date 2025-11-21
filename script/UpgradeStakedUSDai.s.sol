@@ -19,6 +19,7 @@ contract UpgradeStakedUSDai is Deployer {
             _deployment.priceOracle,
             loanRouter,
             adminFeeRecipient,
+            _deployment.genesisTimestamp,
             baseYieldAdminFeeRate,
             loanRouterAdminFeeRate
         );

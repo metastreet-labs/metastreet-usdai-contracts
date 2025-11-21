@@ -22,6 +22,7 @@ contract Deployer is BaseScript {
     /*--------------------------------------------------------------------------*/
 
     struct Deployment {
+        uint64 genesisTimestamp;
         address USDai;
         address stakedUSDai;
         address swapAdapter;
@@ -105,6 +106,7 @@ contract Deployer is BaseScript {
         /* Initialize json string */
         string memory json = "";
 
+        json = stdJson.serialize("", "GenesisTimestamp", _deployment.genesisTimestamp);
         json = stdJson.serialize("", "USDai", _deployment.USDai);
         json = stdJson.serialize("", "StakedUSDai", _deployment.stakedUSDai);
         json = stdJson.serialize("", "SwapAdapter", _deployment.swapAdapter);
@@ -127,6 +129,13 @@ contract Deployer is BaseScript {
      */
     function _deserialize() internal {
         string memory json = _getJson();
+
+        /* Deserialize GenesisTimestamp */
+        try vm.parseJsonUint(json, ".GenesisTimestamp") returns (uint256 instance) {
+            _deployment.genesisTimestamp = uint64(instance);
+        } catch {
+            console.log("Could not parse GenesisTimestamp");
+        }
 
         /* Deserialize USDai */
         try vm.parseJsonAddress(json, ".USDai") returns (address instance) {
