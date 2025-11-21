@@ -68,6 +68,7 @@ contract DeployProductionEnvironment is Deployer {
             address(priceOracle),
             LOAN_ROUTER_ADDRESS,
             multisig,
+            uint64(block.timestamp),
             100,
             100
         );
@@ -78,6 +79,7 @@ contract DeployProductionEnvironment is Deployer {
         IWrappedMToken(wrappedMToken).startEarningFor(STAKED_USDAI_ADDRESS);
 
         // Log deployment
+        _deployment.genesisTimestamp = uint64(block.timestamp);
         _deployment.swapAdapter = address(swapAdapter);
         _deployment.priceOracle = address(priceOracle);
         _deployment.USDai = USDAI_ADDRESS;

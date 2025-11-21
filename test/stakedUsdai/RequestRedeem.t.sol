@@ -28,6 +28,9 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
     }
 
     function test__StakedUSDaiRequestRedeem_Multiple() public {
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Request redeem
         vm.startPrank(users.normalUser1);
         uint256 redemptionId1 = stakedUsdai.requestRedeem(300_000 ether, users.normalUser1, users.normalUser1);
@@ -51,7 +54,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption1.redeemableShares, 0);
         assertEq(redemption1.withdrawableAmount, 0);
         assertEq(redemption1.controller, users.normalUser1);
-        assertEq(redemption1.cliff, block.timestamp + TIMELOCK);
+        assertEq(redemption1.redemptionTimestamp, redemptionTimestamp);
 
         assertEq(redemption2.prev, 1);
         assertEq(redemption2.next, 3);
@@ -59,7 +62,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption2.redeemableShares, 0);
         assertEq(redemption2.withdrawableAmount, 0);
         assertEq(redemption2.controller, users.normalUser1);
-        assertEq(redemption2.cliff, block.timestamp + TIMELOCK);
+        assertEq(redemption2.redemptionTimestamp, redemptionTimestamp);
 
         assertEq(redemption3.prev, 2);
         assertEq(redemption3.next, 0);
@@ -67,7 +70,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption3.redeemableShares, 0);
         assertEq(redemption3.withdrawableAmount, 0);
         assertEq(redemption3.controller, users.normalUser1);
-        assertEq(redemption3.cliff, block.timestamp + TIMELOCK);
+        assertEq(redemption3.redemptionTimestamp, redemptionTimestamp);
 
         // Get redemption state info
         (uint256 index1, uint256 head1, uint256 tail1, uint256 pending1, uint256 redemptionBalance1) =
@@ -91,6 +94,9 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         // Service redemption and warp
         serviceRedemptionAndWarp(300_000 ether, true);
 
+        // Get next redemption timestamp
+        redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         vm.prank(users.normalUser1);
         uint256 redemptionId4 = stakedUsdai.requestRedeem(90_000 ether, users.normalUser1, users.normalUser1);
 
@@ -107,7 +113,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption4.redeemableShares, 0);
         assertEq(redemption4.withdrawableAmount, 0);
         assertEq(redemption4.controller, users.normalUser1);
-        assertEq(redemption4.cliff, block.timestamp + TIMELOCK);
+        assertEq(redemption4.redemptionTimestamp, redemptionTimestamp);
 
         // Get redemption state info
         (uint256 index2, uint256 head2, uint256 tail2, uint256 pending2, uint256 redemptionBalance2) =
@@ -128,6 +134,9 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         vm.assume(shares > 1e18);
         vm.assume(shares <= sharesBalance);
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Request redeem
         vm.startPrank(users.normalUser1);
         uint256 redemptionId = stakedUsdai.requestRedeem(shares, users.normalUser1, users.normalUser1);
@@ -145,7 +154,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption.redeemableShares, 0);
         assertEq(redemption.withdrawableAmount, 0);
         assertEq(redemption.controller, users.normalUser1);
-        assertEq(redemption.cliff, block.timestamp + TIMELOCK);
+        assertEq(redemption.redemptionTimestamp, redemptionTimestamp);
 
         // Get redemption state info
         (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance) =

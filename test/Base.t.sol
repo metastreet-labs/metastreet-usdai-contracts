@@ -52,9 +52,6 @@ abstract contract BaseTest is Test {
 
     bytes32 internal constant CLAIM_OVERRIDE_RECIPIENT_PREFIX = "wm_claim_override_recipient";
 
-    /* Staked sUSDai unstake timelock */
-    uint64 internal constant TIMELOCK = 7 days;
-
     address internal constant M_NAV_PRICE_FEED = 0xC28198Df9aee1c4990994B35ff51eFA4C769e534;
 
     /* MetaStreet Pool durations, rates, tick */
@@ -308,6 +305,7 @@ abstract contract BaseTest is Test {
             address(priceOracle),
             address(mockLoanRouter),
             address(users.admin),
+            uint64(block.timestamp),
             100,
             100
         );
@@ -316,7 +314,7 @@ abstract contract BaseTest is Test {
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(
             address(stakedUsdaiImpl),
             address(users.admin),
-            abi.encodeWithSignature("initialize(address,uint64)", users.deployer, TIMELOCK)
+            abi.encodeWithSignature("initialize(address)", users.deployer)
         );
 
         /* Deploy staked usdai */
@@ -486,14 +484,17 @@ abstract contract BaseTest is Test {
     function serviceRedemptionAndWarp(uint256 requestedShares, bool warp) internal returns (uint256) {
         vm.startPrank(users.manager);
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
+        // Warp past redemption timestamp
+        if (warp) {
+            vm.warp(redemptionTimestamp + 30 days);
+        }
+
         uint256 amountProcessed = stakedUsdai.serviceRedemptions(requestedShares);
 
         vm.stopPrank();
-
-        // Warp past timelock
-        if (warp) {
-            vm.warp(block.timestamp + TIMELOCK + 1);
-        }
 
         return amountProcessed;
     }

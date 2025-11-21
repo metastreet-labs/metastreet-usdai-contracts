@@ -250,6 +250,7 @@ abstract contract BaseLoanRouterTest is Test {
             address(priceOracle),
             address(loanRouter),
             BASE_YIELD_ADMIN_FEE_RECIPIENT,
+            uint64(block.timestamp),
             100, // baseYieldAdminFeeRate
             LOAN_ROUTER_ADMIN_FEE_RATE
         );
