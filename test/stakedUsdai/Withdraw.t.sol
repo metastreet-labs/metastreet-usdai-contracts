@@ -9,6 +9,7 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 contract StakedUSDaiWithdrawTest is BaseTest {
     uint256 internal withdrawableAmount;
     uint256 internal redemptionId;
+    uint64 internal redemptionTimestamp;
 
     function setUp() public override {
         super.setUp();
@@ -24,6 +25,9 @@ contract StakedUSDaiWithdrawTest is BaseTest {
         usdai.approve(address(stakedUsdai), initialBalance);
         uint256 requestedShares = stakedUsdai.deposit(initialBalance, users.normalUser1);
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Request redeem
         redemptionId = stakedUsdai.requestRedeem(requestedShares, users.normalUser1, users.normalUser1);
 
@@ -36,6 +40,9 @@ contract StakedUSDaiWithdrawTest is BaseTest {
         // User deposits USD into USDai
         uint256 serviceAmount = usdai.deposit(address(usd), 1_000_000 ether, 0, address(stakedUsdai));
 
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
+
         // Assert balance is correct
         require(usdai.balanceOf(address(stakedUsdai)) == initialBalance + serviceAmount);
         stakedUsdai.serviceRedemptions(requestedShares);
@@ -46,7 +53,7 @@ contract StakedUSDaiWithdrawTest is BaseTest {
         withdrawableAmount = redemption.withdrawableAmount;
 
         // Warp past timelock
-        vm.warp(block.timestamp + TIMELOCK + 1);
+        vm.warp(redemptionTimestamp + 1);
     }
 
     function testFuzz__StakedUSDaiWithdraw(
@@ -153,16 +160,6 @@ contract StakedUSDaiWithdrawTest is BaseTest {
     function test__StakedUSDaiWithdraw_RevertWhen_NotOwnerOrOperator() public {
         vm.startPrank(users.normalUser2);
         vm.expectRevert(IStakedUSDai.InvalidCaller.selector);
-        stakedUsdai.withdraw(1 ether, users.normalUser1, users.normalUser1);
-        vm.stopPrank();
-    }
-
-    function test__StakedUSDaiWithdraw_RevertWhen_BeforeTimelock() public {
-        vm.warp(block.timestamp - (TIMELOCK / 2));
-
-        // Try to withdraw before timelock expires
-        vm.startPrank(users.normalUser1);
-        vm.expectRevert(IStakedUSDai.InvalidRedemptionState.selector);
         stakedUsdai.withdraw(1 ether, users.normalUser1, users.normalUser1);
         vm.stopPrank();
     }

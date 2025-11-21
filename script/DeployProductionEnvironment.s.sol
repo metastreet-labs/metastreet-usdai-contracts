@@ -71,7 +71,8 @@ contract DeployProductionEnvironment is Deployer {
             address(priceOracle),
             LOAN_ROUTER_ADDRESS,
             DEPOSIT_TIMELOCK_ADDRESS,
-            100
+            100,
+            uint64(block.timestamp)
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
@@ -80,6 +81,7 @@ contract DeployProductionEnvironment is Deployer {
         IWrappedMToken(wrappedMToken).startEarningFor(STAKED_USDAI_ADDRESS);
 
         // Log deployment
+        _deployment.genesisTimestamp = uint64(block.timestamp);
         _deployment.swapAdapter = address(swapAdapter);
         _deployment.priceOracle = address(priceOracle);
         _deployment.USDai = USDAI_ADDRESS;
