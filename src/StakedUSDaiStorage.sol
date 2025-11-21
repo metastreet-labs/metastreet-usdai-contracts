@@ -43,13 +43,6 @@ abstract contract StakedUSDaiStorage {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Timelock storage location
-     * @dev keccak256(abi.encode(uint256(keccak256("stakedUSDai.timelock")) - 1)) & ~bytes32(uint256(0xff));
-     */
-    bytes32 private constant TIMELOCK_STORAGE_LOCATION =
-        0x2063345ccd85fc8f12bb2252d09411330c71f2174e47ce4f7919d5f3ad4b9700;
-
-    /**
      * @notice Is operator storage location
      * @dev keccak256(abi.encode(uint256(keccak256("stakedUSDai.isOperator")) - 1)) & ~bytes32(uint256(0xff));
      */
@@ -87,13 +80,6 @@ abstract contract StakedUSDaiStorage {
     /*------------------------------------------------------------------------*/
     /* Structures */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @custom:storage-location erc7201:stakedUSDai.timelock
-     */
-    struct Timelock {
-        uint64 timelock;
-    }
 
     /**
      * @custom:storage-location erc7201:stakedUSDai.isOperator
@@ -162,6 +148,11 @@ abstract contract StakedUSDaiStorage {
      */
     address internal immutable _adminFeeRecipient;
 
+    /**
+     * @notice Genesis redemption timestamp
+     */
+    uint64 internal immutable _genesisTimestamp;
+
     /*------------------------------------------------------------------------*/
     /* Constructor */
     /*------------------------------------------------------------------------*/
@@ -171,27 +162,18 @@ abstract contract StakedUSDaiStorage {
      * @param usdai USDai
      * @param priceOracle Price oracle
      * @param adminFeeRecipient Admin fee recipient
+     * @param genesisTimestamp Genesis redemption timestamp
      */
-    constructor(address usdai, address priceOracle, address adminFeeRecipient) {
+    constructor(address usdai, address priceOracle, address adminFeeRecipient, uint64 genesisTimestamp) {
         _usdai = IUSDai(usdai);
         _priceOracle = IPriceOracle(priceOracle);
         _adminFeeRecipient = adminFeeRecipient;
+        _genesisTimestamp = genesisTimestamp;
     }
 
     /*------------------------------------------------------------------------*/
     /* Storage getters */
     /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Get reference to ERC-7201 timelock storage
-     *
-     * @return $ Reference to timelock storage
-     */
-    function _getTimelockStorage() internal pure returns (Timelock storage $) {
-        assembly {
-            $.slot := TIMELOCK_STORAGE_LOCATION
-        }
-    }
 
     /**
      * @notice Get reference to ERC-7201 is operator storage

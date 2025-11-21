@@ -71,7 +71,8 @@ contract DeployProductionEnvironment is Deployer {
             address(priceOracle),
             LOAN_ROUTER_ADDRESS,
             DEPOSIT_TIMELOCK_ADDRESS,
-            100
+            100,
+            uint64(block.timestamp + 30 days)
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 

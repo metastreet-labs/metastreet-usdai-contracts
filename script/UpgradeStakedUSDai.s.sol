@@ -21,7 +21,8 @@ contract UpgradeStakedUSDai is Deployer {
             _deployment.priceOracle,
             address(0),
             address(0),
-            0
+            0,
+            uint64(block.timestamp + 30 days)
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
