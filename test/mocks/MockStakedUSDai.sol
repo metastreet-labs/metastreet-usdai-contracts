@@ -72,7 +72,7 @@ contract MockStakedUSDai is
     constructor(
         address usdai_
     )
-        StakedUSDaiStorage(usdai_, address(0), address(0))
+        StakedUSDaiStorage(usdai_, address(0), address(0), uint64(block.timestamp + 30 days))
         BasePositionManager(address(0), 0)
         LoanRouterPositionManager(address(0), address(0), 0)
     {
@@ -85,20 +85,14 @@ contract MockStakedUSDai is
 
     /**
      * @notice Initialize the contract
-     * @param timelock_ Timelock period for redemptions
      */
-    function initialize(
-        uint64 timelock_
-    ) external initializer {
+    function initialize() external initializer {
         __ERC165_init();
         __ERC20_init("Staked USD.ai", "sUSDai");
         __ERC20Permit_init("Staked USD.ai");
         __Multicall_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
-
-        /* Initialize storage */
-        _getTimelockStorage().timelock = timelock_;
 
         /* Grant roles */
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
@@ -166,24 +160,25 @@ contract MockStakedUSDai is
     /**
      * @inheritdoc IStakedUSDai
      */
-    function timelock() external view returns (uint64) {
-        return _getTimelockStorage().timelock;
-    }
-
-    /**
-     * @inheritdoc IStakedUSDai
-     */
     function redemptionQueueInfo()
         external
         view
-        returns (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance)
+        returns (
+            uint256 index,
+            uint256 head,
+            uint256 tail,
+            uint256 pending,
+            uint256 redemptionBalance,
+            uint64 redemptionTimestamp
+        )
     {
         return (
             _getRedemptionStateStorage().index,
             _getRedemptionStateStorage().head,
             _getRedemptionStateStorage().tail,
             _getRedemptionStateStorage().pending,
-            _getRedemptionStateStorage().redemptionBalance
+            _getRedemptionStateStorage().redemptionBalance,
+            RedemptionLogic._redemptionTimestamp(_genesisRedemptionTimestamp)
         );
     }
 
@@ -640,8 +635,8 @@ contract MockStakedUSDai is
         /* Get redemption */
         Redemption storage redemption_ = _getRedemptionStateStorage().redemptions[redemptionId];
 
-        /* If controller is not the same or redemption is not past cliff, return 0 */
-        if (redemption_.controller != controller || redemption_.cliff >= block.timestamp) return 0;
+        /* If controller is not the same or redemption is not past redemption timestamp, return 0 */
+        if (redemption_.controller != controller || redemption_.redemptionTimestamp >= block.timestamp) return 0;
 
         return redemption_.redeemableShares;
     }
@@ -676,26 +671,13 @@ contract MockStakedUSDai is
 
         /* Request redeem */
         uint256 redemptionId = RedemptionLogic._requestRedeem(
-            _getRedemptionStateStorage(), _getTimelockStorage().timelock, shares, controller
+            _getRedemptionStateStorage(), _genesisRedemptionTimestamp, shares, controller
         );
 
         /* Emit redeem request */
         emit RedeemRequest(controller, owner, redemptionId, msg.sender, shares);
 
         return redemptionId;
-    }
-
-    /*------------------------------------------------------------------------*/
-    /* Default admin API */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @inheritdoc IStakedUSDai
-     */
-    function setTimelock(
-        uint64 timelock_
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _getTimelockStorage().timelock = timelock_;
     }
 
     /*------------------------------------------------------------------------*/

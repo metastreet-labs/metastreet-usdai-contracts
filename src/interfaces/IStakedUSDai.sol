@@ -19,6 +19,11 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     error InvalidAddress();
 
     /**
+     * @notice Invalid timestamp
+     */
+    error InvalidTimestamp();
+
+    /**
      * @notice Invalid caller
      */
     error InvalidCaller();
@@ -56,7 +61,7 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
      * @param redeemableShares Shares that can be redeemed
      * @param withdrawableAmount Amount that can be withdrawn
      * @param controller Controller address
-     * @param cliff Timestamp at which redemption can be claimed
+     * @param redemptionTimestamp Redemption window end timestamp
      */
     struct Redemption {
         uint256 prev;
@@ -65,7 +70,7 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
         uint256 redeemableShares;
         uint256 withdrawableAmount;
         address controller;
-        uint64 cliff;
+        uint64 redemptionTimestamp;
     }
 
     /*------------------------------------------------------------------------*/
@@ -108,12 +113,6 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     /*------------------------------------------------------------------------*/
 
     /**
-     * @notice Get timelock
-     * @return Timelock
-     */
-    function timelock() external view returns (uint64);
-
-    /**
      * @notice Get total shares
      * @return Total shares
      */
@@ -126,11 +125,19 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
      * @return tail Redemption tail
      * @return pending Redemption pending
      * @return redemptionBalance Redemption balance
+     * @return redemptionTimestamp Redemption timestamp
      */
     function redemptionQueueInfo()
         external
         view
-        returns (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance);
+        returns (
+            uint256 index,
+            uint256 head,
+            uint256 tail,
+            uint256 pending,
+            uint256 redemptionBalance,
+            uint64 redemptionTimestamp
+        );
 
     /**
      * @notice Get redemption
@@ -195,18 +202,6 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
      * @return Amount minted
      */
     function mint(uint256 shares, address receiver, uint256 maxAmount) external returns (uint256);
-
-    /*------------------------------------------------------------------------*/
-    /* Default Admin API */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Set timelock duration for redemptions
-     * @param timelock New timelock duration
-     */
-    function setTimelock(
-        uint64 timelock
-    ) external;
 
     /*------------------------------------------------------------------------*/
     /* Blacklister API */

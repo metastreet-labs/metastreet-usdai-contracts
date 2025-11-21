@@ -11,6 +11,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
     address internal constant RANDOM_ADDRESS = address(0xdead);
     uint256 internal checkpoint;
     uint256 internal redemptionId;
+    uint64 internal redemptionTimestamp;
 
     function setUp() public override {
         super.setUp();
@@ -25,6 +26,9 @@ contract StakedUSDaiRedeemTest is BaseTest {
         // User deposits USDai into StakedUSDai
         usdai.approve(address(stakedUsdai), initialBalance);
         requestedShares = stakedUsdai.deposit(initialBalance, users.normalUser1);
+
+        // Get redemption timestamp
+        (,,,,, redemptionTimestamp) = stakedUsdai.redemptionQueueInfo();
 
         // Request redeem
         redemptionId = stakedUsdai.requestRedeem(requestedShares, users.normalUser1, users.normalUser1);
@@ -46,7 +50,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
         // Service redemption as manager
         serviceRedemptionAndWarp(requestedShares, true);
 
-        (uint256 initialIndex,, uint256 initialTail,, uint256 initialRedemptionBalance) =
+        (uint256 initialIndex,, uint256 initialTail,, uint256 initialRedemptionBalance,) =
             stakedUsdai.redemptionQueueInfo();
 
         // Redeem
@@ -59,7 +63,7 @@ contract StakedUSDaiRedeemTest is BaseTest {
             uint256 currentHead,
             uint256 currentTail,
             uint256 currentPending,
-            uint256 currentRedemptionBalance
+            uint256 currentRedemptionBalance,
         ) = stakedUsdai.redemptionQueueInfo();
 
         // Assert balances updated correctly
@@ -83,12 +87,15 @@ contract StakedUSDaiRedeemTest is BaseTest {
         uint256 currentBalance = uint256(vm.load(address(stakedUsdai), depositsStorageLocation));
         vm.store(address(stakedUsdai), depositsStorageLocation, bytes32(currentBalance - (initialBalance - 1)));
 
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
+
         // Try to service redemption
         vm.startPrank(users.manager);
         stakedUsdai.serviceRedemptions(requestedShares);
         vm.stopPrank();
 
-        vm.warp(block.timestamp + TIMELOCK + 1);
+        vm.warp(redemptionTimestamp + 1);
 
         // Try to redeem requested shares
         vm.startPrank(users.normalUser1);
@@ -213,16 +220,11 @@ contract StakedUSDaiRedeemTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test__StakedUSDaiRedeem_RevertWhen_BeforeTimelock() public {
+    function test__StakedUSDaiRedeem_RevertWhen_BeforeRedemptionTimestamp() public {
         // Simulate yield deposit
         simulateYieldDeposit(1_000_000 ether);
 
-        // Service redemption as manager
-        serviceRedemptionAndWarp(requestedShares, true);
-
-        vm.warp(block.timestamp - (TIMELOCK / 2));
-
-        // Try to redeem before timelock expires
+        // Try to redeem before redemption timestamp
         vm.startPrank(users.normalUser1);
         vm.expectRevert(IStakedUSDai.InvalidRedemptionState.selector);
         stakedUsdai.redeem(1 ether, users.normalUser1, users.normalUser1);

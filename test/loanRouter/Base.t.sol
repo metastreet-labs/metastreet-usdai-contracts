@@ -241,7 +241,8 @@ abstract contract BaseLoanRouterTest is Test {
             address(priceOracle),
             address(loanRouter),
             address(depositTimelock),
-            LOAN_ROUTER_ADMIN_FEE_RATE
+            LOAN_ROUTER_ADMIN_FEE_RATE,
+            uint64(block.timestamp + 30 days)
         );
         vm.stopPrank();
 

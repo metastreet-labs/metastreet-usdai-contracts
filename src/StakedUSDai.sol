@@ -95,9 +95,10 @@ contract StakedUSDai is
         address priceOracle_,
         address loanRouter_,
         address depositTimelock_,
-        uint256 loanRouterAdminFeeRate_
+        uint256 loanRouterAdminFeeRate_,
+        uint64 genesisRedemptionTimestamp_
     )
-        StakedUSDaiStorage(usdai_, priceOracle_, adminFeeRecipient_)
+        StakedUSDaiStorage(usdai_, priceOracle_, adminFeeRecipient_, genesisRedemptionTimestamp_)
         BasePositionManager(baseToken_, baseYieldAdminFeeRate_)
         LoanRouterPositionManager(loanRouter_, depositTimelock_, loanRouterAdminFeeRate_)
     {
@@ -111,17 +112,16 @@ contract StakedUSDai is
     /**
      * @notice Initialize the contract
      * @param admin Default admin address
-     * @param timelock_ Timelock period for redemptions
      */
-    function initialize(address admin, uint64 timelock_) external initializer {
+    function initialize(
+        address admin
+    ) external initializer {
         __ERC165_init();
         __ERC20_init("Staked USDai", "sUSDai");
         __ERC20Permit_init("Staked USDai");
         __Multicall_init();
         __ReentrancyGuard_init();
         __AccessControl_init();
-
-        _getTimelockStorage().timelock = timelock_;
 
         /* Grant roles */
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -173,24 +173,25 @@ contract StakedUSDai is
     /**
      * @inheritdoc IStakedUSDai
      */
-    function timelock() external view returns (uint64) {
-        return _getTimelockStorage().timelock;
-    }
-
-    /**
-     * @inheritdoc IStakedUSDai
-     */
     function redemptionQueueInfo()
         external
         view
-        returns (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance)
+        returns (
+            uint256 index,
+            uint256 head,
+            uint256 tail,
+            uint256 pending,
+            uint256 redemptionBalance,
+            uint64 redemptionTimestamp
+        )
     {
         return (
             _getRedemptionStateStorage().index,
             _getRedemptionStateStorage().head,
             _getRedemptionStateStorage().tail,
             _getRedemptionStateStorage().pending,
-            _getRedemptionStateStorage().redemptionBalance
+            _getRedemptionStateStorage().redemptionBalance,
+            RedemptionLogic._redemptionTimestamp(_genesisRedemptionTimestamp)
         );
     }
 
@@ -654,8 +655,8 @@ contract StakedUSDai is
         /* Get redemption */
         Redemption storage redemption_ = _getRedemptionStateStorage().redemptions[redemptionId];
 
-        /* If controller is not the same or redemption is not past cliff, return 0 */
-        if (redemption_.controller != controller || redemption_.cliff >= block.timestamp) return 0;
+        /* If controller is not the same, return 0 */
+        if (redemption_.controller != controller) return 0;
 
         return redemption_.redeemableShares;
     }
@@ -688,7 +689,7 @@ contract StakedUSDai is
 
         /* Request redeem */
         uint256 redemptionId = RedemptionLogic._requestRedeem(
-            _getRedemptionStateStorage(), _getTimelockStorage().timelock, shares, controller
+            _getRedemptionStateStorage(), _genesisRedemptionTimestamp, shares, controller
         );
 
         /* Emit redeem request */
@@ -707,19 +708,6 @@ contract StakedUSDai is
      */
     function share() external view returns (address) {
         return address(this);
-    }
-
-    /*------------------------------------------------------------------------*/
-    /* Default admin API */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @inheritdoc IStakedUSDai
-     */
-    function setTimelock(
-        uint64 timelock_
-    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        _getTimelockStorage().timelock = timelock_;
     }
 
     /*------------------------------------------------------------------------*/

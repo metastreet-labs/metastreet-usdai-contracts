@@ -14,7 +14,7 @@ contract StakedUSDaiServiceRedemptions is Deployer {
     ) public useDeployment {
         IStakedUSDai stakedUSDai = IStakedUSDai(_deployment.stakedUSDai);
 
-        (,,, uint256 pending, uint256 redemptionBalance) = stakedUSDai.redemptionQueueInfo();
+        (,,, uint256 pending, uint256 redemptionBalance,) = stakedUSDai.redemptionQueueInfo();
         uint256 redemptionSharePrice = stakedUSDai.redemptionSharePrice();
 
         uint256 usdaiBalance = IERC20(_deployment.USDai).balanceOf(_deployment.stakedUSDai);

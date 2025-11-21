@@ -39,6 +39,11 @@ library RedemptionLogic {
      */
     uint256 internal constant MIN_REDEMPTION_SHARES = 1e18;
 
+    /**
+     * @notice Redemption window
+     */
+    uint64 internal constant REDEMPTION_WINDOW = 30 days;
+
     /*------------------------------------------------------------------------*/
     /* Getters */
     /*------------------------------------------------------------------------*/
@@ -101,11 +106,9 @@ library RedemptionLogic {
             /* Look up redemption */
             IStakedUSDai.Redemption memory redemption_ = redemptionState_.redemptions[redemptionIds[i]];
 
-            /* If redemption is past cliff, increment amount */
-            if (redemption_.cliff < block.timestamp) {
-                amount += redemption_.withdrawableAmount;
-                shares += redemption_.redeemableShares;
-            }
+            /* Add withdrawable amount and redeemable shares which are already serviced */
+            amount += redemption_.withdrawableAmount;
+            shares += redemption_.redeemableShares;
         }
 
         /* Return amount and shares */
@@ -115,6 +118,23 @@ library RedemptionLogic {
     /*------------------------------------------------------------------------*/
     /* Helpers */
     /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Compute current redemption timestamp
+     * @param genesisRedemptionTimestamp Genesis redemption timestamp
+     * @return Current redemption timestamp
+     */
+    function _redemptionTimestamp(
+        uint64 genesisRedemptionTimestamp
+    ) public view returns (uint64) {
+        /* Compute elapsed windows */
+        uint64 elapsedWindows = block.timestamp > genesisRedemptionTimestamp
+            ? uint64((block.timestamp - genesisRedemptionTimestamp) / REDEMPTION_WINDOW + 1)
+            : 0;
+
+        /* Return current redemption timestamp */
+        return genesisRedemptionTimestamp + elapsedWindows * REDEMPTION_WINDOW;
+    }
 
     /**
      * @notice Withdraw assets
@@ -138,8 +158,8 @@ library RedemptionLogic {
             /* Look up redemption */
             IStakedUSDai.Redemption storage redemption_ = redemptionState_.redemptions[redemptionIds[i]];
 
-            /* Skip if not past cliff or redemption amount is 0 */
-            if (redemption_.cliff >= block.timestamp || redemption_.withdrawableAmount == 0) continue;
+            /* Skip if redemption amount is 0 */
+            if (redemption_.withdrawableAmount == 0) continue;
 
             /* Compute amount to withdraw */
             uint256 amountToWithdraw = Math.min(remainingAmount, redemption_.withdrawableAmount);
@@ -195,8 +215,8 @@ library RedemptionLogic {
             /* Look up redemption */
             IStakedUSDai.Redemption storage redemption_ = redemptionState_.redemptions[redemptionIds[i]];
 
-            /* Skip if not past cliff or redemption amount is 0 */
-            if (redemption_.cliff >= block.timestamp || redemption_.redeemableShares == 0) continue;
+            /* Skip if redemption amount is 0 */
+            if (redemption_.redeemableShares == 0) continue;
 
             /* Compute shares to redeem */
             uint256 sharesToRedeem = Math.min(remainingShares, redemption_.redeemableShares);
@@ -233,14 +253,14 @@ library RedemptionLogic {
     /**
      * @notice Request redeem
      * @param redemptionState_ Redemption state
-     * @param timelock_ Timelock
+     * @param genesisRedemptionTimestamp Genesis redemption timestamp
      * @param shares Shares to redeem
      * @param controller Controller address
      * @return Redemption ID
      */
     function _requestRedeem(
         StakedUSDaiStorage.RedemptionState storage redemptionState_,
-        uint64 timelock_,
+        uint64 genesisRedemptionTimestamp,
         uint256 shares,
         address controller
     ) external returns (uint256) {
@@ -251,6 +271,9 @@ library RedemptionLogic {
 
         /* Validate shares are greater than minimum redemption shares */
         if (shares < MIN_REDEMPTION_SHARES) revert IStakedUSDai.InvalidAmount();
+
+        /* Compute redemption timestamp */
+        uint64 redemptionTimestamp = _redemptionTimestamp(genesisRedemptionTimestamp);
 
         /* Assign redemption ID */
         uint256 redemptionId = ++redemptionState_.index;
@@ -269,7 +292,7 @@ library RedemptionLogic {
             redeemableShares: 0,
             withdrawableAmount: 0,
             controller: controller,
-            cliff: uint64(block.timestamp) + timelock_
+            redemptionTimestamp: redemptionTimestamp
         });
         redemptionState_.tail = redemptionId;
 
@@ -292,7 +315,7 @@ library RedemptionLogic {
      * @param redemptionState_ Redemption state
      * @param shares Shares to process
      * @param redemptionSharePrice_ Redemption share price
-     * @return Amount processed, true if all redemptions are serviced
+     * @return Amount processed, true if all valid redemptions are serviced
      */
     function _processRedemptions(
         StakedUSDaiStorage.RedemptionState storage redemptionState_,
@@ -316,6 +339,9 @@ library RedemptionLogic {
         while (remainingShares > 0 && head != 0) {
             /* Get redemption */
             IStakedUSDai.Redemption storage redemption_ = redemptionState_.redemptions[head];
+
+            /* Validate that redemption is past redemption timestamp */
+            if (redemption_.redemptionTimestamp >= block.timestamp) revert IStakedUSDai.InvalidRedemptionState();
 
             /* Compute shares to fulfill */
             uint256 fulfilledShares = Math.min(redemption_.pendingShares, remainingShares);
@@ -348,7 +374,8 @@ library RedemptionLogic {
         redemptionState_.head = head;
         redemptionState_.pending -= shares;
 
-        /* If head is 0, it means all redemptions are serviced */
-        return (amountProcessed, head == 0);
+        /* If head is 0 or next redemption is not past redemption timestamp, it means all redemptions for the elapsed
+        redemption windows are serviced */
+        return (amountProcessed, head == 0 || redemptionState_.redemptions[head].redemptionTimestamp >= block.timestamp);
     }
 }
