@@ -40,9 +40,7 @@ interface ILoanRouterPositionManager {
      * @param depositAmount Deposit amount
      * @param usdaiDepositAmount USDai deposit amount
      */
-    event LoanRepaymentDeposited(
-        address indexed currencyToken, uint256 depositAmount, uint256 usdaiDepositAmount
-    );
+    event LoanRepaymentDeposited(address indexed currencyToken, uint256 depositAmount, uint256 usdaiDepositAmount);
 
     /**
      * @notice Admin fee transferred

@@ -1007,7 +1007,6 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         ILoanRouter.LoanTerms memory loanTerms = ILoanRouter.LoanTerms({
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
-            depositTimelock: address(depositTimelock),
             currencyToken: USDC,
             collateralToken: COLLATERAL_WRAPPER,
             collateralTokenId: wrappedTokenId,
@@ -1115,7 +1114,6 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         ILoanRouter.LoanTerms memory loanTerms = ILoanRouter.LoanTerms({
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
-            depositTimelock: address(depositTimelock),
             currencyToken: USDAI, // <<<< Using USDai (18 decimals) instead of USDC!
             collateralToken: COLLATERAL_WRAPPER,
             collateralTokenId: wrappedTokenId,
@@ -1246,7 +1244,6 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         ILoanRouter.LoanTerms memory loanTerms = ILoanRouter.LoanTerms({
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
-            depositTimelock: address(depositTimelock),
             currencyToken: USDAI,
             collateralToken: COLLATERAL_WRAPPER,
             collateralTokenId: wrappedTokenId,

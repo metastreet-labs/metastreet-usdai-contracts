@@ -189,7 +189,7 @@ abstract contract BaseLoanRouterTest is Test {
         vm.startPrank(users.deployer);
 
         // Deploy implementation
-        loanRouterImpl = new LoanRouter(ENGLISH_AUCTION_LIQUIDATOR, COLLATERAL_WRAPPER);
+        loanRouterImpl = new LoanRouter(ENGLISH_AUCTION_LIQUIDATOR, COLLATERAL_WRAPPER, address(depositTimelock));
 
         // Deploy proxy
         loanRouterProxy = new TransparentUpgradeableProxy(
@@ -400,7 +400,6 @@ abstract contract BaseLoanRouterTest is Test {
         return ILoanRouter.LoanTerms({
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
-            depositTimelock: address(depositTimelock),
             currencyToken: USDC,
             collateralToken: COLLATERAL_WRAPPER,
             collateralTokenId: _wrappedTokenId,
