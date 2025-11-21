@@ -37,7 +37,7 @@ usage() {
     echo "Usage: $0 <command> [arguments...]"
     echo ""
     echo "Commands:"
-    echo "  deploy-test-environment <wrapped M token> <swap router> <mnav price feed> <loan router> <tokens> <price feeds> <redemption timelock>"
+    echo "  deploy-test-environment <wrapped M token> <swap router> <mnav price feed> <loan router> <tokens> <price feeds>"
     echo ""
     echo "  deploy-test-mnav-price-feed"
     echo "  deploy-swap-adapter <wrapped M token> <swap router> <tokens>"

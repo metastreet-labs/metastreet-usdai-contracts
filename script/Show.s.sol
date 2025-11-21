@@ -13,6 +13,8 @@ contract Show is Deployer {
         /* Deserialize */
         _deserialize();
 
+        console.log("GenesisTimestamp:      %d", _deployment.genesisTimestamp);
+        console.log("");
         console.log("USDai:                 %s", _deployment.USDai);
         console.log("StakedUSDai:           %s", _deployment.stakedUSDai);
         console.log("SwapAdapter:           %s", _deployment.swapAdapter);

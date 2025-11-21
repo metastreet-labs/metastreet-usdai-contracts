@@ -34,6 +34,9 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         }
         vm.assume(totalRedemptions <= initialBalance);
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Request multiple redemptions
         vm.startPrank(users.normalUser1);
         for (uint256 i = 0; i < redemptionAmounts.length; i++) {
@@ -44,6 +47,15 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         // Simulate yield deposit
         yieldAmount = bound(yieldAmount, 1 ether, 10_000 ether);
         simulateYieldDeposit(yieldAmount);
+
+        // Expect revert when service redemptions before redemption timestamp
+        vm.startPrank(users.manager);
+        vm.expectRevert(IStakedUSDai.InvalidRedemptionState.selector);
+        stakedUsdai.serviceRedemptions(1);
+        vm.stopPrank();
+
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
 
         // Service redemptions in chunks
         uint256 remainingRedemptions = totalRedemptions;
@@ -56,9 +68,6 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
             assertGt(processed, 0, "Should process some redemptions");
             remainingRedemptions -= chunk;
         }
-
-        // Warp past timelock
-        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Verify all redemptions can be redeemed
         vm.startPrank(users.normalUser1);
@@ -92,6 +101,9 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         }
         vm.assume(totalRedemptions <= initialBalance);
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Request multiple redemptions
         vm.startPrank(users.normalUser1);
         for (uint256 i = 0; i < redemptionAmounts.length; i++) {
@@ -106,6 +118,9 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         usdai.transfer(RANDOM_ADDRESS, reductionAmount);
         vm.stopPrank();
 
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
+
         // Service redemptions in chunks
         uint256 remainingRedemptions = totalRedemptions;
         while (remainingRedemptions > 0) {
@@ -117,9 +132,6 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
             assertGt(processed, 0, "Should process some redemptions");
             remainingRedemptions -= chunk;
         }
-
-        // Warp past timelock
-        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Verify all redemptions can be redeemed
         vm.startPrank(users.normalUser1);
@@ -173,11 +185,16 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         amounts[3] = 400_000 ether;
         amounts[4] = 500_000 ether;
 
+        // Get redemption timestamp
+        uint64 redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // First two redemption requests
         vm.startPrank(users.normalUser1);
         stakedUsdai.requestRedeem(amounts[0], users.normalUser1, users.normalUser1);
         stakedUsdai.requestRedeem(amounts[1], users.normalUser1, users.normalUser1);
         vm.stopPrank();
+
+        vm.warp(redemptionTimestamp + 1);
 
         // First service redemption (100k)
         vm.prank(users.manager);
@@ -193,11 +210,17 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(pending1, 200_000 ether, "Pending should be second redemption amount");
         assertEq(redemptionBalance1, processed1, "Should have redemption balance");
 
+        // Get next redemption timestamp
+        redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Two more redemption requests
         vm.startPrank(users.normalUser1);
         stakedUsdai.requestRedeem(amounts[2], users.normalUser1, users.normalUser1);
         stakedUsdai.requestRedeem(amounts[3], users.normalUser1, users.normalUser1);
         vm.stopPrank();
+
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
 
         // Second service redemption (350k)
         vm.prank(users.manager);
@@ -213,10 +236,16 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(pending2, 550_000 ether, "Pending should be the sum of processed redemptions");
         assertGt(redemptionBalance2, redemptionBalance1, "Redemption balance should increase");
 
+        // Get next redemption timestamp
+        redemptionTimestamp = stakedUsdai.redemptionTimestamp();
+
         // Final redemption request
         vm.startPrank(users.normalUser1);
         stakedUsdai.requestRedeem(amounts[4], users.normalUser1, users.normalUser1);
         vm.stopPrank();
+
+        // Warp past redemption timestamp
+        vm.warp(redemptionTimestamp + 1);
 
         // Third service redemption (600k)
         vm.prank(users.manager);
@@ -231,9 +260,6 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(tail3, 5, "Tail should be 5");
         assertEq(pending3, 450_000 ether, "Should have remaining pending amount");
         assertGt(redemptionBalance3, redemptionBalance2, "Redemption balance should increase");
-
-        // Warp past timelock
-        vm.warp(block.timestamp + TIMELOCK + 1);
 
         // Verify serviced redemptions can be redeemed
         vm.startPrank(users.normalUser1);

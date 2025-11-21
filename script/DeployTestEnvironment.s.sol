@@ -20,8 +20,7 @@ contract DeployTestEnvironment is Deployer {
         address mNavPriceFeed,
         address loanRouter,
         address[] calldata tokens,
-        address[] calldata priceFeeds,
-        uint64 timelock
+        address[] calldata priceFeeds
     ) public broadcast useDeployment returns (address, address, address, address) {
         // Deploy UniswapV3SwapAdapter
         UniswapV3SwapAdapter swapAdapter = new UniswapV3SwapAdapter(wrappedMToken, swapRouter, tokens);
@@ -43,15 +42,20 @@ contract DeployTestEnvironment is Deployer {
 
         // Deploy StakedUSDai
         StakedUSDai stakedUSDaiImpl = new StakedUSDai(
-            address(USDai_), wrappedMToken, 100, msg.sender, address(priceOracle), loanRouter, 100
+            address(USDai_),
+            wrappedMToken,
+            100,
+            msg.sender,
+            address(priceOracle),
+            loanRouter,
+            100,
+            uint64(block.timestamp)
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
         // Deploy StakedUSDai proxy
         TransparentUpgradeableProxy stakedUSDai = new TransparentUpgradeableProxy(
-            address(stakedUSDaiImpl),
-            msg.sender,
-            abi.encodeWithSignature("initialize(address,uint64)", msg.sender, timelock)
+            address(stakedUSDaiImpl), msg.sender, abi.encodeWithSignature("initialize(address)", msg.sender)
         );
         console.log("StakedUSDai proxy", address(stakedUSDai));
 

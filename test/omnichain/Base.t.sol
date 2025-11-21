@@ -114,7 +114,7 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
 
         /* Deploy staked usdai proxy */
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(
-            address(stakedUsdaiImpl), address(this), abi.encodeWithSignature("initialize(uint64)", 0)
+            address(stakedUsdaiImpl), address(this), abi.encodeWithSignature("initialize()")
         );
 
         /* Cast staked usdai */

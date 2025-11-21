@@ -20,7 +20,8 @@ contract UpgradeStakedUSDai is Deployer {
             adminFeeRecipient,
             _deployment.priceOracle,
             loanRouter,
-            loanRouterAdminFeeRate
+            loanRouterAdminFeeRate,
+            _deployment.genesisTimestamp
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 
