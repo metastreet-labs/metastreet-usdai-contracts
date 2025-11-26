@@ -406,6 +406,28 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     }
 
     /*------------------------------------------------------------------------*/
+    /* Getters */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @inheritdoc IOUSDaiUtility
+     */
+    function whitelistedOAdapters(uint256 offset, uint256 count) external view returns (address[] memory) {
+        /* Clamp on count */
+        count = Math.min(count, _whitelistedOAdapters.length() - offset);
+
+        /* Create arrays */
+        address[] memory oAdapters_ = new address[](count);
+
+        /* Fill array */
+        for (uint256 i = offset; i < offset + count; i++) {
+            oAdapters_[i - offset] = _whitelistedOAdapters.at(i);
+        }
+
+        return oAdapters_;
+    }
+
+    /*------------------------------------------------------------------------*/
     /* External API */
     /*------------------------------------------------------------------------*/
 
