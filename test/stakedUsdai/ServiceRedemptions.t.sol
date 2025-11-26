@@ -78,7 +78,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         vm.stopPrank();
 
         // Get redemption state info
-        (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance) =
+        (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 balance) =
             stakedUsdai.redemptionQueueInfo();
 
         // Assert redemption state info
@@ -86,7 +86,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(head, 0, "Redemption head should be 0");
         assertEq(tail, 5, "Redemption tail should be 5");
         assertEq(pending, 0, "Redemption pending should be 0");
-        assertEq(redemptionBalance, 0, "Redemption balance should be total amount");
+        assertEq(balance, 0, "Redemption balance should be total amount");
     }
 
     function testFuzz__ServiceRedemptions_WithAssetReduction(
@@ -142,7 +142,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         vm.stopPrank();
 
         // Get redemption state info
-        (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance) =
+        (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 balance) =
             stakedUsdai.redemptionQueueInfo();
 
         // Assert redemption state info
@@ -150,7 +150,7 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(head, 0, "Redemption head should be 0");
         assertEq(tail, 5, "Redemption tail should be 5");
         assertEq(pending, 0, "Redemption pending should be 0");
-        assertEq(redemptionBalance, 0, "Redemption balance should be total amount");
+        assertEq(balance, 0, "Redemption balance should be total amount");
     }
 
     function test__ServiceRedemptions_RevertWhen_InvalidAmount() public {
@@ -202,13 +202,13 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(processed1 > 0, true, "Should process first redemption");
 
         // Check state after first service
-        (uint256 index1, uint256 head1, uint256 tail1, uint256 pending1, uint256 redemptionBalance1) =
+        (uint256 index1, uint256 head1, uint256 tail1, uint256 pending1, uint256 balance1) =
             stakedUsdai.redemptionQueueInfo();
         assertEq(index1, 2, "Index should be 2");
         assertEq(head1, 2, "Head should point to second redemption");
         assertEq(tail1, 2, "Tail should be 2");
         assertEq(pending1, 200_000 ether, "Pending should be second redemption amount");
-        assertEq(redemptionBalance1, processed1, "Should have redemption balance");
+        assertEq(balance1, processed1, "Should have redemption balance");
 
         // Get next redemption timestamp
         redemptionTimestamp = stakedUsdai.redemptionTimestamp();
@@ -228,13 +228,13 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(processed2 > 0, true, "Should process second batch");
 
         // Check state after second service
-        (uint256 index2, uint256 head2, uint256 tail2, uint256 pending2, uint256 redemptionBalance2) =
+        (uint256 index2, uint256 head2, uint256 tail2, uint256 pending2, uint256 balance2) =
             stakedUsdai.redemptionQueueInfo();
         assertEq(index2, 4, "Index should be 4");
         assertEq(head2, 3, "Head should point to third redemption");
         assertEq(tail2, 4, "Tail should be 4");
         assertEq(pending2, 550_000 ether, "Pending should be the sum of processed redemptions");
-        assertGt(redemptionBalance2, redemptionBalance1, "Redemption balance should increase");
+        assertGt(balance2, balance1, "Redemption balance should increase");
 
         // Get next redemption timestamp
         redemptionTimestamp = stakedUsdai.redemptionTimestamp();
@@ -253,13 +253,13 @@ contract StakedUSDaiServiceRedemptionsTest is BaseTest {
         assertEq(processed3 > 0, true, "Should process third batch");
 
         // Check final state
-        (uint256 index3, uint256 head3, uint256 tail3, uint256 pending3, uint256 redemptionBalance3) =
+        (uint256 index3, uint256 head3, uint256 tail3, uint256 pending3, uint256 balance3) =
             stakedUsdai.redemptionQueueInfo();
         assertEq(index3, 5, "Index should be 5");
         assertEq(head3, 5, "Head should point to fifth redemption");
         assertEq(tail3, 5, "Tail should be 5");
         assertEq(pending3, 450_000 ether, "Should have remaining pending amount");
-        assertGt(redemptionBalance3, redemptionBalance2, "Redemption balance should increase");
+        assertGt(balance3, balance2, "Redemption balance should increase");
 
         // Verify serviced redemptions can be redeemed
         vm.startPrank(users.normalUser1);
