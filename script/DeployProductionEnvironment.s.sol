@@ -65,12 +65,12 @@ contract DeployProductionEnvironment is Deployer {
         StakedUSDai stakedUSDaiImpl = new StakedUSDai(
             USDAI_ADDRESS,
             wrappedMToken,
-            100,
-            multisig,
             address(priceOracle),
             LOAN_ROUTER_ADDRESS,
+            uint64(block.timestamp),
             100,
-            uint64(block.timestamp)
+            100,
+            multisig
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 

@@ -302,12 +302,12 @@ abstract contract BaseTest is Test {
         StakedUSDai stakedUsdaiImpl = new StakedUSDai(
             address(usdai),
             address(WRAPPED_M_TOKEN),
-            100,
-            address(users.admin),
             address(priceOracle),
             address(mockLoanRouter),
+            uint64(block.timestamp),
             100,
-            uint64(block.timestamp)
+            100,
+            address(users.admin)
         );
 
         /* Deploy staked usdai proxy */

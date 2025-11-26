@@ -11,17 +11,22 @@ import {StakedUSDai} from "src/StakedUSDai.sol";
 import {Deployer} from "./utils/Deployer.s.sol";
 
 contract UpgradeStakedUSDai is Deployer {
-    function run(address loanRouter, uint256 baseYieldAdminFeeRate, uint256 loanRouterAdminFeeRate, address adminFeeRecipient) public broadcast useDeployment returns (address) {
+    function run(
+        address loanRouter,
+        uint256 baseYieldAdminFeeRate,
+        uint256 loanRouterAdminFeeRate,
+        address adminFeeRecipient
+    ) public broadcast useDeployment returns (address) {
         // Deploy StakedUSDai implemetation
         StakedUSDai stakedUSDaiImpl = new StakedUSDai(
             _deployment.USDai,
             IUSDai(_deployment.USDai).baseToken(),
-            baseYieldAdminFeeRate,
-            adminFeeRecipient,
             _deployment.priceOracle,
             loanRouter,
+            _deployment.genesisTimestamp,
+            baseYieldAdminFeeRate,
             loanRouterAdminFeeRate,
-            _deployment.genesisTimestamp
+            adminFeeRecipient
         );
         console.log("StakedUSDai implementation", address(stakedUSDaiImpl));
 

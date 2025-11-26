@@ -236,12 +236,12 @@ abstract contract BaseLoanRouterTest is Test {
         stakedUsdaiImpl = new StakedUSDai(
             USDAI,
             WRAPPED_M_TOKEN,
-            100, // baseYieldAdminFeeRate
-            BASE_YIELD_ADMIN_FEE_RECIPIENT,
             address(priceOracle),
             address(loanRouter),
+            uint64(block.timestamp),
+            100, // baseYieldAdminFeeRate
             LOAN_ROUTER_ADMIN_FEE_RATE,
-            uint64(block.timestamp)
+            BASE_YIELD_ADMIN_FEE_RECIPIENT
         );
         vm.stopPrank();
 
