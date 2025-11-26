@@ -55,9 +55,7 @@ contract DeployTestEnvironment is Deployer {
 
         // Deploy StakedUSDai proxy
         TransparentUpgradeableProxy stakedUSDai = new TransparentUpgradeableProxy(
-            address(stakedUSDaiImpl),
-            msg.sender,
-            abi.encodeWithSignature("initialize(address)", msg.sender)
+            address(stakedUSDaiImpl), msg.sender, abi.encodeWithSignature("initialize(address)", msg.sender)
         );
         console.log("StakedUSDai proxy", address(stakedUSDai));
 

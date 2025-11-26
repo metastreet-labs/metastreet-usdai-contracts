@@ -163,13 +163,7 @@ contract MockStakedUSDai is
     function redemptionQueueInfo()
         external
         view
-        returns (
-            uint256 index,
-            uint256 head,
-            uint256 tail,
-            uint256 pending,
-            uint256 balance
-        )
+        returns (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 balance)
     {
         return (
             _getRedemptionStateStorage().index,
