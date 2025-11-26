@@ -94,7 +94,7 @@ abstract contract StakedUSDaiStorage {
      * @param head Head of the redemption queue
      * @param tail Tail of the redemption queue
      * @param pending Pending redemption shares
-     * @param redemptionBalance Redemption balance
+     * @param balance Redemption balance
      * @param redemptions Mapping of redemption index to redemption
      * @param redemptionIds Mapping of controller to redemption indices
      */
@@ -103,7 +103,7 @@ abstract contract StakedUSDaiStorage {
         uint256 head;
         uint256 tail;
         uint256 pending;
-        uint256 redemptionBalance;
+        uint256 balance;
         mapping(uint256 => IStakedUSDai.Redemption) redemptions;
         mapping(address => EnumerableSet.UintSet) redemptionIds;
     }

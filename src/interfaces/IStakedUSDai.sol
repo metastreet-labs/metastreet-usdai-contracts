@@ -131,13 +131,7 @@ interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
     function redemptionQueueInfo()
         external
         view
-        returns (
-            uint256 index,
-            uint256 head,
-            uint256 tail,
-            uint256 pending,
-            uint256 balance
-        );
+        returns (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 balance);
 
     /**
      * @notice Get redemption timestamp
