@@ -176,7 +176,7 @@ contract MockStakedUSDai is
             _getRedemptionStateStorage().head,
             _getRedemptionStateStorage().tail,
             _getRedemptionStateStorage().pending,
-            _getRedemptionStateStorage().redemptionBalance
+            _getRedemptionStateStorage().balance
         );
     }
 
@@ -258,7 +258,7 @@ contract MockStakedUSDai is
      * @return USDai deposit balance less serviced redemption
      */
     function _depositBalance() internal view returns (uint256) {
-        return _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().redemptionBalance;
+        return _usdai.balanceOf(address(this)) - _getRedemptionStateStorage().balance;
     }
 
     /**
@@ -734,7 +734,7 @@ contract MockStakedUSDai is
         if (amountProcessed > _depositBalance()) revert InsufficientBalance();
 
         /* Update redemption balance */
-        _getRedemptionStateStorage().redemptionBalance += amountProcessed;
+        _getRedemptionStateStorage().balance += amountProcessed;
 
         /* Emit RedemptionsServiced */
         emit RedemptionsServiced(shares, amountProcessed, allRedemptionsServiced);

@@ -218,7 +218,7 @@ library RedemptionLogic {
         if (remainingAmount != 0) revert IStakedUSDai.InvalidRedemptionState();
 
         /* Update redemption balance */
-        redemptionState_.redemptionBalance -= amount;
+        redemptionState_.balance -= amount;
 
         return shares;
     }
@@ -275,7 +275,7 @@ library RedemptionLogic {
         if (remainingShares != 0) revert IStakedUSDai.InvalidRedemptionState();
 
         /* Update redemption balance */
-        redemptionState_.redemptionBalance -= amount;
+        redemptionState_.balance -= amount;
 
         return amount;
     }
