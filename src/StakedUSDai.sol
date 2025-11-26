@@ -174,20 +174,14 @@ contract StakedUSDai is
     function redemptionQueueInfo()
         external
         view
-        returns (
-            uint256 index,
-            uint256 head,
-            uint256 tail,
-            uint256 pending,
-            uint256 balance
-        )
+        returns (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 balance)
     {
         return (
             _getRedemptionStateStorage().index,
             _getRedemptionStateStorage().head,
             _getRedemptionStateStorage().tail,
             _getRedemptionStateStorage().pending,
-            _getRedemptionStateStorage().redemptionBalance
+            _getRedemptionStateStorage().balance
         );
     }
 
@@ -270,7 +264,7 @@ contract StakedUSDai is
      * @return USDai deposit balance less serviced redemption
      */
     function _depositBalance() internal view returns (uint256) {
-        return _getDepositsStorage().balance - _getRedemptionStateStorage().redemptionBalance;
+        return _getDepositsStorage().balance - _getRedemptionStateStorage().balance;
     }
 
     /**
@@ -762,7 +756,7 @@ contract StakedUSDai is
         if (amountProcessed > _depositBalance()) revert InsufficientBalance();
 
         /* Update redemption balance */
-        _getRedemptionStateStorage().redemptionBalance += amountProcessed;
+        _getRedemptionStateStorage().balance += amountProcessed;
 
         /* Emit RedemptionsServiced */
         emit RedemptionsServiced(shares, amountProcessed, allRedemptionsServiced);

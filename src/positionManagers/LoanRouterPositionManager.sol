@@ -324,7 +324,7 @@ abstract contract LoanRouterPositionManager is
         uint64 expiration
     ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant {
         /* Get USDai balance */
-        uint256 usdaiBalance = _getDepositsStorage().balance - _getRedemptionStateStorage().redemptionBalance;
+        uint256 usdaiBalance = _getDepositsStorage().balance - _getRedemptionStateStorage().balance;
 
         /* Validate USDai balance */
         if (usdaiAmount > usdaiBalance) revert PositionManager.InsufficientBalance();

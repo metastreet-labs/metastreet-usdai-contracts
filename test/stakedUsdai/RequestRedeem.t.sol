@@ -73,7 +73,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption3.redemptionTimestamp, redemptionTimestamp);
 
         // Get redemption state info
-        (uint256 index1, uint256 head1, uint256 tail1, uint256 pending1, uint256 redemptionBalance1) =
+        (uint256 index1, uint256 head1, uint256 tail1, uint256 pending1, uint256 balance1) =
             stakedUsdai.redemptionQueueInfo();
 
         // Assert redemption state info
@@ -81,7 +81,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(head1, 1);
         assertEq(tail1, 3);
         assertEq(pending1, 900_000 ether);
-        assertEq(redemptionBalance1, 0);
+        assertEq(balance1, 0);
 
         // Assert user's StakedUSDai balance decreased
         assertEq(stakedUsdai.balanceOf(users.normalUser1), sharesBalance - 900_000 ether);
@@ -116,7 +116,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption4.redemptionTimestamp, redemptionTimestamp);
 
         // Get redemption state info
-        (uint256 index2, uint256 head2, uint256 tail2, uint256 pending2, uint256 redemptionBalance2) =
+        (uint256 index2, uint256 head2, uint256 tail2, uint256 pending2, uint256 balance2) =
             stakedUsdai.redemptionQueueInfo();
 
         // Assert redemption state info
@@ -125,7 +125,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(head2, 2);
         assertEq(tail2, 4);
         assertEq(pending2, 690_000 ether);
-        assertEq(redemptionBalance2, redemption5.withdrawableAmount);
+        assertEq(balance2, redemption5.withdrawableAmount);
     }
 
     function testFuzz__StakedUSDaiRequestRedeem(
@@ -157,7 +157,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(redemption.redemptionTimestamp, redemptionTimestamp);
 
         // Get redemption state info
-        (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 redemptionBalance) =
+        (uint256 index, uint256 head, uint256 tail, uint256 pending, uint256 balance) =
             stakedUsdai.redemptionQueueInfo();
 
         // Assert redemption state info
@@ -165,7 +165,7 @@ contract StakedUSDaiRequestRedeemTest is BaseTest {
         assertEq(head, redemptionId);
         assertEq(tail, redemptionId);
         assertEq(pending, shares);
-        assertEq(redemptionBalance, 0);
+        assertEq(balance, 0);
 
         // Assert user's StakedUSDai balance decreased
         assertEq(stakedUsdai.balanceOf(users.normalUser1), sharesBalance - shares);
