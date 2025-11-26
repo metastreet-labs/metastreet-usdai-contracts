@@ -305,7 +305,7 @@ abstract contract BaseTest is Test {
             100,
             address(users.admin),
             address(priceOracle),
-            address(0),
+            address(mockLoanRouter),
             100,
             uint64(block.timestamp)
         );
