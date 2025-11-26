@@ -1,3 +1,9 @@
+* StakedUSDai v1.4 - 11/26/2025
+    * Deprecate `PoolPositionManager.`
+    * Add `LoanRouterPositionManager`.
+    * Migrate from individual redemption timelocks to fixed redemption
+      windows.
+
 * OUSDaiUtility v1.6 - 11/26/2025
     * Add `whitelistedOAdapters()` getter.
 
