@@ -20,7 +20,6 @@ contract UpgradeStakedUSDai is Deployer {
             adminFeeRecipient,
             _deployment.priceOracle,
             address(0),
-            address(0),
             0,
             _deployment.genesisTimestamp
         );

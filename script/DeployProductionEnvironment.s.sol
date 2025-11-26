@@ -29,7 +29,6 @@ contract DeployProductionEnvironment is Deployer {
 
     // Loan router and deposit timelock addresses
     address internal constant LOAN_ROUTER_ADDRESS = address(0);
-    address internal constant DEPOSIT_TIMELOCK_ADDRESS = address(0);
 
     function run(
         address wrappedMToken,
@@ -70,7 +69,6 @@ contract DeployProductionEnvironment is Deployer {
             multisig,
             address(priceOracle),
             LOAN_ROUTER_ADDRESS,
-            DEPOSIT_TIMELOCK_ADDRESS,
             100,
             uint64(block.timestamp)
         );

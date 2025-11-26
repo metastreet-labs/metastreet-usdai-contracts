@@ -70,11 +70,12 @@ contract MockStakedUSDai is
      * @notice sUSD.ai Constructor
      */
     constructor(
-        address usdai_
+        address usdai_,
+        address loanRouter_
     )
         StakedUSDaiStorage(usdai_, address(0), address(0), uint64(block.timestamp))
         BasePositionManager(address(0), 0)
-        LoanRouterPositionManager(address(0), address(0), 0)
+        LoanRouterPositionManager(loanRouter_, 0)
     {
         _disableInitializers();
     }

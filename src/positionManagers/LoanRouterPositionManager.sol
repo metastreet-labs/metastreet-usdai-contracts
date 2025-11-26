@@ -141,12 +141,11 @@ abstract contract LoanRouterPositionManager is
     /**
      * @notice Constructor
      * @param loanRouter_ Loan router
-     * @param depositTimelock_ Deposit timelock
      * @param loanRouterAdminFeeRate_ Loan router admin fee rate
      */
-    constructor(address loanRouter_, address depositTimelock_, uint256 loanRouterAdminFeeRate_) {
+    constructor(address loanRouter_, uint256 loanRouterAdminFeeRate_) {
         _loanRouter = loanRouter_;
-        _depositTimelock = depositTimelock_;
+        _depositTimelock = ILoanRouter(loanRouter_).depositTimelock();
         _loanRouterAdminFeeRate = loanRouterAdminFeeRate_;
     }
 

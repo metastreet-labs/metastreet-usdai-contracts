@@ -47,7 +47,6 @@ contract DeployTestEnvironment is Deployer {
             msg.sender,
             address(priceOracle),
             address(0),
-            address(0),
             100,
             uint64(block.timestamp)
         );

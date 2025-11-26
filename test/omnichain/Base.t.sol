@@ -35,6 +35,7 @@ import {ReceiptToken} from "src/queuedDepositor/ReceiptToken.sol";
 // Mock imports
 import {MockUSDai} from "../mocks/MockUSDai.sol";
 import {MockStakedUSDai} from "../mocks/MockStakedUSDai.sol";
+import {MockLoanRouter} from "../mocks/MockLoanRouter.sol";
 
 // Interface imports
 import {IUSDai} from "src/interfaces/IUSDai.sol";
@@ -105,8 +106,11 @@ abstract contract OmnichainBaseTest is TestHelperOz5 {
         /* Cast usdai */
         usdai = IUSDai(address(usdaiProxy));
 
+        // Deploy mock loan router
+        MockLoanRouter mockLoanRouter = new MockLoanRouter();
+
         // Deploy mock staked usdai implementation
-        IStakedUSDai stakedUsdaiImpl = new MockStakedUSDai(address(usdai));
+        IStakedUSDai stakedUsdaiImpl = new MockStakedUSDai(address(usdai), address(mockLoanRouter));
 
         /* Deploy staked usdai proxy */
         TransparentUpgradeableProxy stakedUsdaiProxy = new TransparentUpgradeableProxy(
