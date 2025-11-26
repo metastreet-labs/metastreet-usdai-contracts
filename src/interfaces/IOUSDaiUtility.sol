@@ -143,6 +143,18 @@ interface IOUSDaiUtility {
     event WhitelistedOAdaptersRemoved(address[] oAdapters);
 
     /*------------------------------------------------------------------------*/
+    /* Getters */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Get whitelisted OAdapters
+     * @param offset Offset into list
+     * @param count Count to return
+     * @return OAdapters
+     */
+    function whitelistedOAdapters(uint256 offset, uint256 count) external view returns (address[] memory);
+
+    /*------------------------------------------------------------------------*/
     /* Public API */
     /*------------------------------------------------------------------------*/
 
