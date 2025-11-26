@@ -32,7 +32,7 @@ contract OUSDaiUtility is ILayerZeroComposer, ReentrancyGuardUpgradeable, Access
     /**
      * @notice Implementation version
      */
-    string public constant IMPLEMENTATION_VERSION = "1.5";
+    string public constant IMPLEMENTATION_VERSION = "1.6";
 
     /*------------------------------------------------------------------------*/
     /* Immutable state */
