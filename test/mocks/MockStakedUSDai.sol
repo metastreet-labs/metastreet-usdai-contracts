@@ -16,6 +16,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {StakedUSDaiStorage} from "src/StakedUSDaiStorage.sol";
 import {RedemptionLogic} from "src/RedemptionLogic.sol";
+import "src/QEVLogic.sol";
 
 import {BasePositionManager} from "src/positionManagers/BasePositionManager.sol";
 import {PoolPositionManager} from "src/positionManagers/PoolPositionManager.sol";
@@ -73,7 +74,7 @@ contract MockStakedUSDai is
         address usdai_,
         address loanRouter_
     )
-        StakedUSDaiStorage(usdai_, address(0), address(0), uint64(block.timestamp))
+        StakedUSDaiStorage(usdai_, address(0), address(0), address(0), uint64(block.timestamp))
         BasePositionManager(address(0), 0)
         LoanRouterPositionManager(loanRouter_, 0)
     {
@@ -226,6 +227,13 @@ contract MockStakedUSDai is
      */
     function totalShares() public view returns (uint256) {
         return totalSupply() + _getBridgedSupplyStorage().bridgedSupply + _getRedemptionStateStorage().pending;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function qevRegistry() external view returns (address) {
+        return _qevRegistry;
     }
 
     /**
@@ -722,8 +730,9 @@ contract MockStakedUSDai is
         uint256 shares
     ) external onlyRole(STRATEGY_ADMIN_ROLE) nonZeroUint(shares) returns (uint256) {
         /* Process redemptions */
-        (uint256 amountProcessed, bool allRedemptionsServiced) =
-            RedemptionLogic._processRedemptions(_getRedemptionStateStorage(), shares, redemptionSharePrice());
+        (uint256 amountProcessed, bool allRedemptionsServiced) = RedemptionLogic._processRedemptions(
+            _getRedemptionStateStorage(), _qevRegistry, shares, redemptionSharePrice()
+        );
 
         /* Validate amount is available to be serviced */
         if (amountProcessed > _depositBalance()) revert InsufficientBalance();
@@ -735,6 +744,25 @@ contract MockStakedUSDai is
         emit RedemptionsServiced(shares, amountProcessed, allRedemptionsServiced);
 
         return amountProcessed;
+    }
+
+    /**
+     * @inheritdoc IStakedUSDai
+     */
+    function reorderRedemptions(
+        uint64 auctionId,
+        uint256 count
+    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonZeroUint(count) returns (uint256, uint256) {
+        (uint256 totalPendingSharesBurnt, uint256 totalAdminFee, address adminFeeRecipient, bool isCompleted) =
+            QEVLogic._reorderRedemptions(_getRedemptionStateStorage(), _qevRegistry, auctionId, count);
+
+        /* Mint shares to admin fee recipient */
+        _mint(adminFeeRecipient, totalAdminFee);
+
+        /* Emit RedemptionsReordered */
+        emit RedemptionsReordered(auctionId, count, totalPendingSharesBurnt, totalAdminFee, isCompleted);
+
+        return (totalPendingSharesBurnt, totalAdminFee);
     }
 
     /*------------------------------------------------------------------------*/

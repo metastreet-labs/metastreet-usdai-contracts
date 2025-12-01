@@ -33,6 +33,7 @@ contract Deployer is BaseScript {
         address oTokenStakedUSDai;
         address oUSDaiUtility;
         address usdaiQueuedDepositor;
+        address qevRegistry;
     }
 
     /*--------------------------------------------------------------------------*/
