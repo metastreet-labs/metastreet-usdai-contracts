@@ -7,7 +7,6 @@ import {Script} from "forge-std/Script.sol";
  * @notice Base deployment script
  */
 contract BaseScript is Script {
-    uint256 internal _broadcaster;
     mapping(uint256 => string) internal _chainIdToNetwork;
 
     /*--------------------------------------------------------------------------*/
@@ -15,10 +14,6 @@ contract BaseScript is Script {
     /*--------------------------------------------------------------------------*/
 
     constructor() {
-        try vm.envUint("PRIVATE_KEY") returns (uint256 value) {
-            _broadcaster = value;
-        } catch {}
-
         _chainIdToNetwork[1] = "mainnet";
         _chainIdToNetwork[5] = "goerli";
         _chainIdToNetwork[11155111] = "sepolia";
@@ -30,14 +25,18 @@ contract BaseScript is Script {
     }
 
     modifier broadcast() {
-        if (_broadcaster != 0) {
-            vm.startBroadcast(_broadcaster);
-        } else {
+        if (vm.envOr("BROADCAST", false)) {
             vm.startBroadcast();
+        } else {
+            vm.startPrank(msg.sender);
         }
 
         _;
 
-        vm.stopBroadcast();
+        if (vm.envOr("BROADCAST", false)) {
+            vm.stopBroadcast();
+        } else {
+            vm.stopPrank();
+        }
     }
 }

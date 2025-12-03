@@ -110,7 +110,7 @@ echo -e "Running on $NETWORK\n"
 if [[ ! -z "$LEDGER_DERIVATION_PATH" ]]; then
     forge script --rpc-url "$RPC_URL" --ledger --hd-paths "$LEDGER_DERIVATION_PATH" --sender "$LEDGER_ADDRESS" --broadcast -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
 elif [[ ! -z "$PRIVATE_KEY" ]]; then
-    forge script --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --broadcast -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
+    forge script --rpc-url "$RPC_URL" --private-key "$PRIVATE_KEY" --sender "$(cast wallet address "$PRIVATE_KEY")" --broadcast -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
 else
     forge script --rpc-url "$RPC_URL" -vvvv "$SCRIPT" --sig "$SIGNATURE" "${@:2}"
 fi
