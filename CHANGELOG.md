@@ -1,3 +1,7 @@
+* StakedUSDai v1.4 - 12/05/2025
+    * Deprecate `PoolPositionManager`.
+    * Add USDai deposit state.
+
 * OUSDaiUtility v1.5 - 09/26/2025
     * Add support for stake action.
 
