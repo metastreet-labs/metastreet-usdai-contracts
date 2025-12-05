@@ -1,3 +1,6 @@
+* OUSDaiUtility v1.6 - 12/05/2025
+    * Add `whitelistedOAdapters()` getter.
+
 * StakedUSDai v1.4 - 12/05/2025
     * Deprecate `PoolPositionManager`.
     * Add USDai deposit state.
