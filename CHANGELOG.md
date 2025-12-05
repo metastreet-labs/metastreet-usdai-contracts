@@ -1,3 +1,8 @@
+* StakedUSDai v1.5 - 12/05/2025
+    * Remove completed `migrate()` function.
+    * Add `LoanRouterPositionManager`.
+    * Change individual redemption timelocks to fixed redemption windows.
+
 * OUSDaiUtility v1.6 - 12/05/2025
     * Add `whitelistedOAdapters()` getter.
 
