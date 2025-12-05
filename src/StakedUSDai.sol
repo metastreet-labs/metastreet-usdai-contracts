@@ -118,21 +118,6 @@ contract StakedUSDai is
     }
 
     /*------------------------------------------------------------------------*/
-    /* Migration  */
-    /*------------------------------------------------------------------------*/
-
-    /**
-     * @notice Migrate contract state
-     */
-    function migrate() external reinitializer(2) {
-        /* Initialize deposit balance */
-        _getDepositsStorage().balance = _usdai.balanceOf(address(this));
-
-        /* Emit migrated event */
-        emit Migrated("Initialize USDai deposit balance", "");
-    }
-
-    /*------------------------------------------------------------------------*/
     /* Modifiers  */
     /*------------------------------------------------------------------------*/
 
