@@ -46,7 +46,8 @@ contract MockLender is ILoanRouterHooks, IERC165, IERC721Receiver {
         uint256,
         uint256 principal,
         uint256,
-        uint256 prepay
+        uint256 prepay,
+        uint64 repaymentDeadline
     ) external override {
         repayments.push(RepaymentRecord({principal: principal, prepayment: prepay}));
         totalPrincipalReceived += principal;
@@ -1008,7 +1009,7 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
             currencyToken: USDC,
-            collateralToken: COLLATERAL_WRAPPER,
+            collateralToken: collateralWrapper,
             collateralTokenId: wrappedTokenId,
             duration: LOAN_DURATION,
             repaymentInterval: REPAYMENT_INTERVAL,
@@ -1115,7 +1116,7 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
             currencyToken: USDAI, // <<<< Using USDai (18 decimals) instead of USDC!
-            collateralToken: COLLATERAL_WRAPPER,
+            collateralToken: collateralWrapper,
             collateralTokenId: wrappedTokenId,
             duration: LOAN_DURATION,
             repaymentInterval: REPAYMENT_INTERVAL,
@@ -1245,7 +1246,7 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
             currencyToken: USDAI,
-            collateralToken: COLLATERAL_WRAPPER,
+            collateralToken: collateralWrapper,
             collateralTokenId: wrappedTokenId,
             duration: LOAN_DURATION,
             repaymentInterval: REPAYMENT_INTERVAL,

@@ -59,13 +59,27 @@ abstract contract LoanRouterPositionManager is
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Vest
+     * @param amount Remaining amount to vest
+     * @param originalAmount Original amount when vesting started
+     * @param timestamp Last vesting timestamp
+     */
+    struct Vest {
+        uint256 amount;
+        uint256 originalAmount;
+        uint64 timestamp;
+    }
+
+    /**
      * @notice Repayment
      * @param repayment Repayment amount
      * @param adminFee Admin fee amount
+     * @param vest Vesting state
      */
     struct Repayment {
         uint256 repayment;
         uint256 adminFee;
+        Vest vest;
     }
 
     /**
@@ -258,7 +272,8 @@ abstract contract LoanRouterPositionManager is
         uint256 loanBalance,
         uint256 principal,
         uint256 interest,
-        uint256 prepayment
+        uint256 prepayment,
+        uint64 repaymentDeadline
     ) external nonReentrant {
         /* Handle loan repayment */
         LoanRouterPositionManagerLogic.loanRepayment(
@@ -270,7 +285,8 @@ abstract contract LoanRouterPositionManager is
             principal + prepayment,
             interest,
             _loanRouterAdminFeeRate,
-            _loanRouter
+            _loanRouter,
+            repaymentDeadline
         );
     }
 
@@ -382,6 +398,9 @@ abstract contract LoanRouterPositionManager is
         uint256 usdaiAmountMinimum,
         bytes calldata data
     ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant {
+        /* Update vesting interest */
+        LoanRouterPositionManagerLogic.vestInterest(_getLoansStorage().repaymentBalances[currencyToken]);
+
         /* Validate repayment balance */
         if (depositAmount > _getLoansStorage().repaymentBalances[currencyToken].repayment) {
             revert InsufficientBalance();

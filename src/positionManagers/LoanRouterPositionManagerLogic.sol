@@ -34,6 +34,11 @@ library LoanRouterPositionManagerLogic {
      */
     uint256 private constant BASIS_POINTS_SCALE = 10_000;
 
+    /**
+     * @notice Vesting duration (7 days)
+     */
+    uint256 private constant VESTING_DURATION = 7 * 86400;
+
     /*------------------------------------------------------------------------*/
     /* Errors */
     /*------------------------------------------------------------------------*/
@@ -79,19 +84,27 @@ library LoanRouterPositionManagerLogic {
     /**
      * @notice Update accrued interest and timestamp
      * @param accrual Accrual
+     * @param interest Scaled interest amount (less admin fee)
      * @param oldAccrualRate Old accrual rate
      * @param timestamp Timestamp
      * @param lastRepaymentTimestamp Last repayment timestamp
+     * @return vestInterest_ Unscaled interest amount for vesting
      */
     function _accrue(
         LoanRouterPositionManager.Accrual storage accrual,
+        uint256 interest,
         uint256 oldAccrualRate,
         uint64 timestamp,
         uint64 lastRepaymentTimestamp
-    ) internal {
-        /* Accrue unscaled interest */
-        accrual.accrued = accrual.accrued + accrual.rate * (block.timestamp - accrual.timestamp)
-            - (oldAccrualRate * (timestamp - lastRepaymentTimestamp));
+    ) internal returns (uint256 vestInterest_) {
+        /* Compute scaled accrued value */
+        uint256 accruedValue = oldAccrualRate * (timestamp - lastRepaymentTimestamp);
+
+        /* Compute scaled interest amount for vesting */
+        if (interest > accruedValue) vestInterest_ = (interest - accruedValue) / FIXED_POINT_SCALE;
+
+        /* Accrue scaled interest */
+        accrual.accrued = accrual.accrued + accrual.rate * (block.timestamp - accrual.timestamp) - accruedValue;
 
         /* Update timestamp */
         accrual.timestamp = uint64(block.timestamp);
@@ -143,9 +156,16 @@ library LoanRouterPositionManagerLogic {
             /* Get currency token */
             address currencyToken = loansStorage.currencyTokens.at(i);
 
+            /* Simulate vested interest */
+            uint256 elapsed = block.timestamp - loansStorage.repaymentBalances[currencyToken].vest.timestamp;
+            uint256 vested = elapsed >= VESTING_DURATION
+                ? loansStorage.repaymentBalances[currencyToken].vest.amount
+                : Math.mulDiv(loansStorage.repaymentBalances[currencyToken].vest.amount, elapsed, VESTING_DURATION);
+
             /* Get repayment balance in terms of USDai */
-            totalRepaymentBalance +=
-                _value(usdai, priceOracle, currencyToken, loansStorage.repaymentBalances[currencyToken].repayment);
+            totalRepaymentBalance += _value(
+                usdai, priceOracle, currencyToken, loansStorage.repaymentBalances[currencyToken].repayment + vested
+            );
 
             /* Get pending balances in terms of USDai */
             totalPendingBalance +=
@@ -164,6 +184,71 @@ library LoanRouterPositionManagerLogic {
 
         /* Return loan router balance */
         return (totalRepaymentBalance, totalPendingBalance, totalAccruedBalance);
+    }
+
+    /*------------------------------------------------------------------------*/
+    /* Vesting Logic */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @notice Vest interest
+     * @param repaymentBalances Repayment balances
+     */
+    function vestInterest(
+        LoanRouterPositionManager.Repayment storage repaymentBalances
+    ) public {
+        /* If no amount to vest, return early */
+        if (repaymentBalances.vest.amount == 0) return;
+
+        /* Compute elapsed time */
+        uint256 elapsed = block.timestamp - repaymentBalances.vest.timestamp;
+
+        /* Compute vested amount */
+        uint256 vested = elapsed >= VESTING_DURATION
+            ? repaymentBalances.vest.amount
+            : Math.mulDiv(repaymentBalances.vest.amount, elapsed, VESTING_DURATION);
+
+        /* If vested amount is zero, return early */
+        if (vested == 0) return;
+
+        /* Update repayment */
+        repaymentBalances.repayment += vested;
+
+        /* Update vesting */
+        repaymentBalances.vest.amount -= vested;
+        repaymentBalances.vest.timestamp = uint64(block.timestamp);
+    }
+
+    /**
+     * @notice Add vesting amount with blended schedule
+     * @param repaymentBalances Repayment balances
+     * @param newAmount New amount to add to vesting
+     */
+    function addVestingAmount(
+        LoanRouterPositionManager.Repayment storage repaymentBalances,
+        uint256 newAmount
+    ) internal {
+        /* If no existing vesting, start fresh */
+        if (repaymentBalances.vest.amount == 0) {
+            repaymentBalances.vest.amount = newAmount;
+            repaymentBalances.vest.originalAmount = newAmount;
+            repaymentBalances.vest.timestamp = uint64(block.timestamp);
+            return;
+        }
+
+        /* Compute vested from original */
+        uint256 vestedAmount = repaymentBalances.vest.originalAmount - repaymentBalances.vest.amount;
+
+        /* Compute new original amount */
+        uint256 newOriginal = repaymentBalances.vest.originalAmount + newAmount;
+
+        /* Compute new effective elapsed time */
+        uint256 effectiveElapsed = Math.mulDiv(vestedAmount, VESTING_DURATION, newOriginal);
+
+        /* Update state */
+        repaymentBalances.vest.amount += newAmount;
+        repaymentBalances.vest.originalAmount = newOriginal;
+        repaymentBalances.vest.timestamp = uint64(block.timestamp - effectiveElapsed);
     }
 
     /*------------------------------------------------------------------------*/
@@ -194,6 +279,9 @@ library LoanRouterPositionManagerLogic {
         /* Validate hook context */
         _validateHookContext(loanTerms, trancheIndex, loanRouter);
 
+        /* Update vesting interest */
+        vestInterest(loansStorage.repaymentBalances[loanTerms.currencyToken]);
+
         /* Validate currency token is either USDai, or supported by price oracle */
         if (loanTerms.currencyToken != address(usdai) && !priceOracle.supportedToken(loanTerms.currencyToken)) {
             revert UnsupportedCurrency(loanTerms.currencyToken);
@@ -223,7 +311,7 @@ library LoanRouterPositionManagerLogic {
         LoanRouterPositionManager.Accrual storage accrual = loansStorage.interestAccruals[loanTerms.currencyToken];
 
         /* Update accrued interest and timestamp */
-        _accrue(accrual, 0, 0, 0);
+        _accrue(accrual, 0, 0, 0, 0);
 
         /* Update unscaled rate */
         accrual.rate += accrualRate;
@@ -239,6 +327,7 @@ library LoanRouterPositionManagerLogic {
      * @param principal Principal amount
      * @param interest Interest amount
      * @param loanRouter Loan router
+     * @param repaymentDeadline Repayment deadline
      */
     function loanRepayment(
         LoanRouterPositionManager.Loans storage loansStorage,
@@ -249,10 +338,14 @@ library LoanRouterPositionManagerLogic {
         uint256 principal,
         uint256 interest,
         uint256 adminFeeRate,
-        address loanRouter
+        address loanRouter,
+        uint64 repaymentDeadline
     ) external {
         /* Validate hook context */
         _validateHookContext(loanTerms, trancheIndex, loanRouter);
+
+        /* Update vesting interest */
+        vestInterest(loansStorage.repaymentBalances[loanTerms.currencyToken]);
 
         /* Get loan */
         LoanRouterPositionManager.Loan storage loan = loansStorage.loan[loanTermsHash];
@@ -273,14 +366,34 @@ library LoanRouterPositionManagerLogic {
         /* Compute new loan balance */
         uint256 newLoanBalance = loan.pendingBalance - principal;
 
+        /* Compute seconds early if it is not prepayment */
+        uint256 secondsEarly = block.timestamp > repaymentDeadline - loanTerms.repaymentInterval
+            && block.timestamp < repaymentDeadline ? repaymentDeadline - block.timestamp : 0;
+
         /* Compute scaled new accrual rate */
-        uint256 newAccrualRate = loanTerms.trancheSpecs[trancheIndex].rate * newLoanBalance;
+        uint256 newAccrualRate = Math.mulDiv(
+            loanTerms.trancheSpecs[trancheIndex].rate * newLoanBalance,
+            loanTerms.repaymentInterval,
+            loanTerms.repaymentInterval + secondsEarly
+        );
 
         /* Get interest accrual */
         LoanRouterPositionManager.Accrual storage accrual = loansStorage.interestAccruals[loanTerms.currencyToken];
 
-        /* Update accrued interest and timestamp */
-        _accrue(accrual, loan.accrualRate, uint64(block.timestamp), loan.lastRepaymentTimestamp);
+        /* Update accrued interest, timestamp, and calculate unscaled vesting interest */
+        uint256 vestInterest_ = _accrue(
+            accrual,
+            (interest - adminFee) * FIXED_POINT_SCALE,
+            loan.accrualRate,
+            uint64(block.timestamp),
+            loan.lastRepaymentTimestamp
+        );
+
+        /* Update unscaled vesting interest */
+        if (vestInterest_ > 0) {
+            loansStorage.repaymentBalances[loanTerms.currencyToken].repayment -= vestInterest_;
+            addVestingAmount(loansStorage.repaymentBalances[loanTerms.currencyToken], vestInterest_);
+        }
 
         /* Update unscaled rate */
         accrual.rate = accrual.rate + newAccrualRate - loan.accrualRate;
@@ -313,6 +426,9 @@ library LoanRouterPositionManagerLogic {
         /* Validate hook context */
         _validateHookContext(loanTerms, trancheIndex, loanRouter);
 
+        /* Update vesting interest */
+        vestInterest(loansStorage.repaymentBalances[loanTerms.currencyToken]);
+
         /* Get loan */
         LoanRouterPositionManager.Loan storage loan = loansStorage.loan[loanTermsHash];
 
@@ -320,7 +436,7 @@ library LoanRouterPositionManagerLogic {
         LoanRouterPositionManager.Accrual storage accrual = loansStorage.interestAccruals[loanTerms.currencyToken];
 
         /* Update accrued interest and timestamp */
-        _accrue(accrual, 0, 0, 0);
+        _accrue(accrual, 0, 0, 0, 0);
 
         /* Update unscaled rate */
         accrual.rate -= loan.accrualRate;
@@ -353,6 +469,9 @@ library LoanRouterPositionManagerLogic {
         /* Validate hook context */
         _validateHookContext(loanTerms, trancheIndex, loanRouter);
 
+        /* Update vesting interest */
+        vestInterest(loansStorage.repaymentBalances[loanTerms.currencyToken]);
+
         /* Get loan */
         LoanRouterPositionManager.Loan memory loan = loansStorage.loan[loanTermsHash];
 
@@ -369,8 +488,20 @@ library LoanRouterPositionManagerLogic {
         /* Get interest accrual */
         LoanRouterPositionManager.Accrual storage accrual = loansStorage.interestAccruals[loanTerms.currencyToken];
 
-        /* Update accrued interest and timestamp */
-        _accrue(accrual, loan.accrualRate, loan.liquidationTimestamp, loan.lastRepaymentTimestamp);
+        /* Update accrued interest, timestamp, and calculate unscaled vesting interest */
+        uint256 vestInterest_ = _accrue(
+            accrual,
+            (interest - adminFee) * FIXED_POINT_SCALE,
+            loan.accrualRate,
+            loan.liquidationTimestamp,
+            loan.lastRepaymentTimestamp
+        );
+
+        /* Update unscaled vesting interest */
+        if (vestInterest_ > 0) {
+            loansStorage.repaymentBalances[loanTerms.currencyToken].repayment -= vestInterest_;
+            addVestingAmount(loansStorage.repaymentBalances[loanTerms.currencyToken], vestInterest_);
+        }
 
         /* Delete loan */
         delete loansStorage.loan[loanTermsHash];

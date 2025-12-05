@@ -19,6 +19,7 @@ import {DepositTimelock} from "lib/metastreet-usdai-loan-router/src/DepositTimel
 import {SimpleInterestRateModel} from "lib/metastreet-usdai-loan-router/src/rates/SimpleInterestRateModel.sol";
 import {USDaiSwapAdapter} from "lib/metastreet-usdai-loan-router/src/swapAdapters/USDaiSwapAdapter.sol";
 import {ILoanRouter} from "@metastreet-usdai-loan-router/interfaces/ILoanRouter.sol";
+import {BundleCollateralWrapper} from "@metastreet-usdai-loan-router/collateralWrappers/BundleCollateralWrapper.sol";
 
 import {TestERC721} from "test/tokens/TestERC721.sol";
 
@@ -37,7 +38,6 @@ abstract contract BaseLoanRouterTest is Test {
     address internal constant USDAI = 0x0A1a1A107E45b7Ced86833863f482BC5f4ed82EF;
     address internal constant STAKED_USDAI_PROXY = 0x0B2b2B2076d95dda7817e785989fE353fe955ef9;
     address internal constant WRAPPED_M_TOKEN = 0x437cc33344a0B27A429f795ff6B469C72698B291;
-    address internal constant COLLATERAL_WRAPPER = 0xC2356bf42c8910fD6c28Ee6C843bc0E476ee5D26;
     address internal constant ENGLISH_AUCTION_LIQUIDATOR = 0xceb5856C525bbb654EEA75A8852A0F51073C4a58;
     address internal constant BASE_YIELD_ADMIN_FEE_RECIPIENT = 0x5F0BC72FB5952b2f3F2E11404398eD507B25841F;
     address internal constant PRICE_ORACLE = 0xeC335fb6151354c74A8f97E84E770377945D00B3;
@@ -104,6 +104,8 @@ abstract contract BaseLoanRouterTest is Test {
 
     TestERC721 internal testNFT;
 
+    address internal collateralWrapper;
+
     /*------------------------------------------------------------------------*/
     /* Test state */
     /*------------------------------------------------------------------------*/
@@ -140,6 +142,9 @@ abstract contract BaseLoanRouterTest is Test {
         usdai = IUSDai(USDAI);
         stakedUsdai = StakedUSDai(STAKED_USDAI_PROXY);
         priceOracle = IPriceOracle(PRICE_ORACLE);
+
+        // Deploy collateral wrapper
+        deployCollateralWrapper();
 
         // Deploy test NFT
         deployTestNFT();
@@ -189,7 +194,7 @@ abstract contract BaseLoanRouterTest is Test {
         vm.startPrank(users.deployer);
 
         // Deploy implementation
-        loanRouterImpl = new LoanRouter(ENGLISH_AUCTION_LIQUIDATOR, COLLATERAL_WRAPPER, address(depositTimelock));
+        loanRouterImpl = new LoanRouter(address(depositTimelock), ENGLISH_AUCTION_LIQUIDATOR, collateralWrapper);
 
         // Deploy proxy
         loanRouterProxy = new TransparentUpgradeableProxy(
@@ -219,6 +224,12 @@ abstract contract BaseLoanRouterTest is Test {
     function deployTestNFT() internal {
         vm.startPrank(users.deployer);
         testNFT = new TestERC721("TestNFT", "TNFT", "https://testnft.com/token/");
+        vm.stopPrank();
+    }
+
+    function deployCollateralWrapper() internal {
+        vm.startPrank(users.deployer);
+        collateralWrapper = address(new BundleCollateralWrapper());
         vm.stopPrank();
     }
 
@@ -295,15 +306,14 @@ abstract contract BaseLoanRouterTest is Test {
         vm.startPrank(users.borrower);
 
         // Approve collateral wrapper to transfer NFTs
-        testNFT.setApprovalForAll(COLLATERAL_WRAPPER, true);
+        testNFT.setApprovalForAll(collateralWrapper, true);
 
         // Record logs to capture BundleMinted event
         vm.recordLogs();
 
         // Mint first bundle (wrap NFTs)
-        (bool success, bytes memory data) = COLLATERAL_WRAPPER.call(
-            abi.encodeWithSignature("mint(address,uint256[])", address(testNFT), tokenIdsToWrap)
-        );
+        (bool success, bytes memory data) =
+            collateralWrapper.call(abi.encodeWithSignature("mint(address,uint256[])", address(testNFT), tokenIdsToWrap));
         require(success, "Failed to mint bundle");
 
         // Decode wrapped token ID
@@ -324,7 +334,7 @@ abstract contract BaseLoanRouterTest is Test {
         vm.recordLogs();
 
         // Mint second bundle (wrap NFTs)
-        (bool success2, bytes memory data2) = COLLATERAL_WRAPPER.call(
+        (bool success2, bytes memory data2) = collateralWrapper.call(
             abi.encodeWithSignature("mint(address,uint256[])", address(testNFT), tokenIdsToWrap2)
         );
         require(success2, "Failed to mint bundle 2");
@@ -354,7 +364,7 @@ abstract contract BaseLoanRouterTest is Test {
     function setApprovals() internal {
         // Borrower approvals
         vm.startPrank(users.borrower);
-        IERC721(COLLATERAL_WRAPPER).setApprovalForAll(address(loanRouter), true);
+        IERC721(collateralWrapper).setApprovalForAll(address(loanRouter), true);
         IERC20(USDC).approve(address(loanRouter), type(uint256).max);
         vm.stopPrank();
 
@@ -400,7 +410,7 @@ abstract contract BaseLoanRouterTest is Test {
             expiration: uint64(block.timestamp + 7 days),
             borrower: users.borrower,
             currencyToken: USDC,
-            collateralToken: COLLATERAL_WRAPPER,
+            collateralToken: collateralWrapper,
             collateralTokenId: _wrappedTokenId,
             duration: LOAN_DURATION,
             repaymentInterval: REPAYMENT_INTERVAL,
