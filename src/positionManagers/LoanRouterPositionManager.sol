@@ -19,6 +19,7 @@ import {ILoanRouterPositionManager} from "../interfaces/ILoanRouterPositionManag
 import {IDepositTimelock} from "@usdai-loan-router-contracts/interfaces/IDepositTimelock.sol";
 import {ILoanRouter} from "@usdai-loan-router-contracts/interfaces/ILoanRouter.sol";
 import {ILoanRouterHooks} from "@usdai-loan-router-contracts/interfaces/ILoanRouterHooks.sol";
+import {IDepositTimelockHooks} from "@usdai-loan-router-contracts/interfaces/IDepositTimelockHooks.sol";
 
 import {LoanRouterPositionManagerLogic} from "./LoanRouterPositionManagerLogic.sol";
 
@@ -32,7 +33,8 @@ abstract contract LoanRouterPositionManager is
     PositionManager,
     StakedUSDaiStorage,
     ILoanRouterPositionManager,
-    ILoanRouterHooks
+    ILoanRouterHooks,
+    IDepositTimelockHooks
 {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -221,6 +223,34 @@ abstract contract LoanRouterPositionManager is
      */
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
         return IERC721Receiver.onERC721Received.selector;
+    }
+
+    /*------------------------------------------------------------------------*/
+    /* Deposit Timelock Hooks */
+    /*------------------------------------------------------------------------*/
+
+    /**
+     * @inheritdoc IDepositTimelockHooks
+     */
+    function onDepositWithdrawn(
+        address,
+        bytes32,
+        address depositToken,
+        address withdrawToken,
+        uint256,
+        uint256,
+        uint256 refundDepositAmount,
+        uint256 refundWithdrawAmount
+    ) external nonReentrant {
+        /* Handle deposit timelock deposit token refunded */
+        LoanRouterPositionManagerLogic.depositTimelockRefunded(
+            _getLoansStorage(), _usdai, _priceOracle, _depositTimelock, depositToken, refundDepositAmount
+        );
+
+        /* Handle deposit timelock withdraw token refunded */
+        LoanRouterPositionManagerLogic.depositTimelockRefunded(
+            _getLoansStorage(), _usdai, _priceOracle, _depositTimelock, withdrawToken, refundWithdrawAmount
+        );
     }
 
     /*------------------------------------------------------------------------*/

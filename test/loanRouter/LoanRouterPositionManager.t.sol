@@ -99,8 +99,9 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
     // This reflects the actual USDC price from the Arbitrum mainnet price oracle
     uint256 constant PENDING_BALANCE_1M = 999958860000000000000000; // ~999.96e18 USDai
 
-    // Note: Refunds from DepositTimelock (excess USDai after swap) are NOT tracked
-    // in repaymentBalances because they're already in USDai and don't need swapping
+    /* Expected refund amount from DepositTimelock */
+    uint256 constant REFUND_AMOUNT = 132025046266135080000;
+
     /*------------------------------------------------------------------------*/
     /* Helper functions */
     /*------------------------------------------------------------------------*/
@@ -219,8 +220,8 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         assertApproxEqRel(navAfter, navBefore, 0.0002e18, "NAV should be the same after borrowing");
 
         // Verify balances after origination
-        // Note: repaymentBalance is 0 because USDai refunds don't need to be tracked
-        assertBalances("After onLoanOriginated", 0, 0, PENDING_BALANCE_1M, 0);
+        // Note: repaymentBalance is not 0 because USDai refunds are tracked
+        assertBalances("After onLoanOriginated", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, 0);
     }
 
     function test__LoanRouterPositionManagerAccruedInterest_AfterOrigination() public {
@@ -254,7 +255,7 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         // Calculate expected interest based on pending balance
         uint256 expectedInterest = calculateExpectedInterest(PENDING_BALANCE_1M, RATE_10_PCT, 30 days);
 
-        assertBalances("After 30 days", 0, 0, PENDING_BALANCE_1M, expectedInterest);
+        assertBalances("After 30 days", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, expectedInterest);
     }
 
     function test__LoanRouterPositionManagerAccruedInterest_CompoundsOverTime() public {
@@ -393,12 +394,12 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         assertEq(navAfter, navBefore, "NAV should be the same after liquidation");
 
         // Verify interest stopped accruing
-        assertBalances("After onLoanLiquidated", 0, 0, PENDING_BALANCE_1M, accruedBefore);
+        assertBalances("After onLoanLiquidated", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, accruedBefore);
 
         // Warp forward and verify interest doesn't increase
         warp(30 days);
 
-        assertBalances("30 days after liquidation", 0, 0, PENDING_BALANCE_1M, accruedBefore);
+        assertBalances("30 days after liquidation", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, accruedBefore);
     }
 
     function test__LoanRouterPositionManagerOnLiquidated_AccrualStateTransition() public {
@@ -734,13 +735,13 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         // 2. Originate
         _borrowLoan(loanTerms);
 
-        assertBalances("2. After origination", 0, 0, PENDING_BALANCE_1M, 0);
+        assertBalances("2. After origination", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, 0);
 
         // 3. Wait and accrue interest
         warp(30 days);
         uint256 expectedInterest = calculateExpectedInterest(PENDING_BALANCE_1M, RATE_10_PCT, 30 days);
 
-        assertBalances("3. After 30 days", 0, 0, PENDING_BALANCE_1M, expectedInterest);
+        assertBalances("3. After 30 days", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, expectedInterest);
 
         // 4. Full repayment
         warp(REPAYMENT_INTERVAL - 30 days);
@@ -785,7 +786,7 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         _borrowLoan(loanTerms);
 
         // Verify initial state
-        assertBalances("After origination", 0, 0, PENDING_BALANCE_1M, 0);
+        assertBalances("After origination", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, 0);
 
         // ===== First repayment period (30 days) =====
         warp(REPAYMENT_INTERVAL);
@@ -794,7 +795,7 @@ contract LoanRouterPositionManagerTest is BaseLoanRouterTest {
         uint256 expectedInterestBeforeRepay1 =
             calculateExpectedInterest(PENDING_BALANCE_1M, RATE_10_PCT, REPAYMENT_INTERVAL);
 
-        assertBalances("Before first repayment", 0, 0, PENDING_BALANCE_1M, expectedInterestBeforeRepay1);
+        assertBalances("Before first repayment", 0, REFUND_AMOUNT, PENDING_BALANCE_1M, expectedInterestBeforeRepay1);
 
         // Make first partial repayment
         (, uint64 maturity, uint64 repaymentDeadline, uint256 balance) =
