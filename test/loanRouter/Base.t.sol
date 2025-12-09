@@ -194,7 +194,8 @@ abstract contract BaseLoanRouterTest is Test {
         vm.startPrank(users.deployer);
 
         // Deploy implementation
-        loanRouterImpl = new LoanRouter(address(depositTimelock), ENGLISH_AUCTION_LIQUIDATOR, address(bundleCollateralWrapper));
+        loanRouterImpl =
+            new LoanRouter(address(depositTimelock), ENGLISH_AUCTION_LIQUIDATOR, address(bundleCollateralWrapper));
 
         // Deploy proxy
         loanRouterProxy = new TransparentUpgradeableProxy(

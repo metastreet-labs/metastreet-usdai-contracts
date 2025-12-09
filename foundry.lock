@@ -1,0 +1,50 @@
+{
+  "lib/forge-std": {
+    "rev": "77041d2ce690e692d6e03cc812b57d1ddaa4d505"
+  },
+  "lib/layerzero": {
+    "rev": "88428755be6caa71cb1d2926141d73c8989296b5"
+  },
+  "lib/layerzero-devtools": {
+    "rev": "a0d0a9476dd5ca7c0b59875918989deb5ce7cd70"
+  },
+  "lib/layerzero-v1": {
+    "rev": "a1fb11a3b9c0ac449291816e71eacede4e36613e"
+  },
+  "lib/metastreet-contracts-v2": {
+    "rev": "71e7ec4aef36e3c83b034d7038f49011f66e7e80"
+  },
+  "lib/openzeppelin-contracts": {
+    "rev": "acd4ff74de833399287ed6b31b4debf6b2b35527"
+  },
+  "lib/openzeppelin-contracts-upgradeable": {
+    "rev": "3d5fa5c24c411112bab47bec25cfa9ad0af0e6e8"
+  },
+  "lib/openzeppelin-contracts-upgradeable-v4.9": {
+    "branch": {
+      "name": "release-v4.9",
+      "rev": "2d081f24cac1a867f6f73d512f2022e1fa987854"
+    }
+  },
+  "lib/openzeppelin-contracts-v4.9": {
+    "branch": {
+      "name": "release-v4.9",
+      "rev": "dc44c9f1a4c3b10af99492eed84f83ed244203f6"
+    }
+  },
+  "lib/solidity-bytes-utils": {
+    "rev": "b66afa93c6ba12bb91bac100fc35e8c8c1abae78"
+  },
+  "lib/uniswap-swap-router-contracts": {
+    "rev": "70bc2e40dfca294c1cea9bf67a4036732ee54303"
+  },
+  "lib/uniswap-v3-core": {
+    "rev": "d8b1c635c275d2a9450bd6a78f3fa2484fef73eb"
+  },
+  "lib/uniswap-v3-periphery": {
+    "rev": "0682387198a24c7cd63566a2c58398533860a5d1"
+  },
+  "lib/usdai-loan-router-contracts": {
+    "rev": "2af2b7237b37542c9580f7349bbc1cccb5792d32"
+  }
+}

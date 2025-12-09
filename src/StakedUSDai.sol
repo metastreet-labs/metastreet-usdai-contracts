@@ -802,6 +802,7 @@ contract StakedUSDai is
             || interfaceId == type(IERC7540Redeem).interfaceId || interfaceId == type(IERC7540Operator).interfaceId
             || interfaceId == type(IStakedUSDai).interfaceId || interfaceId == type(IMintableBurnable).interfaceId
             || interfaceId == type(IERC7575).interfaceId || interfaceId == type(ILoanRouterHooks).interfaceId
-            || interfaceId == type(IERC721Receiver).interfaceId || super.supportsInterface(interfaceId);
+            || interfaceId == type(IERC721Receiver).interfaceId || interfaceId == type(IDepositTimelockHooks).interfaceId
+            || super.supportsInterface(interfaceId);
     }
 }

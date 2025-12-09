@@ -77,6 +77,19 @@ library LoanRouterPositionManagerLogic {
     }
 
     /**
+     * @notice Validate currency token
+     * @param currencyToken Currency token address
+     * @param usdai USDai
+     * @param priceOracle Price oracle
+     */
+    function _validateCurrencyToken(address currencyToken, IUSDai usdai, IPriceOracle priceOracle) internal view {
+        /* Validate currency token is either USDai, or supported by price oracle */
+        if (currencyToken != address(usdai) && !priceOracle.supportedToken(currencyToken)) {
+            revert UnsupportedCurrency(currencyToken);
+        }
+    }
+
+    /**
      * @notice Update accrued interest and timestamp
      * @param accrual Accrual
      * @param oldAccrualRate Old accrual rate
@@ -171,6 +184,39 @@ library LoanRouterPositionManagerLogic {
     /*------------------------------------------------------------------------*/
 
     /**
+     * @notice Handle deposit timelock refunded hook
+     * @param loansStorage Loans storage
+     * @param usdai USDai
+     * @param priceOracle Price oracle
+     * @param depositTimelock Deposit timelock
+     * @param token Token address
+     * @param amount Amount
+     */
+    function depositTimelockRefunded(
+        LoanRouterPositionManager.Loans storage loansStorage,
+        IUSDai usdai,
+        IPriceOracle priceOracle,
+        address depositTimelock,
+        address token,
+        uint256 amount
+    ) external {
+        /* Return if amount is 0 */
+        if (amount == 0) return;
+
+        /* Validate caller is deposit timelock */
+        if (msg.sender != depositTimelock) revert InvalidCaller();
+
+        /* Validate currency token */
+        _validateCurrencyToken(token, usdai, priceOracle);
+
+        /* Register currency token */
+        loansStorage.currencyTokens.add(token);
+
+        /* Update repayment balance with refunded amount */
+        loansStorage.repaymentBalances[token].repayment += amount;
+    }
+
+    /**
      * @notice Handle loan originated hook
      * @param depositTimelockStorage Deposit timelock storage
      * @param loansStorage Loans storage
@@ -195,9 +241,7 @@ library LoanRouterPositionManagerLogic {
         _validateHookContext(loanTerms, trancheIndex, loanRouter);
 
         /* Validate currency token is either USDai, or supported by price oracle */
-        if (loanTerms.currencyToken != address(usdai) && !priceOracle.supportedToken(loanTerms.currencyToken)) {
-            revert UnsupportedCurrency(loanTerms.currencyToken);
-        }
+        _validateCurrencyToken(loanTerms.currencyToken, usdai, priceOracle);
 
         /* Subtract deposited USDai amount from deposit timelock balance */
         depositTimelockStorage.balance -= depositTimelockStorage.amounts[loanTermsHash];
