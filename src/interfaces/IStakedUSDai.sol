@@ -2,13 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "./IBasePositionManager.sol";
-import "./IPoolPositionManager.sol";
 
 /**
  * @title Staked USDai Interface
  * @author MetaStreet Foundation
  */
-interface IStakedUSDai is IBasePositionManager, IPoolPositionManager {
+interface IStakedUSDai is IBasePositionManager {
     /*------------------------------------------------------------------------*/
     /* Errors */
     /*------------------------------------------------------------------------*/

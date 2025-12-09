@@ -19,14 +19,12 @@ import "./StakedUSDaiStorage.sol";
 import "./RedemptionLogic.sol";
 
 import "./positionManagers/BasePositionManager.sol";
-import "./positionManagers/PoolPositionManager.sol";
 import "./positionManagers/LoanRouterPositionManager.sol";
 
 import "./interfaces/IUSDai.sol";
 import "./interfaces/IStakedUSDai.sol";
 import "./interfaces/IERC7540.sol";
 import "./interfaces/IERC7575.sol";
-import "./interfaces/IPoolPositionManager.sol";
 import "./interfaces/IBasePositionManager.sol";
 import "./interfaces/IMintableBurnable.sol";
 
@@ -42,7 +40,6 @@ contract StakedUSDai is
     PausableUpgradeable,
     StakedUSDaiStorage,
     BasePositionManager,
-    PoolPositionManager,
     LoanRouterPositionManager,
     IStakedUSDai,
     IMintableBurnable,
@@ -255,9 +252,9 @@ contract StakedUSDai is
      */
     function _assets(
         ValuationType valuationType
-    ) internal view override(BasePositionManager, PoolPositionManager, LoanRouterPositionManager) returns (uint256) {
-        return BasePositionManager._assets(valuationType) + PoolPositionManager._assets(valuationType)
-            + LoanRouterPositionManager._assets(valuationType) + _depositBalance();
+    ) internal view override(BasePositionManager, LoanRouterPositionManager) returns (uint256) {
+        return BasePositionManager._assets(valuationType) + LoanRouterPositionManager._assets(valuationType)
+            + _depositBalance();
     }
 
     /**

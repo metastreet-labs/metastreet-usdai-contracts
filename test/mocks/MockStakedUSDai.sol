@@ -18,7 +18,6 @@ import {StakedUSDaiStorage} from "src/StakedUSDaiStorage.sol";
 import {RedemptionLogic} from "src/RedemptionLogic.sol";
 
 import {BasePositionManager} from "src/positionManagers/BasePositionManager.sol";
-import {PoolPositionManager} from "src/positionManagers/PoolPositionManager.sol";
 import {LoanRouterPositionManager} from "src/positionManagers/LoanRouterPositionManager.sol";
 
 import {IStakedUSDai} from "src/interfaces/IStakedUSDai.sol";
@@ -37,7 +36,6 @@ contract MockStakedUSDai is
     PausableUpgradeable,
     StakedUSDaiStorage,
     BasePositionManager,
-    PoolPositionManager,
     LoanRouterPositionManager,
     IStakedUSDai,
     IMintableBurnable,
@@ -244,7 +242,7 @@ contract MockStakedUSDai is
      */
     function _assets(
         ValuationType
-    ) internal view override(BasePositionManager, PoolPositionManager, LoanRouterPositionManager) returns (uint256) {
+    ) internal view override(BasePositionManager, LoanRouterPositionManager) returns (uint256) {
         return _depositBalance();
     }
 
