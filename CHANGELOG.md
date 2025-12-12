@@ -1,3 +1,7 @@
+* StakedUSDai v1.6 - 12/12/2025
+    * Add temporary `poolGarbageCollect()` API to `PoolPositionManager` to
+      clean up deprecated pools state.
+
 * StakedUSDai v1.5 - 12/05/2025
     * Remove completed `migrate()` function.
     * Add `LoanRouterPositionManager`.
