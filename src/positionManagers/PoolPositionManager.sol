@@ -104,35 +104,11 @@ abstract contract PoolPositionManager is
     /**
      * @inheritdoc IPoolPositionManager
      */
-    function poolWithdraw(
+    function poolGarbageCollect(
         address pool,
         uint128 tick,
-        uint128 redemptionId,
-        uint256 poolCurrencyAmountMaximum,
-        uint256 usdaiAmountMinimum,
-        bytes calldata data
-    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant returns (uint256) {
-        /* Withdraw */
-        (uint256 withdrawnShares, uint256 poolCurrencyAmount) = IPool(pool).withdraw(tick, redemptionId);
-
-        /* Validate pool currency amount */
-        if (poolCurrencyAmount > poolCurrencyAmountMaximum) revert InvalidPoolCurrencyAmount();
-
-        /* Get currency token */
-        address poolCurrency = IPool(pool).currencyToken();
-
-        /* Approve currency token */
-        IERC20(poolCurrency).forceApprove(address(_usdai), poolCurrencyAmount);
-
-        /* Swap currency token to USDai */
-        uint256 usdaiAmount = _usdai.deposit(poolCurrency, poolCurrencyAmount, usdaiAmountMinimum, address(this), data);
-
-        /* Update deposits balance */
-        _getDepositsStorage().balance += usdaiAmount;
-
-        /* Emit PoolWithdrawn */
-        emit PoolWithdrawn(pool, tick, withdrawnShares, redemptionId, poolCurrencyAmount, usdaiAmount);
-
-        return usdaiAmount;
+        uint128 redemptionId
+    ) external onlyRole(STRATEGY_ADMIN_ROLE) nonReentrant {
+        PoolPositionManagerLogic._garbageCollect(_getPoolsStorage(), pool, tick, redemptionId);
     }
 }
